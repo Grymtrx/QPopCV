@@ -1,5 +1,3 @@
-# QPopCV - V1.0.0
-
 import json
 import threading
 import time
@@ -17,6 +15,11 @@ DISCORD_SERVER_URL = "https://discord.gg/Tg4myXwf"
 
 stop_event = threading.Event()
 watcher_thread = None
+
+# ------------ throttle control ------------
+last_test_time = 0        # limits how often "Test" can be used
+last_qpop_time = 0        # limits how often Qpop! webhook is sent
+THROTTLE_SECONDS = 15
 
 # ------------ config helpers ------------
 
@@ -94,6 +97,7 @@ def start_watcher(cfg, status_label, status_dot):
         )
 
     def loop():
+        global last_qpop_time
         seen_once = False
         while not stop_event.is_set():
             try:
@@ -120,18 +124,27 @@ def start_watcher(cfg, status_label, status_dot):
                 if match_found and not seen_once:
                     ts = time.strftime("%Y-%m-%d %H:%M:%S")
                     print(f"[{ts}] Queue popup detected via '{match_name}'")
-                    try:
-                        requests.post(
-                            url,
-                            json={"content": f"{mention} Qpop!"},
-                            timeout=5,
-                        )
-                        print("Discord notification sent.")
-                    except Exception as e:
-                        print("Error sending webhook:", e)
+
+                    now = time.time()
+                    if now - last_qpop_time >= THROTTLE_SECONDS:
+                        try:
+                            requests.post(
+                                url,
+                                json={"content": f"{mention} Qpop!"},
+                                timeout=5,
+                            )
+                            last_qpop_time = now
+                            print("Discord notification sent.")
+                        except Exception as e:
+                            print("Error sending webhook:", e)
+                    else:
+                        remaining = int(THROTTLE_SECONDS - (now - last_qpop_time))
+                        print(f"⏳ Qpop! throttled — skipping (wait {remaining}s).")
+
                     # flash detected state in GUI
                     flash_detected()
                     seen_once = True
+
                 elif not match_found and seen_once:
                     print("Popup gone, ready for next detection.")
                     seen_once = False
@@ -206,11 +219,22 @@ def main():
         messagebox.showinfo("Saved", "Configuration saved.")
 
     def on_test_discord():
+        global last_test_time
+        now = time.time()
+        if now - last_test_time < THROTTLE_SECONDS:
+            remaining = int(THROTTLE_SECONDS - (now - last_test_time))
+            messagebox.showwarning(
+                "Throttled",
+                f"Please wait {remaining} seconds before sending another test."
+            )
+            return
+
         test_url = webhook_var.get().strip()
         test_uid = user_var.get().strip()
         if not test_url or not test_uid:
             messagebox.showwarning("Missing settings", "Webhook URL and User ID are required for test.")
             return
+
         mention = f"<@{test_uid}>"
         try:
             requests.post(
@@ -218,6 +242,7 @@ def main():
                 json={"content": f"{mention} QPop App Discord Connection Test ✅"},
                 timeout=5,
             )
+            last_test_time = now
             messagebox.showinfo("Success", "Test message sent to Discord.")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to send test message:\n{e}")
@@ -262,8 +287,18 @@ def main():
             cfg["webhook_url"] = webhook_var.get().strip()
             cfg["user_id"] = user_var.get().strip()
             if not (cfg["webhook_url"] and cfg["user_id"]):
-                messagebox.showwarning("Missing settings", "Please fill in webhook and Discord user ID before watching.")
+                messagebox.showwarning(
+                    "Missing settings",
+                    "Please fill in webhook and Discord user ID before watching."
+                )
                 return
+
+            messagebox.showinfo(
+                "Mobile Discord Notifications",
+                "If you would like Discord notifications to be directed to your phone, "
+                "please close Discord and 'Quit Discord' in your system tray."
+            )
+
             save_config(cfg)
             start_watcher(cfg, status_label, status_dot)
             watch_btn.configure(text="Stop", fg_color="#0ea5e9")
@@ -297,9 +332,6 @@ def main():
 
     status_label = ctk.CTkLabel(status_frame, text="Status: Stopped")
     status_label.grid(row=0, column=1, sticky="w")
-
-    version_label = ctk.CTkLabel(status_frame, text=APP_VERSION)
-    version_label.grid(row=0, column=2, sticky="e", padx=(4, 0))
 
     def on_close():
         stop_watcher(status_label, status_dot)
