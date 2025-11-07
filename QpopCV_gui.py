@@ -130,7 +130,7 @@ def start_watcher(cfg, status_label, status_dot):
                         try:
                             requests.post(
                                 url,
-                                json={"content": f"{mention} Qpop!"},
+                                json={"content": f"{mention} Your Queue has popped!"},
                                 timeout=5,
                             )
                             last_qpop_time = now
@@ -239,7 +239,7 @@ def main():
         try:
             requests.post(
                 test_url,
-                json={"content": f"{mention} QPop App Discord Connection Test ✅"},
+                json={"content": f"{mention} QPop App | Discord Connection Test: Successful ✅"},
                 timeout=5,
             )
             last_test_time = now
@@ -262,15 +262,6 @@ def main():
     )
     discord_btn.pack(side="left", padx=(0, 4))
 
-    save_btn = ctk.CTkButton(
-        btn_frame,
-        text="💾",
-        width=36,
-        corner_radius=12,
-        command=on_save,
-    )
-    save_btn.pack(side="left", padx=4)
-
     test_btn = ctk.CTkButton(
         btn_frame,
         text="Test",
@@ -279,6 +270,15 @@ def main():
         command=on_test_discord,
     )
     test_btn.pack(side="left", padx=4)
+    
+    save_btn = ctk.CTkButton(
+        btn_frame,
+        text="Save",
+        width=36,
+        corner_radius=12,
+        command=on_save,
+    )
+    save_btn.pack(side="left", padx=4)
 
     watch_state = {"running": False}
 
@@ -295,8 +295,8 @@ def main():
 
             messagebox.showinfo(
                 "Mobile Discord Notifications",
-                "If you would like Discord notifications to be directed to your phone INSTEAD of your PC, "
-                "please close 'Quit Discord' in your system tray."
+                "If you would like Discord Notifications to be directed to your phone INSTEAD of your PC, "
+                "please 'Quit Discord' in your system tray."
             )
 
             save_config(cfg)
