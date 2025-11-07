@@ -19,14 +19,23 @@ A tiny desktop app that **watches your screen for WoW queue pops** and sends you
 - **Windows**
 - A **Discord webhook URL** (from a channel in your server)
 - Your **Discord user ID** (copy & paste it)
-
-![Discord User ID](https://i.imgur.com/3ggfUt7.png)
-
 - WoW open with the **queue pop visible** on screen
 
 
 ## Install
 
 1. **Download this repo**
-   - On GitHub.com: `Click on Releases' [Release](https://github.com/Grymtrx/QPopCV/releases)
+   - On GitHub.com: Click on [Release](https://github.com/Grymtrx/QPopCV/releases)
+
+
+## Setup
+
+1. Copy & paste Discord **webhhook URL** to App
+    - Use QPopCV's Public Discord Webhook or create your own private one easily.
+2. Copy & paste Discord **User ID** to App
+
+![Discord User ID](https://i.imgur.com/3ggfUt7.png)
+
+3. Set Mobile Push Notification on & @mention only for #channel webhook is linked too.
+
 
