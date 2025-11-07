@@ -36,8 +36,11 @@ A tiny desktop app that **watches your screen for WoW queue pops** and sends you
     - Create your own private one easily.
 2. Copy & paste Discord **User ID** to App
     - Discord settings > Advanced > Developer Mode
+
     ![Dev Mode ON](https://i.imgur.com/23nOrhM.png)
+    
     - Copy User ID
+
     ![Discord User ID](https://i.imgur.com/3ggfUt7.png)
 
 3. Set Mobile Push Notification ON & @mention only for the #channel your webhook is linked too.
