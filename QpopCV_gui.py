@@ -192,14 +192,14 @@ def main():
     card.grid_columnconfigure(1, weight=1)
 
     # Row 0: Webhook
-    ctk.CTkLabel(card, text="Webhook:").grid(row=0, column=0, padx=6, pady=4, sticky="w")
+    ctk.CTkLabel(card, text="Discord Webhook:").grid(row=0, column=0, padx=6, pady=4, sticky="w")
     webhook_var = ctk.StringVar(value=cfg.get("webhook_url", ""))
     ctk.CTkEntry(card, textvariable=webhook_var, corner_radius=10).grid(
         row=0, column=1, padx=4, pady=4, sticky="we"
     )
 
     # Row 1: User ID
-    ctk.CTkLabel(card, text="User ID:").grid(row=1, column=0, padx=6, pady=4, sticky="w")
+    ctk.CTkLabel(card, text="Discord User ID:").grid(row=1, column=0, padx=6, pady=4, sticky="w")
     user_var = ctk.StringVar(value=cfg.get("user_id", ""))
     ctk.CTkEntry(card, textvariable=user_var, corner_radius=10).grid(
         row=1, column=1, padx=4, pady=4, sticky="we"
@@ -295,8 +295,8 @@ def main():
 
             messagebox.showinfo(
                 "Mobile Discord Notifications",
-                "If you would like Discord notifications to be directed to your phone, "
-                "please close Discord and 'Quit Discord' in your system tray."
+                "If you would like Discord notifications to be directed to your phone INSTEAD of your PC, "
+                "please close 'Quit Discord' in your system tray."
             )
 
             save_config(cfg)
