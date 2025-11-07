@@ -3,7 +3,9 @@
 A tiny desktop app that **watches your screen for WoW queue pops** and sends you a **Discord ping** when they appear.
 
 ![Solo Shuffle Q Pop](https://i.imgur.com/GoKTl4J.png)
+
 ![Discord Noti](https://i.imgur.com/n6fU2La.png)
+
 
 ## What it does
 
