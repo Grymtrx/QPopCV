@@ -7,8 +7,7 @@ A tiny desktop app that **watches your screen for WoW queue pops** and sends you
 
 - Looks for the Solo Shuffle queue pop on your screen (top-center area).
 - When it sees a pop, it sends a message to your **Discord webhook**.
-- The message "@{User ID} Your Queue popped!" send to your phone.
-
+- The message "@{User ID} Your Queue popped!" sent to your phone.
 
 
 ## Requirements
