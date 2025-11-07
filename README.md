@@ -1,8 +1,9 @@
 # ⚡ QPopCV
 
 A tiny desktop app that **watches your screen for WoW queue pops** and sends you a **Discord ping** when they appear.
-![Solo Shuffle Q Pop](media\qpop_ss_blizzardUI_reference.png)
-![Discord Noti](https://i.imgur.com/a/n6fU2La.png)
+
+![Solo Shuffle Q Pop](https://i.imgur.com/GoKTl4J.png)
+![Discord Noti](https://i.imgur.com/n6fU2La.png)
 
 ## What it does
 
@@ -16,7 +17,9 @@ A tiny desktop app that **watches your screen for WoW queue pops** and sends you
 - **Windows**
 - A **Discord webhook URL** (from a channel in your server)
 - Your **Discord user ID** (copy & paste it)
+
 ![Discord User ID](https://i.imgur.com/3ggfUt7.png)
+
 - WoW open with the **queue pop visible** on screen
 
 
