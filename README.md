@@ -1,21 +1,7 @@
 # QPopCV
 
-A tiny desktop app that sends you a **Discord ping** when your Solo Shuffle queue pops.
-
-
-## Install
-
-1. **Download this project**  
-   - On GitHub: `Code → Download ZIP`  
-   - Extract it somewhere easy (e.g. Desktop).
-
-
-# QPopCV
-
 A tiny desktop app that **watches your screen for WoW queue pops** and sends you a **Discord ping** when they appear.
 
-
----
 
 ## What it does
 
@@ -24,7 +10,6 @@ A tiny desktop app that **watches your screen for WoW queue pops** and sends you
 - The message @mentions **your Discord user** so you don’t miss queues while tabbed out.
 - Shows a **“Detected!”** status in the app when a pop is seen.
 
----
 
 ## Requirements
 
@@ -33,7 +18,6 @@ A tiny desktop app that **watches your screen for WoW queue pops** and sends you
 - Your **Discord user ID**
 - WoW open with the **queue pop visible** on screen
 
----
 
 ## Install
 
