@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Dict
 import json
 
-APP_VERSION = "V1.0.0"
+APP_VERSION = "V1.0.1"
 CONFIG_PATH = Path("config.json")
 DISCORD_SERVER_URL = "https://discord.gg/vXvjcrUFm8"  # QPopCV Discord Server (PermaLink)
 
