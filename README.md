@@ -1,17 +1,10 @@
 # ⚡ QPopCV
 
-A tiny desktop app that **watches your screen for WoW queue pops** and sends you a **Discord ping** when they appear.
+A tiny desktop app that **watches your screen for WoW queue pops** and sends you a **Discord ping** when they appear. Allowing notifications to your phone so you can roam away from your PC during Queues.
 
 ![Solo Shuffle Q Pop](https://i.imgur.com/KRNfpee.png)
 
 ![Discord Noti](https://i.imgur.com/3vXwvf4.png)
-
-
-## What it does
-
-- Looks for the Solo Shuffle queue pop on your screen (top-center area).
-- When it sees a pop, it sends a message to your **Discord webhook**.
-- The message "@{User ID} Your Queue popped!" sent to your phone.
 
 
 ## Requirements
@@ -25,7 +18,7 @@ A tiny desktop app that **watches your screen for WoW queue pops** and sends you
 ## Install
 
 1. **Download this repo**
-   - On GitHub.com: Click on [Release](https://github.com/Grymtrx/QPopCV/releases)
+   - Click on [Release](https://github.com/Grymtrx/QPopCV/releases)
 
 
 ## Setup
@@ -43,3 +36,6 @@ A tiny desktop app that **watches your screen for WoW queue pops** and sends you
     ![Discord User ID](https://i.imgur.com/3ggfUt7.png)
 
 3. Set Mobile Push Notification ON & @mention only for the #channel your webhook is linked too.
+    - This way you only get notifications when queue pops for YOU.
+
+Important Note: Quit discord in your systems tray when you want notifications to be diverted to your phone, otherwise notifications will go to your desktop.
