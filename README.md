@@ -41,3 +41,5 @@ A tiny desktop app that **watches your screen for WoW queue pops** and sends you
     - This way you only get notifications when queue pops for YOU.
 
 Important Note: Quit discord in your systems tray when you want notifications to be diverted to your phone, otherwise notifications will go to your desktop.
+
+Join [QPopCV Discord](https://discord.gg/rCquPBdA) to get your discord notifications.
