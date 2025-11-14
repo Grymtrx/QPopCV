@@ -5,6 +5,7 @@ A tiny desktop app that **watches your screen for WoW queue pops** and sends you
 ![Solo Shuffle Q Pop](https://i.imgur.com/KRNfpee.png)
 
 ![Discord Noti](https://i.imgur.com/3vXwvf4.png)
+![Mobile Noti] (https://i.imgur.com/qBB0jmF.png)
 
 
 ## Requirements
