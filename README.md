@@ -24,7 +24,7 @@ A tiny desktop app that **watches your screen for WoW queue pops** and sends you
 ## Setup
 
 1. Copy & paste Discord **webhhook URL** to QPopCV App
-    - Use [QPopCV Discord](https://discord.gg/rCquPBdA) for a public Webhook.
+    - Use [QPopCV Discord](https://discord.gg/vXvjcrUFm8) for a public Webhook.
         - Webhook URL https://discord.com/api/webhooks/1435435868767912096/Ken8UDwQGDKEZ-MJAo6FNQR9wNxOahRgg5Pci_Y2X-smeSKUeE4dfhYuwfkCKu1hmzVA
     - OR... Create your own private one easily.
 
@@ -42,4 +42,4 @@ A tiny desktop app that **watches your screen for WoW queue pops** and sends you
 
 Important Note: Quit discord in your systems tray when you want notifications to be diverted to your phone, otherwise notifications will go to your desktop.
 
-Join [QPopCV Discord](https://discord.gg/rCquPBdA) to get your discord notifications.
+Join [QPopCV Discord](https://discord.gg/vXvjcrUFm8) to get your discord notifications.
