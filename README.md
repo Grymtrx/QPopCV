@@ -43,3 +43,10 @@ A tiny desktop app that **watches your screen for WoW queue pops** and sends you
 Important Note: Quit discord in your systems tray when you want notifications to be diverted to your phone, otherwise notifications will go to your desktop.
 
 Join [QPopCV Discord](https://discord.gg/vXvjcrUFm8) to get your discord notifications.
+
+
+## Speed (End-to-End Latency)
+- App QPop Detection: 0.005s - 0.15s (Code optimized)
+- HTTP request to Discord: 0.711s (Internet speed dependent)
+- Discord -> Phone Notification: 1.8s (Discord infastructure limit)
+    Total ~ 3s

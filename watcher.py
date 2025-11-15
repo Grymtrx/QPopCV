@@ -79,15 +79,15 @@ class QPopWatcher:
         region_h = screen_h // 2
         return region_x, region_y, region_w, region_h
 
-    def _find_queue_popup(self) -> Optional[str]:
+    def _find_queue_popup(self, screenshot) -> Optional[str]:
         for name, path in REFERENCE_IMG:
             if not path.exists():
                 continue
             try:
-                loc = pyautogui.locateOnScreen(
+                loc = pyautogui.locate(
                     str(path),
+                    screenshot,
                     confidence=self._confidence,
-                    region=self._region,
                 )
             except ImageNotFoundException:
                 loc = None
@@ -113,7 +113,8 @@ class QPopWatcher:
         return False, 0, now
 
     def _handle_detected_popup(self, match_name: str) -> None:
-        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        detected_at = time.time()
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(detected_at))
         print(f"[{timestamp}] Queue popup detected via '{match_name}'")
 
         throttled, remaining, now = self._check_throttle()
@@ -122,20 +123,31 @@ class QPopWatcher:
             print(f"⏳ Qpop! throttled — skipping (wait {remaining}s).")
         else:
             try:
+                send_start = time.time()
                 self._send_discord_message(f"{self._mention} Your Queue has popped!")
+                send_end = time.time()
+
                 self._last_qpop_time = now
-                print("Discord notification sent.")
+                print(f"Discord notification sent. HTTP took {send_end - send_start:.3f}s")
             except Exception as e:
                 print("Error sending webhook:", e)
 
+        # local GUI feedback timing
+        gui_start = time.time()
         if self._on_detect:
             self._on_detect()
+        gui_end = time.time()
+        print(f"Local GUI detect effect took {gui_end - gui_start:.3f}s")
 
     def _loop(self) -> None:
-        """Main watcher loop running in a background thread."""
+        # Main watcher loop running in a background thread.
         while not self._stop_event.is_set():
             try:
-                match_name = self._find_queue_popup()
+                # Take a single screenshot of the region
+                screenshot = pyautogui.screenshot(region=self._region)
+
+                # Check all reference images against this single screenshot
+                match_name = self._find_queue_popup(screenshot)
                 popup_active = match_name is not None
 
                 # Transition: no popup -> popup
