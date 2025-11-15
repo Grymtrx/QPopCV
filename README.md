@@ -39,16 +39,12 @@ Paste this into the QPopCV app so the webhook @mentions you.
 
 ### 3. Configure mobile notifications
 - Enable **Mobile Push Notifications** on Discord  
-- In the channel with the webhook, set notifications to **@mentions only**
+- Set discord #channel notifications to **@mentions only** (By Default on QPopCV Discord)
 
 This ensures you only receive alerts when *your* queue pops.
 
-> **Important:**  
-> Quit Discord from the **system tray** if you want notifications routed to your phone instead of your desktop.
-
-Join the community here:  
-👉 **[QPopCV Discord](https://discord.gg/vXvjcrUFm8)**
-
+**Important:**  
+ - Quit Discord from the **system tray** if you want notifications routed to your phone instead of your desktop.
 
 
 ## Speed (End-to-End Latency)
@@ -58,3 +54,6 @@ Measured from queue pop appearing → notification on phone:
 - **HTTP request to Discord:** ~0.711s  
 - **Discord → phone push:** ~1.8s  
 - **Total:** ~2.5- 3s seconds
+
+Join the community here:  
+👉 **[QPopCV Discord](https://discord.gg/vXvjcrUFm8)**
