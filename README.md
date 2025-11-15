@@ -32,7 +32,7 @@ You may use:
 1. Discord → **Settings → Advanced → Enable Developer Mode**  
  ![Dev Mode ON](https://i.imgur.com/23nOrhM.png)
 
-2. Right-click your profile → **Copy User ID**  
+2. Left-click your profile → **Copy User ID**  
  ![Discord User ID](https://i.imgur.com/3ggfUt7.png)
 
 Paste this into the QPopCV app so the webhook @mentions you.
