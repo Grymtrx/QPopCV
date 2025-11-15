@@ -1,52 +1,60 @@
 # ⚡ QPopCV
 
-A tiny desktop app that **watches your screen for WoW queue pops** and sends you a **Discord ping** when they appear. Divert notifications to your phone so you can roam away from your PC during Queues.
+A lightweight desktop app that **monitors your screen for WoW Solo Shuffle queue pops** and instantly sends a **Discord ping** to your phone so you can step away from your PC while waiting.
 
 ![Solo Shuffle Q Pop](https://i.imgur.com/KRNfpee.png)
-
 ![Mobile Noti](https://i.imgur.com/uk64CQt.png)
 
 
-## Requirements
 
+## Requirements
 - **Windows**
-- A **Discord webhook URL** 
-- Your **Discord user ID**
-- WoW open with the **queue pop visible** on screen
+- A **Discord Webhook URL**
+- Your **Discord User ID**
+- WoW open with the **Queue pop visible on screen**
+
 
 
 ## Install
+1. **Download the latest release**  
+- [QPopCV Releases](https://github.com/Grymtrx/QPopCV/releases)
 
-1. **Download this repo**
-   - Click on [Release](https://github.com/Grymtrx/QPopCV/releases)
 
 
 ## Setup
 
-1. Copy & paste Discord **webhhook URL** to QPopCV App
-    - Use [QPopCV Discord](https://discord.gg/vXvjcrUFm8) for a public Webhook.
-        - Webhook URL https://discord.com/api/webhooks/1435435868767912096/Ken8UDwQGDKEZ-MJAo6FNQR9wNxOahRgg5Pci_Y2X-smeSKUeE4dfhYuwfkCKu1hmzVA
-    - OR... Create your own private one easily.
+### 1. Add your Discord Webhook URL  
+You may use:
+- The **public webhook** in the [QPopCV Discord](https://discord.gg/vXvjcrUFm8):
+- **Or create your own private webhook** in any Discord server/channel you own.
 
-2. Copy & paste Discord **User ID** to App
-    - Discord settings > Advanced > Developer Mode
+### 2. Add your Discord User ID  
+1. Discord → **Settings → Advanced → Enable Developer Mode**  
+ ![Dev Mode ON](https://i.imgur.com/23nOrhM.png)
 
-    ![Dev Mode ON](https://i.imgur.com/23nOrhM.png)
-    
-    - Copy User ID
+2. Right-click your profile → **Copy User ID**  
+ ![Discord User ID](https://i.imgur.com/3ggfUt7.png)
 
-    ![Discord User ID](https://i.imgur.com/3ggfUt7.png)
+Paste this into the QPopCV app so the webhook @mentions you.
 
-3. Set Mobile Push Notification ON & @mention only for the #channel your webhook is linked too.
-    - This way you only get notifications when queue pops for YOU.
+### 3. Configure mobile notifications
+- Enable **Mobile Push Notifications** on Discord  
+- In the channel with the webhook, set notifications to **@mentions only**
 
-Important Note: Quit discord in your systems tray when you want notifications to be diverted to your phone, otherwise notifications will go to your desktop.
+This ensures you only receive alerts when *your* queue pops.
 
-Join [QPopCV Discord](https://discord.gg/vXvjcrUFm8) to get your discord notifications.
+> **Important:**  
+> Quit Discord from the **system tray** if you want notifications routed to your phone instead of your desktop.
+
+Join the community here:  
+👉 **[QPopCV Discord](https://discord.gg/vXvjcrUFm8)**
+
 
 
 ## Speed (End-to-End Latency)
-- App QPop Detection: 0.005s - 0.15s (Code optimized)
-- HTTP request to Discord: 0.711s (Internet speed dependent)
-- Discord -> Phone Notification: 1.8s (Discord infastructure limit)
-    Total ~ 3s
+Measured from queue pop appearing → notification on phone:
+
+- **App detection:** 0.005s – 0.15s  
+- **HTTP request to Discord:** ~0.711s  
+- **Discord → phone push:** ~1.8s  
+- **Total:** ~2.5- 3s seconds
