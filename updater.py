@@ -98,6 +98,13 @@ class UpdateManager:
         if not cleaned:
             return ()
         parts: list[tuple[int, object]] = []
+    def _normalize_version(version: str) -> Sequence[object]:
+        cleaned = version.strip().lower()
+        if cleaned.startswith("v"):
+            cleaned = cleaned[1:]
+        if not cleaned:
+            return ()
+        parts: list[object] = []
         for token in re.split(r"[\.\-_]", cleaned):
             if not token:
                 continue
@@ -106,6 +113,10 @@ class UpdateManager:
             else:
                 parts.append((1, token))
         return tuple(parts)
+                parts.append(int(token))
+            else:
+                parts.append(token)
+        return parts
 
     def _is_newer_version(self, latest: str, current: str) -> bool:
         return self._normalize_version(latest) > self._normalize_version(current)
