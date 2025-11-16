@@ -8,7 +8,7 @@ if getattr(sys, "frozen", False):
 else:
     APP_DIR = Path(__file__).resolve().parent
 
-APP_VERSION = "V1.0.1"
+APP_VERSION = "1.0.2"
 CONFIG_PATH = APP_DIR / "config.json"
 DISCORD_SERVER_URL = "https://discord.gg/vXvjcrUFm8"  # QPopCV Discord Server (PermaLink)
 
