@@ -1,4 +1,5 @@
 from typing import Dict, Optional
+import threading
 import time
 import webbrowser
 
@@ -6,12 +7,14 @@ import tkinter.messagebox as messagebox
 import customtkinter as ctk
 
 from config import (
+    APP_DIR,
     APP_VERSION,
     DISCORD_SERVER_URL,
     load_config,
     save_config,
 )
 from watcher import QPopWatcher, THROTTLE_SECONDS
+from updater import UpdateInfo, UpdateManager
 
 
 class QPopApp:
@@ -19,6 +22,12 @@ class QPopApp:
         self.config: Dict[str, object] = load_config()
         self._last_test_time: float = 0.0
         self._watcher: Optional[QPopWatcher] = None
+        self._update_info: Optional[UpdateInfo] = None
+        self._update_clickable: bool = False
+
+        self.update_manager = UpdateManager(
+            current_version=APP_VERSION, app_dir=APP_DIR
+        )
 
         ctk.set_appearance_mode("light")
         ctk.set_default_color_theme("blue")
@@ -33,6 +42,8 @@ class QPopApp:
         self.root.grid_rowconfigure(0, weight=1)
 
         self._build_ui()
+
+        self.root.after(250, self._start_update_check)
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
@@ -122,6 +133,17 @@ class QPopApp:
 
         self.status_label = ctk.CTkLabel(status_frame, text="Status: Stopped")
         self.status_label.grid(row=0, column=1, sticky="w")
+
+        self.update_status_label = ctk.CTkLabel(
+            card,
+            text="Checking for updates…",
+            text_color="gray",
+            font=("TkDefaultFont", 11),
+        )
+        self.update_status_label.grid(
+            row=5, column=0, columnspan=2, padx=6, pady=(4, 4), sticky="w"
+        )
+        self.update_status_label.bind("<Button-1>", self.on_update_click)
 
     # --------- CONFIG / VALIDATION ---------
 
@@ -232,6 +254,27 @@ class QPopApp:
         else:
             self._stop_watch()
 
+    def on_update_click(self, _event=None) -> None:
+        if not self._update_clickable:
+            messagebox.showinfo("QPopCV", "You are running the latest version.")
+            return
+
+        if not self._update_info or not self._update_info.available:
+            messagebox.showinfo("QPopCV", "No update is currently available.")
+            return
+
+        if not messagebox.askyesno(
+            "Update Available",
+            f"Version {self._update_info.latest_version} is available.\n"
+            "Would you like to download and install it now?",
+        ):
+            return
+
+        self._set_update_status("Downloading update…", clickable=False, color="#0ea5e9")
+        threading.Thread(
+            target=self._perform_update_install, daemon=True
+        ).start()
+
     # --------- WATCHER CONTROL ---------
 
     def _start_watch(self) -> None:
@@ -291,6 +334,69 @@ class QPopApp:
         return False, 0, now
 
     # --------- LIFECYCLE ---------
+
+    def _start_update_check(self) -> None:
+        threading.Thread(target=self._check_updates_background, daemon=True).start()
+
+    def _check_updates_background(self) -> None:
+        try:
+            info = self.update_manager.check_for_updates()
+        except Exception as exc:
+            print("Update check failed:", exc)
+            self.root.after(
+                0,
+                lambda: self._set_update_status(
+                    "Update check failed", clickable=False, color="red"
+                ),
+            )
+            return
+
+        self._update_info = info
+        self.root.after(0, lambda: self._apply_update_info(info))
+
+    def _apply_update_info(self, info: UpdateInfo) -> None:
+        if info.available:
+            text = f"Update available: {info.latest_version} (click to install)"
+            self._set_update_status(text, clickable=True, color="#0ea5e9")
+        else:
+            text = f"Version {APP_VERSION} is up to date"
+            self._set_update_status(text, clickable=False, color="gray")
+
+    def _set_update_status(self, text: str, clickable: bool, color: str = "gray") -> None:
+        self.update_status_label.configure(text=text, text_color=color)
+        self._update_clickable = clickable
+        cursor = "hand2" if clickable else "arrow"
+        self.update_status_label.configure(cursor=cursor)
+
+    def _perform_update_install(self) -> None:
+        try:
+            assert self._update_info is not None
+            self.update_manager.install_update(self._update_info)
+        except Exception as exc:
+            print("Update installation failed:", exc)
+            self.root.after(
+                0,
+                lambda: self._set_update_status(
+                    "Update failed – try again", clickable=True, color="red"
+                ),
+            )
+            self.root.after(
+                0,
+                lambda: messagebox.showerror(
+                    "Update Failed", f"Unable to install the update:\n{exc}"
+                ),
+            )
+            return
+
+        self.root.after(0, self._restart_after_update)
+
+    def _restart_after_update(self) -> None:
+        messagebox.showinfo(
+            "Update Installed",
+            "The newest version has been installed. QPopCV will relaunch now.",
+        )
+        self.on_close()
+        self.update_manager.relaunch()
 
     def on_close(self) -> None:
         if self._watcher is not None:
