@@ -9,6 +9,7 @@ DISCORD_SERVER_URL = "https://discord.gg/vXvjcrUFm8"  # QPopCV Discord Server (P
 DEFAULT_CONFIG: Dict[str, object] = {
     "webhook_url": "",
     "user_id": "",
+    "ui_scale": 69,
     "check_interval": 0.15,
     "confidence": 0.6,
 }

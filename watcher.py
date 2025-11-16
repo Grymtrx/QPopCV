@@ -1,13 +1,15 @@
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Callable
+from typing import Dict, Optional, Tuple, Callable, List
 import threading
 import time
 
 import pyautogui
 from pyautogui import ImageNotFoundException
 import requests
+from PIL import Image
 
 THROTTLE_SECONDS = 15
+BASELINE_UI_SCALE = 69.0
 
 REFERENCE_IMG = [
     ("solo_shuffle_blizzui", Path("media/qpop_ss_blizzardUI_reference.png")),
@@ -33,6 +35,10 @@ class QPopWatcher:
         self._user_id = str(config.get("user_id", "")).strip()
         self._check_interval = float(config.get("check_interval", 0.5))
         self._confidence = float(config.get("confidence", 0.6))
+        self._ui_scale = self._coerce_ui_scale(config.get("ui_scale", BASELINE_UI_SCALE))
+        self._scale_factor = (
+            self._ui_scale / BASELINE_UI_SCALE if BASELINE_UI_SCALE else 1.0
+        )
 
         self._mention = f"<@{self._user_id}>"
         self._on_detect = on_detect
@@ -43,6 +49,7 @@ class QPopWatcher:
         self._seen_once: bool = False
 
         self._region = self._compute_top_center_region()
+        self._reference_images = self._prepare_reference_images()
 
     # --------- Public API ---------
 
@@ -57,10 +64,12 @@ class QPopWatcher:
         print("QPopCV screen watcher started.")
         print(f"Region (top-center): {self._region}")
         print(f"Interval: {self._check_interval}s, confidence: {self._confidence}")
-
-        for name, path in REFERENCE_IMG:
-            if not path.exists():
-                print(f"Missing reference image for '{name}': {path}")
+        print(
+            f"UI scale: {self._ui_scale}% "
+            f"(factor {self._scale_factor:.3f} vs baseline {BASELINE_UI_SCALE}%)"
+        )
+        if not self._reference_images:
+            print("Warning: no reference images loaded; detection will be disabled.")
 
     def stop(self) -> None:
         self._stop_event.set()
@@ -80,12 +89,10 @@ class QPopWatcher:
         return region_x, region_y, region_w, region_h
 
     def _find_queue_popup(self, screenshot) -> Optional[str]:
-        for name, path in REFERENCE_IMG:
-            if not path.exists():
-                continue
+        for name, reference in self._reference_images:
             try:
                 loc = pyautogui.locate(
-                    str(path),
+                    reference,
                     screenshot,
                     confidence=self._confidence,
                 )
@@ -120,7 +127,7 @@ class QPopWatcher:
         throttled, remaining, now = self._check_throttle()
 
         if throttled:
-            print(f"⏳ Qpop! throttled — skipping (wait {remaining}s).")
+            print(f"Qpop throttled - skipping (wait {remaining}s).")
         else:
             try:
                 send_start = time.time()
@@ -169,3 +176,33 @@ class QPopWatcher:
                     break
 
         print("Watcher stopped.")
+
+    @staticmethod
+    def _coerce_ui_scale(value: object) -> float:
+        try:
+            scale = float(value)
+        except (TypeError, ValueError):
+            return BASELINE_UI_SCALE
+        return max(65.0, min(scale, 115.0))
+
+    def _prepare_reference_images(self) -> List[Tuple[str, Image.Image]]:
+        prepared: List[Tuple[str, Image.Image]] = []
+        factor = max(0.1, min(self._scale_factor, 5.0))
+        for name, path in REFERENCE_IMG:
+            if not path.exists():
+                print(f"Missing reference image for '{name}': {path}")
+                continue
+            try:
+                with Image.open(path) as img:
+                    image = img.convert("RGB")
+            except Exception as exc:
+                print(f"Failed to load reference image '{name}': {exc}")
+                continue
+            image.load()
+            if factor != 1.0:
+                new_w = max(1, int(round(image.width * factor)))
+                new_h = max(1, int(round(image.height * factor)))
+                if (new_w, new_h) != image.size:
+                    image = image.resize((new_w, new_h), Image.BICUBIC)
+            prepared.append((name, image))
+        return prepared

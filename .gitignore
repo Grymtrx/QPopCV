@@ -28,3 +28,6 @@ older_versions/
 Thumbs.db
 .idea/
 .vscode/
+
+# TODO file
+TODO.txt
