@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Dict, Optional, Tuple, Callable, List
 import threading
 import time
+import sys
 
 import pyautogui
 from pyautogui import ImageNotFoundException
@@ -11,10 +12,17 @@ from PIL import Image
 THROTTLE_SECONDS = 15
 BASELINE_UI_SCALE = 69.0
 
+if getattr(sys, "frozen", False):
+    MEDIA_ROOT = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+else:
+    MEDIA_ROOT = Path(__file__).resolve().parent
+
+MEDIA_DIR = MEDIA_ROOT / "media"
+
 REFERENCE_IMG = [
-    ("solo_shuffle_blizzui", Path("media/qpop_ss_blizzardUI_reference.png")),
-    ("solo_shuffle_bbqui", Path("media/qpop_ss_bbq_reference.png")),
-    ("solo_shuffle_bbqui_dark", Path("media/qpop_ss_bbq_dark_reference.png")),
+    ("solo_shuffle_blizzui", MEDIA_DIR / "qpop_ss_blizzardUI_reference.png"),
+    ("solo_shuffle_bbqui", MEDIA_DIR / "qpop_ss_bbq_reference.png"),
+    ("solo_shuffle_bbqui_dark", MEDIA_DIR / "qpop_ss_bbq_dark_reference.png"),
 ]
 
 
