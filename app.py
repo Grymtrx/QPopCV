@@ -236,7 +236,7 @@ class QPopApp:
             requests.post(
                 webhook_url,
                 json={
-                    "content": f"{mention} connected to Discord successfully ✅"
+                    "content": f"{mention} connected ✅"
                 },
                 timeout=5,
             )
