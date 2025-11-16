@@ -83,6 +83,7 @@ class UpdateManager:
                 shutil.move(str(archive_path), target)
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
+
         return self.app_dir
 
     def relaunch(self) -> None:
@@ -94,29 +95,32 @@ class UpdateManager:
 
     @staticmethod
     def _normalize_version(version: str) -> Sequence[tuple[int, object]]:
-        cleaned = version.strip()
-        if not cleaned:
-            return ()
-        parts: list[tuple[int, object]] = []
-    def _normalize_version(version: str) -> Sequence[object]:
+        """
+        Normalize version strings like 'v1.2.3-beta' into a tuple that compares well.
+
+        Each token becomes:
+          - (0, int_value) for numeric parts
+          - (1, str_value) for non-numeric parts
+
+        This way, '1.10' > '1.2', and '1.2b' > '1.2a', etc.
+        """
         cleaned = version.strip().lower()
         if cleaned.startswith("v"):
             cleaned = cleaned[1:]
         if not cleaned:
             return ()
-        parts: list[object] = []
-        for token in re.split(r"[\.\-_]", cleaned):
+
+        parts: list[tuple[int, object]] = []
+
+        for token in re.split(r"[.\-_]", cleaned):
             if not token:
                 continue
             if token.isdigit():
                 parts.append((0, int(token)))
             else:
                 parts.append((1, token))
+
         return tuple(parts)
-                parts.append(int(token))
-            else:
-                parts.append(token)
-        return parts
 
     def _is_newer_version(self, latest: str, current: str) -> bool:
         return self._normalize_version(latest) > self._normalize_version(current)
@@ -135,15 +139,18 @@ class UpdateManager:
         response.raise_for_status()
         filename = Path(url).name or "update.bin"
         dest = tmp_dir / filename
+
         with dest.open("wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
                 if chunk:
                     f.write(chunk)
+
         return dest
 
     def _install_from_archive(self, archive: Path, tmp_dir: Path) -> None:
         extract_dir = tmp_dir / "extracted"
         extract_dir.mkdir(parents=True, exist_ok=True)
+
         with zipfile.ZipFile(archive) as zf:
             zf.extractall(extract_dir)
 
@@ -159,9 +166,12 @@ class UpdateManager:
 
     def _copy_tree(self, src: Path, dest: Path) -> None:
         for item in src.iterdir():
+            # keep user config and hidden files in place
             if item.name == "config.json" or item.name.startswith("."):
                 continue
+
             target = dest / item.name
+
             if item.is_dir():
                 if item.name == "__pycache__":
                     continue
@@ -170,4 +180,3 @@ class UpdateManager:
                 shutil.copytree(item, target)
             else:
                 shutil.copy2(item, target)
-
