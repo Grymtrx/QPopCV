@@ -93,6 +93,11 @@ class UpdateManager:
     # --------- Internal Helpers ---------
 
     @staticmethod
+    def _normalize_version(version: str) -> Sequence[tuple[int, object]]:
+        cleaned = version.strip()
+        if not cleaned:
+            return ()
+        parts: list[tuple[int, object]] = []
     def _normalize_version(version: str) -> Sequence[object]:
         cleaned = version.strip().lower()
         if cleaned.startswith("v"):
@@ -104,6 +109,10 @@ class UpdateManager:
             if not token:
                 continue
             if token.isdigit():
+                parts.append((0, int(token)))
+            else:
+                parts.append((1, token))
+        return tuple(parts)
                 parts.append(int(token))
             else:
                 parts.append(token)
