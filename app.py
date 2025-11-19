@@ -73,7 +73,7 @@ class QPopApp:
         )
 
         # Row 2: UI Scale
-        ctk.CTkLabel(card, text="UI Scale (%):").grid(
+        ctk.CTkLabel(card, text="WoW UI Scale (%):").grid(
             row=2, column=0, padx=6, pady=4, sticky="w"
         )
         self.scale_var = ctk.StringVar(value=str(self.config.get("ui_scale", "69")))
@@ -154,7 +154,7 @@ class QPopApp:
 
     def _normalize_ui_scale_in_config(self) -> None:
         try:
-            value = float(self.config.get("ui_scale", 69))
+            value = int(self.config.get("ui_scale", 69))
         except (TypeError, ValueError):
             value = 69.0
         self.config["ui_scale"] = value
@@ -182,7 +182,7 @@ class QPopApp:
             )
             return False
         try:
-            scale_value = float(ui_scale)
+            scale_value = int(ui_scale)
         except (TypeError, ValueError):
             messagebox.showwarning(
                 "Invalid UI Scale %",
