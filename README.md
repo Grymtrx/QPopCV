@@ -3,7 +3,8 @@
 A lightweight desktop app that **monitors your screen for WoW Solo Shuffle queue pops** and instantly sends a **Discord ping** to your phone so you can step away from your PC while waiting.
 
 ![Solo Shuffle Q Pop](https://i.imgur.com/KRNfpee.png)
-![Mobile Noti](https://i.imgur.com/uk64CQt.png)
+
+![Mobile Noti](https://i.imgur.com/FAwYL5B.png)
 
 
 
