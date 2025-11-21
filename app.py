@@ -135,13 +135,13 @@ class QPopApp:
         self.status_label.grid(row=0, column=1, sticky="w")
 
         self.update_status_label = ctk.CTkLabel(
-            status_frame,
-            text="Checking updates...",
+            card,
+            text="Checking for updates…",
             text_color="gray",
             font=("TkDefaultFont", 11),
         )
         self.update_status_label.grid(
-            row=0, column=2, padx=(4, 8), pady=(0, 0), sticky="e"
+            row=5, column=0, columnspan=2, padx=6, pady=(4, 4), sticky="w"
         )
         self.update_status_label.bind("<Button-1>", self.on_update_click)
 
@@ -270,7 +270,7 @@ class QPopApp:
         ):
             return
 
-        self._set_update_status("Downloading update...", clickable=False, color="#0ea5e9")
+        self._set_update_status("Downloading update…", clickable=False, color="#0ea5e9")
         threading.Thread(
             target=self._perform_update_install, daemon=True
         ).start()
@@ -356,10 +356,10 @@ class QPopApp:
 
     def _apply_update_info(self, info: UpdateInfo) -> None:
         if info.available:
-            text = "Update available"
+            text = f"Update available: {info.latest_version} (click to install)"
             self._set_update_status(text, clickable=True, color="#0ea5e9")
         else:
-            text = "Up to date"
+            text = f"Version {APP_VERSION} is up to date"
             self._set_update_status(text, clickable=False, color="gray")
 
     def _set_update_status(self, text: str, clickable: bool, color: str = "gray") -> None:
