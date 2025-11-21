@@ -10,7 +10,6 @@ import requests
 from PIL import Image
 
 THROTTLE_SECONDS = 15
-BASELINE_UI_SCALE = 69.0
 
 if getattr(sys, "frozen", False):
     MEDIA_ROOT = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
@@ -19,6 +18,7 @@ else:
 
 MEDIA_DIR = MEDIA_ROOT / "media"
 
+# Built-in fallback references (for your own setup)
 REFERENCE_IMG = [
     ("solo_shuffle_blizzui", MEDIA_DIR / "qpop_ss_blizzardUI_reference.png"),
     ("solo_shuffle_bbqui", MEDIA_DIR / "qpop_ss_bbq_reference.png"),
@@ -32,6 +32,11 @@ class QPopWatcher:
     - Scans the top-center of the screen for reference images.
     - Sends a Discord webhook when a popup is detected (throttled).
     - Calls an optional callback when a popup is detected (for GUI effects).
+
+    Now supports per-user calibration via `reference_image_path` in config:
+    - If provided and valid, uses that as the primary reference (with small
+      multi-scale variants around 100%).
+    - If not provided, falls back to built-in reference images.
     """
 
     def __init__(
@@ -43,10 +48,9 @@ class QPopWatcher:
         self._user_id = str(config.get("user_id", "")).strip()
         self._check_interval = float(config.get("check_interval", 0.5))
         self._confidence = float(config.get("confidence", 0.6))
-        self._ui_scale = self._coerce_ui_scale(config.get("ui_scale", BASELINE_UI_SCALE))
-        self._scale_factor = (
-            self._ui_scale / BASELINE_UI_SCALE if BASELINE_UI_SCALE else 1.0
-        )
+
+        ref_path = str(config.get("reference_image_path", "")).strip()
+        self._reference_path = Path(ref_path).expanduser() if ref_path else None
 
         self._mention = f"<@{self._user_id}>"
         self._on_detect = on_detect
@@ -73,8 +77,8 @@ class QPopWatcher:
         print(f"Region (top-center): {self._region}")
         print(f"Interval: {self._check_interval}s, confidence: {self._confidence}")
         print(
-            f"UI scale: {self._ui_scale}% "
-            f"(factor {self._scale_factor:.3f} vs baseline {BASELINE_UI_SCALE}%)"
+            f"Reference image: "
+            f"{self._reference_path if self._reference_path else 'built-in defaults'}"
         )
         if not self._reference_images:
             print("Warning: no reference images loaded; detection will be disabled.")
@@ -185,32 +189,35 @@ class QPopWatcher:
 
         print("Watcher stopped.")
 
-    @staticmethod
-    def _coerce_ui_scale(value: object) -> float:
-        try:
-            scale = float(value)
-        except (TypeError, ValueError):
-            return BASELINE_UI_SCALE
-        return max(65.0, min(scale, 115.0))
-
     def _prepare_reference_images(self) -> List[Tuple[str, Image.Image]]:
         prepared: List[Tuple[str, Image.Image]] = []
-        factor = max(0.1, min(self._scale_factor, 5.0))
-        for name, path in REFERENCE_IMG:
-            if not path.exists():
-                print(f"Missing reference image for '{name}': {path}")
-                continue
+
+        # Only use user-provided reference image
+        if self._reference_path and self._reference_path.exists():
             try:
-                with Image.open(path) as img:
-                    image = img.convert("RGB")
+                with Image.open(self._reference_path) as img:
+                    base = img.convert("RGB")
+                    base.load()
             except Exception as exc:
-                print(f"Failed to load reference image '{name}': {exc}")
-                continue
-            image.load()
-            if factor != 1.0:
-                new_w = max(1, int(round(image.width * factor)))
-                new_h = max(1, int(round(image.height * factor)))
-                if (new_w, new_h) != image.size:
-                    image = image.resize((new_w, new_h), Image.BICUBIC)
-            prepared.append((name, image))
+                print(f"Failed to load user reference image: {exc}")
+                return prepared
+
+            # Small multi-scale around 100% for robustness
+            for factor in (0.9, 1.0, 1.1):
+                if factor == 1.0:
+                    variant = base
+                else:
+                    new_w = max(1, int(round(base.width * factor)))
+                    new_h = max(1, int(round(base.height * factor)))
+                    variant = base.resize((new_w, new_h), Image.BICUBIC)
+                prepared.append((f"user_ref_{factor:.1f}", variant))
+
+            print(
+                f"Loaded ONLY user reference image with {len(prepared)} scale variants "
+                f"from: {self._reference_path}"
+            )
+            return prepared
+
+        # No fallback at all while testing
+        print("No valid user reference image; detection will be disabled (no fallbacks).")
         return prepared

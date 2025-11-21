@@ -1,7 +1,8 @@
 {
   "webhook_url": "https://discord.com/api/webhooks/1435435868767912096/Ken8UDwQGDKEZ-MJAo6FNQR9wNxOahRgg5Pci_Y2X-smeSKUeE4dfhYuwfkCKu1hmzVA",
   "user_id": "",
-  "ui_scale": 69,
   "check_interval": 0.5,
-  "confidence": 0.6
+  "confidence": 0.6,
+  "reference_image_path": "",
+  "ui_scale": 69
 }

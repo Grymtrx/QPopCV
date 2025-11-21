@@ -2,7 +2,9 @@ from typing import Dict, Optional
 import threading
 import time
 import webbrowser
+from pathlib import Path
 
+from tkinter import filedialog
 import tkinter.messagebox as messagebox
 import customtkinter as ctk
 
@@ -15,6 +17,19 @@ from config import (
 )
 from watcher import QPopWatcher, THROTTLE_SECONDS
 from updater import UpdateInfo, UpdateManager
+
+
+# --- THEME COLORS (Option A – light, soft glass widget) ---
+BG_COLOR = "#e5e7eb"
+CARD_BG = "#f9fafb"
+CARD_BORDER = "#d1d5db"
+ACCENT = "#0ea5e9"
+ACCENT_HOVER = "#0284c7"
+TEXT_PRIMARY = "#111827"
+TEXT_MUTED = "#6b7280"
+DANGER = "#dc2626"
+SUCCESS = "#16a34a"
+DETECTED = "#f97316"
 
 
 class QPopApp:
@@ -33,136 +48,236 @@ class QPopApp:
         ctk.set_default_color_theme("blue")
 
         self.root = ctk.CTk()
-        self.root.title(f"QPopCV {APP_VERSION}")
-        self.root.geometry("350x200")
-        self.root.minsize(340, 200)
+        # Window title
+        self.root.title("QPopCV Watcher App")
+        self.root.geometry("360x220")
+        self.root.minsize(360, 220)
         self.root.resizable(True, True)
+        self.root.configure(fg_color=BG_COLOR)
 
         self.root.grid_columnconfigure(0, weight=1)
-        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_rowconfigure(0, weight=0)
 
         self._build_ui()
 
         self.root.after(250, self._start_update_check)
-
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
     # --------- UI BUILDING ---------
 
     def _build_ui(self) -> None:
-        card = ctk.CTkFrame(self.root, corner_radius=16)
-        card.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
-        card.grid_columnconfigure(1, weight=1)
 
-        # Row 0: Webhook
-        ctk.CTkLabel(card, text="Discord Webhook:").grid(
-            row=0, column=0, padx=6, pady=4, sticky="w"
+        card = ctk.CTkFrame(
+            self.root,
+            corner_radius=14,
+            fg_color=CARD_BG,
+            border_width=1,
+            border_color=CARD_BORDER,
         )
+        card.grid(row=0, column=0, padx=8, pady=8 , sticky="new")
+
+        card.grid_columnconfigure(0, weight=0)
+        card.grid_columnconfigure(1, weight=1)
+        card.grid_columnconfigure(2, weight=0)
+
+        # Row 0: Webhook (extra top padding)
+        ctk.CTkLabel(
+            card,
+            text="Discord Webhook",
+            text_color=TEXT_PRIMARY,
+            font=("Segoe UI", 10),
+        ).grid(row=0, column=0, padx=6, pady=(10, 3), sticky="w")
+
         self.webhook_var = ctk.StringVar(value=str(self.config.get("webhook_url", "")))
-        ctk.CTkEntry(card, textvariable=self.webhook_var, corner_radius=10).grid(
-            row=0, column=1, padx=4, pady=4, sticky="we"
-        )
+        ctk.CTkEntry(
+            card,
+            textvariable=self.webhook_var,
+            corner_radius=8,
+            fg_color="white",
+            border_color=CARD_BORDER,
+            border_width=1,
+            text_color=TEXT_PRIMARY,
+        ).grid(row=0, column=1, columnspan=2, padx=(4, 6), pady=(10, 3), sticky="we")
 
         # Row 1: User ID
-        ctk.CTkLabel(card, text="Discord User ID:").grid(
-            row=1, column=0, padx=6, pady=4, sticky="w"
-        )
+        ctk.CTkLabel(
+            card,
+            text="Discord User ID",
+            text_color=TEXT_PRIMARY,
+            font=("Segoe UI", 10),
+        ).grid(row=1, column=0, padx=6, pady=3, sticky="w")
+
         self.user_var = ctk.StringVar(value=str(self.config.get("user_id", "")))
-        ctk.CTkEntry(card, textvariable=self.user_var, corner_radius=10).grid(
-            row=1, column=1, padx=4, pady=4, sticky="we"
-        )
+        ctk.CTkEntry(
+            card,
+            textvariable=self.user_var,
+            corner_radius=8,
+            fg_color="white",
+            border_color=CARD_BORDER,
+            border_width=1,
+            text_color=TEXT_PRIMARY,
+        ).grid(row=1, column=1, columnspan=2, padx=(4, 6), pady=3, sticky="we")
 
-        # Row 2: UI Scale
-        ctk.CTkLabel(card, text="WoW UI Scale (%):").grid(
-            row=2, column=0, padx=6, pady=4, sticky="w"
-        )
-        self.scale_var = ctk.StringVar(value=str(self.config.get("ui_scale", "69")))
-        ctk.CTkEntry(card, textvariable=self.scale_var, corner_radius=10).grid(
-            row=2, column=1, padx=4, pady=4, sticky="we"
-        )
+        # Row 2: Reference Image
+        ctk.CTkLabel(
+            card,
+            text="Reference Image",
+            text_color=TEXT_PRIMARY,
+            font=("Segoe UI", 10),
+        ).grid(row=2, column=0, padx=6, pady=3, sticky="w")
 
-        # Row 3: Buttons inline
+        self.ref_var = ctk.StringVar(
+            value=str(self.config.get("reference_image_path", ""))
+        )
+        self.ref_entry = ctk.CTkEntry(
+            card,
+            textvariable=self.ref_var,
+            corner_radius=8,
+            fg_color="white",
+            border_color=CARD_BORDER,
+            border_width=1,
+            text_color=TEXT_PRIMARY,
+        )
+        self.ref_entry.grid(row=2, column=1, padx=(4, 2), pady=3, sticky="we")
+
+        self.ref_button = ctk.CTkButton(
+            card,
+            text="Add",
+            width=40,
+            height=24,
+            corner_radius=12,
+            fg_color=ACCENT,
+            hover_color=ACCENT_HOVER,
+            text_color="white",
+            font=("Segoe UI", 11),
+            command=self.on_browse_reference,
+        )
+        self.ref_button.grid(row=2, column=2, padx=(2, 6), pady=3, sticky="e")
+
+        # Row 3: Buttons row
         btn_frame = ctk.CTkFrame(card, fg_color="transparent")
-        btn_frame.grid(row=3, column=0, columnspan=3, padx=6, pady=6, sticky="w")
+        btn_frame.grid(row=3, column=0, columnspan=3, padx=6, pady=(4, 3), sticky="we")
 
-        ctk.CTkButton(
+        btn_frame.grid_columnconfigure(0, weight=0)
+        btn_frame.grid_columnconfigure(1, weight=0)
+        btn_frame.grid_columnconfigure(2, weight=0)
+        btn_frame.grid_columnconfigure(3, weight=1)
+
+        self.btn_discord = ctk.CTkButton(
             btn_frame,
-            text="Discord 🔗",
-            width=80,
+            text="Discord",
+            width=68,
+            height=24,
             corner_radius=12,
+            fg_color="white",
+            hover_color="#e5e7eb",
+            text_color=TEXT_PRIMARY,
+            font=("Segoe UI", 10),
             command=self.on_open_discord,
-        ).pack(side="left", padx=(0, 4))
+        )
+        self.btn_discord.grid(row=0, column=0, padx=(0, 3), sticky="w")
 
-        ctk.CTkButton(
+        self.btn_test = ctk.CTkButton(
             btn_frame,
-            text="Test",
-            width=70,
+            text="Test Connection",
+            width=54,
+            height=24,
             corner_radius=12,
+            fg_color="white",
+            hover_color="#e5e7eb",
+            text_color=TEXT_PRIMARY,
+            font=("Segoe UI", 10),
             command=self.on_test_discord,
-        ).pack(side="left", padx=4)
+        )
+        self.btn_test.grid(row=0, column=1, padx=3, sticky="w")
 
-        ctk.CTkButton(
+        self.btn_save = ctk.CTkButton(
             btn_frame,
-            text="Save",
-            width=36,
+            text="Save Config",
+            width=54,
+            height=24,
             corner_radius=12,
+            fg_color="white",
+            hover_color="#e5e7eb",
+            text_color=TEXT_PRIMARY,
+            font=("Segoe UI", 10),
             command=self.on_save,
-        ).pack(side="left", padx=4)
+        )
+        self.btn_save.grid(row=0, column=2, padx=3, sticky="w")
 
         self.watch_btn = ctk.CTkButton(
             btn_frame,
             text="Watch",
-            width=80,
+            width=70,
+            height=24,
             corner_radius=12,
-            fg_color="#38bdf8",
-            hover_color="#0ea5e9",
+            fg_color=ACCENT,
+            hover_color=ACCENT_HOVER,
+            text_color="white",
+            font=("Segoe UI", 10),
             command=self.on_toggle_watch,
         )
-        self.watch_btn.pack(side="left", padx=4)
+        self.watch_btn.grid(row=0, column=3, padx=(0, 0), sticky="e")
 
-        # Row 4: Status
+        # Row 4: Status + Version + Update (inline)
         status_frame = ctk.CTkFrame(card, fg_color="transparent")
-        status_frame.grid(row=4, column=0, columnspan=3, padx=6, pady=(0, 4), sticky="we")
+        status_frame.grid(
+            row=4, column=0, columnspan=3, padx=6, pady=(0, 2), sticky="we"
+        )
 
-        status_frame.grid_columnconfigure(0, weight=0)
-        status_frame.grid_columnconfigure(1, weight=1)
-        status_frame.grid_columnconfigure(2, weight=0)
+        status_frame.grid_columnconfigure(0, weight=1)
 
-        self.status_dot = ctk.CTkLabel(status_frame, text="●", text_color="red")
-        self.status_dot.grid(row=0, column=0, padx=(0, 4), sticky="w")
-
-        self.status_label = ctk.CTkLabel(status_frame, text="Status: Stopped")
-        self.status_label.grid(row=0, column=1, sticky="w")
-
-        self.update_status_label = ctk.CTkLabel(
+        # Centered status text (less button-y)
+        self.status_label = ctk.CTkLabel(
             status_frame,
-            text="Checking updates...",
-            text_color="gray",
-            font=("TkDefaultFont", 11),
+            text="● Stopped",
+            font=("Segoe UI Semibold", 15),
+            text_color=DANGER,
         )
-        self.update_status_label.grid(
-            row=0, column=2, padx=(4, 8), pady=(0, 0), sticky="e"
-        )
-        self.update_status_label.bind("<Button-1>", self.on_update_click)
+        self.status_label.grid(row=0, column=0, columnspan=2, pady=(0, 2), sticky="n")
 
-    # --------- CONFIG / VALIDATION ---------
+        # Bottom-right inline: Version + update status
+        self.version_and_update = ctk.CTkLabel(
+            status_frame,
+            text=f"Version: {APP_VERSION}   •   Checking updates...",
+            text_color=TEXT_MUTED,
+            font=("Segoe UI", 10),
+        )
+        self.version_and_update.grid(row=1, column=0, pady=(0, 2), sticky="s")
+
+        # make it clickable
+        self.version_and_update.bind("<Button-1>", self.on_update_click)
+
+
+    # --------- Status label helpers ---------
+
+    def _set_status(self, text: str, color: str) -> None:
+        self.status_label.configure(
+            text=text,
+            text_color=color,
+        )
+
+    def _flash_detected_status(self) -> None:
+        """Flash 'Detected!' for ~1.6s, then restore."""
+        prev_text = self.status_label.cget("text")
+        prev_color = self.status_label.cget("text_color")
+
+        self._set_status("● Detected!", DETECTED)
+
+        def restore():
+            self._set_status(prev_text, prev_color)
+
+        self.status_label.after(1600, restore)
+
+    # --------- Config / validation ---------
 
     def _update_config_from_ui(self) -> None:
         self.config["webhook_url"] = self.webhook_var.get().strip()
         self.config["user_id"] = self.user_var.get().strip()
-        self.config["ui_scale"] = self.scale_var.get().strip()
-
-    def _normalize_ui_scale_in_config(self) -> None:
-        try:
-            value = int(self.config.get("ui_scale", 69))
-        except (TypeError, ValueError):
-            value = 69.0
-        self.config["ui_scale"] = value
+        self.config["reference_image_path"] = self.ref_var.get().strip()
 
     @staticmethod
-    def _validate_discord_settings(
-        webhook_url: str, user_id: str, ui_scale: str
-    ) -> bool:
+    def _validate_discord_core(webhook_url: str, user_id: str) -> bool:
         if not webhook_url.strip():
             messagebox.showwarning(
                 "Missing Discord Webhook URL",
@@ -178,37 +293,46 @@ class QPopApp:
         if not (user_id.isdigit() and len(user_id) == 18):
             messagebox.showwarning(
                 "Invalid Discord user ID",
-                "Discord user IDs contain exactly 18 digits (example: 695333359080964166).",
-            )
-            return False
-        try:
-            scale_value = int(ui_scale)
-        except (TypeError, ValueError):
-            messagebox.showwarning(
-                "Invalid UI Scale %",
-                "Please enter a valid UI Scale percentage between 65 and 115.",
-            )
-            return False
-        if not (65 <= scale_value <= 115):
-            messagebox.showwarning(
-                "Invalid UI Scale %",
-                "Please enter a valid UI Scale percentage between 65 and 115.",
+                "Discord user IDs must have 18 digits.",
             )
             return False
         return True
 
-    # --------- BUTTON HANDLERS ---------
+    @staticmethod
+    def _validate_reference_image(path_str: str) -> bool:
+        path_str = path_str.strip()
+        path = Path(path_str).expanduser()
+        if not path_str or not path.exists() or path.is_dir():
+            messagebox.showwarning(
+                "Reference Image Error",
+                "Please select a valid reference image file of your WoW queue popup.",
+            )
+            return False
+        return True
+
+    # --------- Button handlers ---------
+
+    def on_browse_reference(self) -> None:
+        filename = filedialog.askopenfilename(
+            title="Select reference image",
+            filetypes=[
+                ("Image files", "*.png;*.jpg;*.jpeg;*.bmp"),
+                ("All files", "*.*"),
+            ],
+        )
+        if filename:
+            self.ref_var.set(filename)
 
     def on_save(self) -> None:
         self._update_config_from_ui()
-        if not self._validate_discord_settings(
-            str(self.config["webhook_url"]),
-            str(self.config["user_id"]),
-            str(self.config["ui_scale"]),
+
+        if not self._validate_discord_core(
+            self.webhook_var.get(), self.user_var.get()
         ):
             return
+        if not self._validate_reference_image(self.ref_var.get()):
+            return
 
-        self._normalize_ui_scale_in_config()
         save_config(self.config)
         messagebox.showinfo("Saved", "Configuration saved.")
 
@@ -224,26 +348,22 @@ class QPopApp:
         webhook_url = self.webhook_var.get().strip()
         user_id = self.user_var.get().strip()
 
-        ui_scale = self.scale_var.get().strip()
-
-        if not self._validate_discord_settings(webhook_url, user_id, ui_scale):
+        if not self._validate_discord_core(webhook_url, user_id):
             return
 
-        import requests  # local import to keep watcher.py self-contained
+        import requests
 
         mention = f"<@{user_id}>"
         try:
             requests.post(
                 webhook_url,
-                json={
-                    "content": f"{mention} connected ✅"
-                },
+                json={"content": f"{mention} connected ✅"},
                 timeout=5,
             )
             self._last_test_time = now
-            messagebox.showinfo("Success", "Test message sent to Discord.")
+            messagebox.showinfo("Success", "Test message sent.")
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to send test message:\n{e}")
+            messagebox.showerror("Error", f"Failed to send test:\n{e}")
 
     def on_open_discord(self) -> None:
         webbrowser.open(DISCORD_SERVER_URL)
@@ -254,7 +374,93 @@ class QPopApp:
         else:
             self._stop_watch()
 
+    # --------- Watcher control ---------
+
+    def _start_watch(self) -> None:
+        self._update_config_from_ui()
+
+        if not self._validate_discord_core(
+            self.webhook_var.get(), self.user_var.get()
+        ):
+            return
+        if not self._validate_reference_image(self.ref_var.get()):
+            return
+
+        save_config(self.config)
+
+        messagebox.showinfo(
+        "Mobile Discord Notifications",
+        "If you would like Discord notifications to be directed to your phone "
+        "INSTEAD of your PC, please 'Quit Discord' in your system tray.",
+    )
+
+        self._watcher = QPopWatcher(self.config, on_detect=self._flash_detected_status)
+        self._watcher.start()
+
+        self._set_status("● Watching", SUCCESS)
+        self.watch_btn.configure(
+            text="Watching", fg_color=SUCCESS, hover_color="#15803d"
+        )
+
+    def _stop_watch(self) -> None:
+        if self._watcher:
+            self._watcher.stop()
+
+        self._set_status("● Stopped", DANGER)
+        self.watch_btn.configure(
+            text="Watch", fg_color=ACCENT, hover_color=ACCENT_HOVER
+        )
+
+    def _check_test_throttle(self):
+        now = time.time()
+        elapsed = now - self._last_test_time
+        if elapsed < THROTTLE_SECONDS:
+            return True, int(THROTTLE_SECONDS - elapsed), now
+        return False, 0, now
+
+    # --------- Updater logic ---------
+
+    def _start_update_check(self) -> None:
+        threading.Thread(target=self._check_updates_background, daemon=True).start()
+
+    def _check_updates_background(self) -> None:
+        try:
+            info = self.update_manager.check_for_updates()
+        except Exception as exc:
+            print("Update check failed:", exc)
+            self.root.after(
+                0,
+                lambda: self._set_update_status(
+                    "Update failed", clickable=False, color=DANGER
+                ),
+            )
+            return
+
+        self._update_info = info
+        self.root.after(0, lambda: self._apply_update_info(info))
+
+    def _apply_update_info(self, info: UpdateInfo) -> None:
+        if info.available:
+            self._set_update_status(
+                "Update available", clickable=True, color=ACCENT
+            )
+        else:
+            self._set_update_status(
+                "Up to date", clickable=False, color=TEXT_MUTED
+            )
+
+    def _set_update_status(self, text: str, clickable: bool, color: str) -> None:
+        self.version_and_update.configure(
+            text=f"Version: {APP_VERSION}   •   {text}",
+            text_color=color,
+        )
+        self._update_clickable = clickable
+        self.update_status_label.configure(
+            cursor="hand2" if clickable else "arrow"
+        )
+
     def on_update_click(self, _event=None) -> None:
+        """Handle clicking the update-status label."""
         if not self._update_clickable:
             messagebox.showinfo("QPopCV", "You are running the latest version.")
             return
@@ -270,103 +476,12 @@ class QPopApp:
         ):
             return
 
-        self._set_update_status("Downloading update...", clickable=False, color="#0ea5e9")
+        self._set_update_status(
+            "Downloading update...", clickable=False, color=ACCENT
+        )
         threading.Thread(
             target=self._perform_update_install, daemon=True
         ).start()
-
-    # --------- WATCHER CONTROL ---------
-
-    def _start_watch(self) -> None:
-        self._update_config_from_ui()
-
-        if not self._validate_discord_settings(
-            str(self.config["webhook_url"]),
-            str(self.config["user_id"]),
-            str(self.config["ui_scale"]),
-        ):
-            return
-
-        messagebox.showinfo(
-            "Mobile Discord Notifications",
-            "If you would like Discord Notifications to be directed to your phone "
-            "INSTEAD of your PC, please 'Quit Discord' in your system tray.",
-        )
-
-        self._normalize_ui_scale_in_config()
-        save_config(self.config)
-
-        self._watcher = QPopWatcher(self.config, on_detect=self._flash_detected_status)
-        self._watcher.start()
-
-        self.status_label.configure(text="Status: Watching")
-        self.status_dot.configure(text_color="green")
-        self.watch_btn.configure(text="Stop", fg_color="#0ea5e9")
-
-    def _stop_watch(self) -> None:
-        if self._watcher is not None:
-            self._watcher.stop()
-
-        self.status_label.configure(text="Status: Stopped")
-        self.status_dot.configure(text_color="red")
-        self.watch_btn.configure(text="Watch", fg_color="#38bdf8")
-
-    def _flash_detected_status(self) -> None:
-        """Flash 'Detected!' for 2 seconds, then restore previous state."""
-        prev_text = self.status_label.cget("text")
-        prev_color = self.status_dot.cget("text_color")
-
-        self.status_label.configure(text="Status: Detected!")
-        self.status_dot.configure(text_color="orange")
-
-        def restore():
-            self.status_label.configure(text=prev_text)
-            self.status_dot.configure(text_color=prev_color)
-
-        self.status_label.after(2000, restore)
-
-    def _check_test_throttle(self):
-        now = time.time()
-        elapsed = now - self._last_test_time
-        if elapsed < THROTTLE_SECONDS:
-            remaining = int(THROTTLE_SECONDS - elapsed)
-            return True, remaining, now
-        return False, 0, now
-
-    # --------- LIFECYCLE ---------
-
-    def _start_update_check(self) -> None:
-        threading.Thread(target=self._check_updates_background, daemon=True).start()
-
-    def _check_updates_background(self) -> None:
-        try:
-            info = self.update_manager.check_for_updates()
-        except Exception as exc:
-            print("Update check failed:", exc)
-            self.root.after(
-                0,
-                lambda: self._set_update_status(
-                    "Update check failed", clickable=False, color="red"
-                ),
-            )
-            return
-
-        self._update_info = info
-        self.root.after(0, lambda: self._apply_update_info(info))
-
-    def _apply_update_info(self, info: UpdateInfo) -> None:
-        if info.available:
-            text = "Update available"
-            self._set_update_status(text, clickable=True, color="#0ea5e9")
-        else:
-            text = "Up to date"
-            self._set_update_status(text, clickable=False, color="gray")
-
-    def _set_update_status(self, text: str, clickable: bool, color: str = "gray") -> None:
-        self.update_status_label.configure(text=text, text_color=color)
-        self._update_clickable = clickable
-        cursor = "hand2" if clickable else "arrow"
-        self.update_status_label.configure(cursor=cursor)
 
     def _perform_update_install(self) -> None:
         try:
@@ -377,7 +492,7 @@ class QPopApp:
             self.root.after(
                 0,
                 lambda: self._set_update_status(
-                    "Update failed – try again", clickable=True, color="red"
+                    "Update failed – try again", clickable=True, color=DANGER
                 ),
             )
             self.root.after(
@@ -398,8 +513,10 @@ class QPopApp:
         self.on_close()
         self.update_manager.relaunch()
 
+    # --------- Close / run ---------
+
     def on_close(self) -> None:
-        if self._watcher is not None:
+        if self._watcher:
             self._watcher.stop()
         self.root.destroy()
 

@@ -15,9 +15,10 @@ DISCORD_SERVER_URL = "https://discord.gg/vXvjcrUFm8"  # QPopCV Discord Server (P
 DEFAULT_CONFIG: Dict[str, object] = {
     "webhook_url": "https://discord.com/api/webhooks/1435435868767912096/Ken8UDwQGDKEZ-MJAo6FNQR9wNxOahRgg5Pci_Y2X-smeSKUeE4dfhYuwfkCKu1hmzVA",
     "user_id": "",
-    "ui_scale": 69,
     "check_interval": 0.15,
     "confidence": 0.6,
+    # NEW: per-user reference image path, captured on *their* PC
+    "reference_image_path": "",
 }
 
 
