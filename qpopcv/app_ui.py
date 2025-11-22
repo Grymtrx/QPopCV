@@ -3,6 +3,7 @@ import threading
 import time
 import webbrowser
 from pathlib import Path
+import logging
 
 from tkinter import filedialog
 import tkinter.messagebox as messagebox
@@ -32,6 +33,7 @@ from .theme import (
 from .validators import validate_discord_core, validate_reference_image
 from .discord_client import send_test_message
 
+logger = logging.getLogger(__name__)
 
 class QPopApp:
     def __init__(self) -> None:
@@ -392,33 +394,35 @@ class QPopApp:
     # --------- Updater logic ---------
 
     def _start_update_check(self) -> None:
-        threading.Thread(target=self._check_updates_background, daemon=True).start()
+        """Start a background update check after UI has loaded."""
 
-    def _check_updates_background(self) -> None:
-        try:
-            info = self.update_manager.check_for_updates()
-        except Exception as exc:
-            print("Update check failed:", exc)
-            self.root.after(
-                0,
-                lambda: self._set_update_status(
-                    "Update failed", clickable=False, color=DANGER
-                ),
-            )
-            return
+        def worker() -> None:
+            try:
+                # NOTE: correct name is check_for_update (no 's')
+                info = self.update_manager.check_for_update()
+                self._update_info = info
+                # Apply result on the Tk thread
+                self.root.after(0, lambda: self._apply_update_info(info))
+            except Exception as exc:
+                logger.exception("Update check failed: %s", exc)
+                # If the check fails (no internet, GitHub issue, etc.),
+                # just show "Up to date" instead of a scary error.
+                self.root.after(
+                    0,
+                    lambda: self._set_update_status(
+                        "Up to date", clickable=False, color=TEXT_MUTED
+                    ),
+                )
 
-        self._update_info = info
-        self.root.after(0, lambda: self._apply_update_info(info))
+        threading.Thread(target=worker, daemon=True).start()
 
     def _apply_update_info(self, info: UpdateInfo) -> None:
-        if info.available:
-            self._set_update_status(
-                "Update available", clickable=True, color=ACCENT
-            )
+        """Update the status label based on UpdateInfo result."""
+        if info.available and info.download_url:
+            text = f"Update available: {info.latest_version}"
+            self._set_update_status(text, clickable=True, color=ACCENT)
         else:
-            self._set_update_status(
-                "Up to date", clickable=False, color=TEXT_MUTED
-            )
+            self._set_update_status("Up to date", clickable=False, color=TEXT_MUTED)
 
     def _set_update_status(self, text: str, clickable: bool, color: str) -> None:
         self.version_and_update.configure(
@@ -433,6 +437,7 @@ class QPopApp:
     def on_update_click(self, _event=None) -> None:
         """Handle clicking the update-status label."""
         if not self._update_clickable:
+            # Not clickable => either up to date or check failed quietly
             messagebox.showinfo("QPopCV", "You are running the latest version.")
             return
 
@@ -442,8 +447,10 @@ class QPopApp:
 
         if not messagebox.askyesno(
             "Update Available",
-            f"Version {self._update_info.latest_version} is available.\n"
-            "Would you like to download and install it now?",
+            (
+                f"Version {self._update_info.latest_version} is available.\n"
+                "Would you like to download and install it now?"
+            ),
         ):
             return
 
@@ -459,7 +466,8 @@ class QPopApp:
             assert self._update_info is not None
             self.update_manager.install_update(self._update_info)
         except Exception as exc:
-            print("Update installation failed:", exc)
+            logger.exception("Update installation failed: %s", exc)
+
             self.root.after(
                 0,
                 lambda: self._set_update_status(
@@ -474,15 +482,19 @@ class QPopApp:
             )
             return
 
+        # Installation kicked off successfully (external updater for frozen exe)
         self.root.after(0, self._restart_after_update)
 
     def _restart_after_update(self) -> None:
+        import os
         messagebox.showinfo(
             "Update Installed",
-            "The newest version has been installed. QPopCV will relaunch now.",
+            "The newest version has been installed. QPopCV will now close "
+            "to finish the update.",
         )
         self.on_close()
-        self.update_manager.relaunch()
+        os._exit(0)
+
 
     # --------- Close / run ---------
 
@@ -493,4 +505,3 @@ class QPopApp:
 
     def run(self) -> None:
         self.root.mainloop()
-
