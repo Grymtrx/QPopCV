@@ -24,8 +24,7 @@ class UpdateInfo:
 
 
 class UpdateManager:
-    """Handles GitHub release update checks and installations."""
-
+    # Handles GitHub release update checks and installations.
     def __init__(
         self,
         repo_owner: str = "Grymtrx",

@@ -17,7 +17,6 @@ DEFAULT_CONFIG: Dict[str, object] = {
     "user_id": "",
     "check_interval": 0.15,
     "confidence": 0.6,
-    # NEW: per-user reference image path, captured on *their* PC
     "reference_image_path": "",
 }
 

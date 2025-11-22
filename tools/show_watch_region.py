@@ -30,7 +30,7 @@ def main():
         width=4
     )
 
-    out_path = "qpop_region_overlay.png"
+    out_path = "qpop_watch_region_overlay.png"
     full_img.save(out_path)
 
     print(f"Overlay saved to: {out_path}")

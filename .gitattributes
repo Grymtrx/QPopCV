@@ -1,2 +1,13 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Normalizes line endings for all text files
+* text=auto eol=lf
+
+# Treat images as binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+
+# Prevent Git from trying to diff binary files
+*.exe binary
+*.dll binary
+*.pdf binary

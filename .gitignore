@@ -12,7 +12,6 @@ env/
 build/
 dist/
 *.spec
-older_versions/
 
 # Installer / release archives
 *.zip

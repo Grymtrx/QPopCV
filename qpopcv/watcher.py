@@ -3,6 +3,8 @@ from typing import Dict, Optional, Tuple, Callable, List
 import threading
 import time
 import sys
+from dataclasses import dataclass
+import logging
 
 import pyautogui
 from pyautogui import ImageNotFoundException
@@ -10,6 +12,8 @@ import requests
 from PIL import Image
 
 THROTTLE_SECONDS = 15
+
+logger = logging.getLogger(__name__)
 
 if getattr(sys, "frozen", False):
     MEDIA_ROOT = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
@@ -24,6 +28,28 @@ REFERENCE_IMG = [
     ("solo_shuffle_bbqui", MEDIA_DIR / "qpop_ss_bbq_reference.png"),
     ("solo_shuffle_bbqui_dark", MEDIA_DIR / "qpop_ss_bbq_dark_reference.png"),
 ]
+
+@dataclass
+class WatcherSettings:
+    webhook_url: str
+    user_id: str
+    check_interval: float = 0.5
+    confidence: float = 0.6
+    reference_image_path: Optional[Path] = None
+
+    @classmethod
+    def from_config(cls, config: Dict[str, object]) -> "WatcherSettings":
+        ref_path_str = str(config.get("reference_image_path", "")).strip()
+        ref_path = Path(ref_path_str).expanduser() if ref_path_str else None
+
+        return cls(
+            webhook_url=str(config.get("webhook_url", "")).strip(),
+            user_id=str(config.get("user_id", "")).strip(),
+            check_interval=float(config.get("check_interval", 0.5)),
+            confidence=float(config.get("confidence", 0.6)),
+            reference_image_path=ref_path,
+        )
+
 
 
 class QPopWatcher:
@@ -41,16 +67,14 @@ class QPopWatcher:
 
     def __init__(
         self,
-        config: Dict[str, object],
+        settings: WatcherSettings,
         on_detect: Optional[Callable[[], None]] = None,
     ) -> None:
-        self._webhook_url = str(config.get("webhook_url", "")).strip()
-        self._user_id = str(config.get("user_id", "")).strip()
-        self._check_interval = float(config.get("check_interval", 0.5))
-        self._confidence = float(config.get("confidence", 0.6))
-
-        ref_path = str(config.get("reference_image_path", "")).strip()
-        self._reference_path = Path(ref_path).expanduser() if ref_path else None
+        self._webhook_url = settings.webhook_url.strip()
+        self._user_id = settings.user_id.strip()
+        self._check_interval = float(settings.check_interval)
+        self._confidence = float(settings.confidence)
+        self._reference_path = settings.reference_image_path
 
         self._mention = f"<@{self._user_id}>"
         self._on_detect = on_detect
@@ -63,6 +87,7 @@ class QPopWatcher:
         self._region = self._compute_top_center_region()
         self._reference_images = self._prepare_reference_images()
 
+
     # --------- Public API ---------
 
     def start(self) -> None:
@@ -73,15 +98,22 @@ class QPopWatcher:
         self._thread = threading.Thread(target=self._loop, daemon=True)
         self._thread.start()
 
-        print("QPopCV screen watcher started.")
-        print(f"Region (top-center): {self._region}")
-        print(f"Interval: {self._check_interval}s, confidence: {self._confidence}")
-        print(
-            f"Reference image: "
-            f"{self._reference_path if self._reference_path else 'built-in defaults'}"
+        logger.info("QPopCV screen watcher started.")
+        logger.info("Region (top-center): %s", self._region)
+        logger.info(
+            "Interval: %ss, confidence: %s",
+            self._check_interval,
+            self._confidence,
+        )
+        logger.info(
+            "Reference image: %s",
+            self._reference_path if self._reference_path else "built-in defaults",
         )
         if not self._reference_images:
-            print("Warning: no reference images loaded; detection will be disabled.")
+            logger.warning(
+                "No reference images prepared. Detection will not work correctly."
+            )
+
 
     def stop(self) -> None:
         self._stop_event.set()

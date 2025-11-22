@@ -8,28 +8,29 @@ from tkinter import filedialog
 import tkinter.messagebox as messagebox
 import customtkinter as ctk
 
-from config import (
+from .config import (
     APP_DIR,
     APP_VERSION,
     DISCORD_SERVER_URL,
     load_config,
     save_config,
 )
-from watcher import QPopWatcher, THROTTLE_SECONDS
-from updater import UpdateInfo, UpdateManager
-
-
-# --- THEME COLORS (Option A – light, soft glass widget) ---
-BG_COLOR = "#e5e7eb"
-CARD_BG = "#f9fafb"
-CARD_BORDER = "#d1d5db"
-ACCENT = "#0ea5e9"
-ACCENT_HOVER = "#0284c7"
-TEXT_PRIMARY = "#111827"
-TEXT_MUTED = "#6b7280"
-DANGER = "#dc2626"
-SUCCESS = "#16a34a"
-DETECTED = "#f97316"
+from .watcher import QPopWatcher, THROTTLE_SECONDS, WatcherSettings
+from .updater import UpdateInfo, UpdateManager
+from .theme import (
+    BG_COLOR,
+    CARD_BG,
+    CARD_BORDER,
+    ACCENT,
+    ACCENT_HOVER,
+    TEXT_PRIMARY,
+    TEXT_MUTED,
+    DANGER,
+    SUCCESS,
+    DETECTED,
+)
+from .validators import validate_discord_core, validate_reference_image
+from .discord_client import send_test_message
 
 
 class QPopApp:
@@ -269,46 +270,14 @@ class QPopApp:
 
         self.status_label.after(1600, restore)
 
-    # --------- Config / validation ---------
+
+    # --------- Config / validation -------
 
     def _update_config_from_ui(self) -> None:
         self.config["webhook_url"] = self.webhook_var.get().strip()
         self.config["user_id"] = self.user_var.get().strip()
         self.config["reference_image_path"] = self.ref_var.get().strip()
 
-    @staticmethod
-    def _validate_discord_core(webhook_url: str, user_id: str) -> bool:
-        if not webhook_url.strip():
-            messagebox.showwarning(
-                "Missing Discord Webhook URL",
-                "Please set the Discord Webhook URL.",
-            )
-            return False
-        if not user_id.strip():
-            messagebox.showwarning(
-                "Missing Discord user ID",
-                "Please set the Discord user ID.",
-            )
-            return False
-        if not (user_id.isdigit() and len(user_id) == 18):
-            messagebox.showwarning(
-                "Invalid Discord user ID",
-                "Discord user IDs must have 18 digits.",
-            )
-            return False
-        return True
-
-    @staticmethod
-    def _validate_reference_image(path_str: str) -> bool:
-        path_str = path_str.strip()
-        path = Path(path_str).expanduser()
-        if not path_str or not path.exists() or path.is_dir():
-            messagebox.showwarning(
-                "Reference Image Error",
-                "Please select a valid reference image file of your WoW queue popup.",
-            )
-            return False
-        return True
 
     # --------- Button handlers ---------
 
@@ -326,11 +295,11 @@ class QPopApp:
     def on_save(self) -> None:
         self._update_config_from_ui()
 
-        if not self._validate_discord_core(
+        if not validate_discord_core(
             self.webhook_var.get(), self.user_var.get()
         ):
             return
-        if not self._validate_reference_image(self.ref_var.get()):
+        if not validate_reference_image(self.ref_var.get()):
             return
 
         save_config(self.config)
@@ -348,18 +317,11 @@ class QPopApp:
         webhook_url = self.webhook_var.get().strip()
         user_id = self.user_var.get().strip()
 
-        if not self._validate_discord_core(webhook_url, user_id):
+        if not validate_discord_core(webhook_url, user_id):
             return
 
-        import requests
-
-        mention = f"<@{user_id}>"
         try:
-            requests.post(
-                webhook_url,
-                json={"content": f"{mention} connected ✅"},
-                timeout=5,
-            )
+            send_test_message(webhook_url, user_id, timeout=5.0)
             self._last_test_time = now
             messagebox.showinfo("Success", "Test message sent.")
         except Exception as e:
@@ -374,32 +336,41 @@ class QPopApp:
         else:
             self._stop_watch()
 
+
+
     # --------- Watcher control ---------
 
     def _start_watch(self) -> None:
         self._update_config_from_ui()
 
-        if not self._validate_discord_core(
+        if not validate_discord_core(
             self.webhook_var.get(), self.user_var.get()
         ):
             return
-        if not self._validate_reference_image(self.ref_var.get()):
+        if not validate_reference_image(self.ref_var.get()):
             return
 
         save_config(self.config)
 
         messagebox.showinfo(
-        "Mobile Discord Notifications",
-        "If you would like Discord notifications to be directed to your phone "
-        "INSTEAD of your PC, please 'Quit Discord' in your system tray.",
-    )
+            "Mobile Discord Notifications",
+            "If you would like Discord notifications to be directed to your phone "
+            "INSTEAD of your PC, please 'Quit Discord' in your system tray.",
+        )
 
-        self._watcher = QPopWatcher(self.config, on_detect=self._flash_detected_status)
+        # Build watcher settings from config and start watcher
+        settings = WatcherSettings.from_config(self.config)
+        self._watcher = QPopWatcher(
+            settings,
+            on_detect=self._flash_detected_status,
+        )
         self._watcher.start()
 
         self._set_status("● Watching", SUCCESS)
         self.watch_btn.configure(
-            text="Watching", fg_color=SUCCESS, hover_color="#15803d"
+            text="Watching",
+            fg_color=SUCCESS,
+            hover_color="#15803d",
         )
 
     def _stop_watch(self) -> None:
@@ -455,7 +426,7 @@ class QPopApp:
             text_color=color,
         )
         self._update_clickable = clickable
-        self.update_status_label.configure(
+        self.version_and_update.configure(
             cursor="hand2" if clickable else "arrow"
         )
 
@@ -523,11 +494,3 @@ class QPopApp:
     def run(self) -> None:
         self.root.mainloop()
 
-
-def main() -> None:
-    app = QPopApp()
-    app.run()
-
-
-if __name__ == "__main__":
-    main()
