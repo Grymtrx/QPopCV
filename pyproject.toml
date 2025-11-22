@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "qpopcv"
+version = { attr = "qpopcv.__version__" }
+description = "World of Warcraft queue-pop vision watcher with Discord notifications."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+
+authors = [
+  { name = "Grymtrx" }
+]
+
+dependencies = [
+  "customtkinter",
+  "pyautogui",
+  "pillow",
+  "requests",
+  "opencv-python"
+]
+
+keywords = ["wow", "world-of-warcraft", "discord", "queue", "vision", "gaming"]
+
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: Microsoft :: Windows",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: MIT License"
+]
+
+[project.urls]
+Homepage = "https://github.com/Grymtrx/QPopCV"
+Source = "https://github.com/Grymtrx/QPopCV"
+
+# Optional: create a console command `qpopcv`
+#   After `pip install .`, user can run `qpopcv` from terminal.
+[project.scripts]
+qpopcv = "qpopcv:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["qpopcv"]
+
+# Include non-Python files inside the package (config + media)
+[tool.hatch.build]
+include = [
+  "qpopcv/config.json",
+  "qpopcv/media/**/*",
+]

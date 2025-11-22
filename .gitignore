@@ -1,4 +1,6 @@
-# Byte-compiled / optimized / DLL files
+# ------------------------------
+# Python artifacts
+# ------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
@@ -8,7 +10,13 @@ __pycache__/
 venv/
 env/
 
-# Build artifacts
+# Installed package metadata (pip install -e)
+*.egg-info/
+*.egg
+
+# ------------------------------
+# Build artifacts / distributors
+# ------------------------------
 build/
 dist/
 *.spec
@@ -18,15 +26,28 @@ dist/
 *.tar
 *.gz
 *.bz2
+*.dmg
+*.msi
+*.exe
 
-# Logs
+# ------------------------------
+# Logs & runtime data
+# ------------------------------
 *.log
 
+# Config generated at runtime (if ever moved outside package)
+config.json
+
+# ------------------------------
 # OS / editor cruft
+# ------------------------------
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/
 
-# TODO file
-TODO.txt
+# ------------------------------
+# Project misc files
+# ------------------------------
+todo.txt
+
