@@ -22,9 +22,9 @@ Join the community here for setup instructions:
 Measured from queue pop appearing → notification on phone:
 
 - **App detection:** 0.005s – 0.15s  
-- **HTTP request to Discord:** ~0.711s  
-- **Discord → phone push:** ~1.8s  
-- **Total:** ~2.5- 3s seconds
+- **HTTP request to Discord:** ~ 0.711s  
+- **Discord → phone push:** ~ 0.2s  
+- **Total:** <1 seconds
 
 
 ----
