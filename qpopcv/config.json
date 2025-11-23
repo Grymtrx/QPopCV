@@ -3,5 +3,5 @@
   "user_id": "",
   "check_interval": 0.5,
   "confidence": 0.6,
-  "reference_image_path": "C:/Git/qpopcv/qpopcv/media/qpop_ss_bbq_dark_reference.png"
+  "reference_image_path": ""
 }
