@@ -16,18 +16,17 @@ A lightweight desktop app that **monitors your screen for WoW Solo Shuffle queue
 
 ## Setup
 Join the community here for setup instructions:  
-👉 **[QPopCV Discord](https://discord.gg/vXvjcrUFm8)**
+👉 **[QPopCV Discord](https://discord.gg/KpupS6N3Zj)**
 
 ## Speed (End-to-End Latency)
 Measured from queue pop appearing → notification on phone:
 
-- **App detection:** 0.005s – 0.15s  
-- **HTTP request to Discord:** ~ 0.711s  
+- **App detection:** 0.005s – 0.1s  
+- **HTTP request to Discord:** ~ 0.7s  
 - **Discord → phone push:** ~ 0.2s  
-- **Total:** <1 seconds
+- **Total:** ~ 1 seconds
 
 
-----
 
 ## Legality / Blizzard TOS Compliance
 
