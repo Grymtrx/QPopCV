@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>QPopCV – Glass Mock</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --glass-bg: rgba(15, 23, 42, 0.55);
+      --glass-bg-soft: rgba(15, 23, 42, 0.35);
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.16);
+      --accent-strong: #0ea5e9;
+      --text: #e5e7eb;
+      --text-soft: #9ca3af;
+      --border: rgba(148, 163, 184, 0.6);
+      --border-soft: rgba(148, 163, 184, 0.35);
+      --shadow-soft: 0 24px 60px rgba(15, 23, 42, 0.85);
+      --radius-xl: 20px;
+      --radius-lg: 14px;
+      --radius-pill: 999px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, #1d2a4b 0, transparent 50%),
+        radial-gradient(circle at bottom right, #020617 0, #000 60%);
+    }
+
+    .window {
+      position: relative;
+      width: 360px;
+      max-width: 100%;
+      padding: 14px 14px 12px;
+      border-radius: 22px;
+      background: linear-gradient(
+          135deg,
+          rgba(148, 163, 184, 0.22),
+          rgba(15, 23, 42, 0.8)
+        ),
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent 55%);
+      background-blend-mode: screen, normal;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      backdrop-filter: blur(18px) saturate(140%);
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+    }
+
+    /* Minimal title bar */
+    .titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .traffic-lights {
+      display: flex;
+      gap: 5px;
+    }
+
+    .traffic-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.45);
+      opacity: 0.95;
+    }
+
+    .traffic-dot.red { background: #fb6b6b; }
+    .traffic-dot.yellow { background: #facc15; }
+    .traffic-dot.green { background: #4ade80; }
+
+    .title-label {
+      flex: 1;
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-soft);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .title-spacer {
+      width: 40px;
+    }
+
+    /* Main glass card */
+    .card {
+      border-radius: var(--radius-xl);
+      background: linear-gradient(
+        145deg,
+        rgba(15, 23, 42, 0.65),
+        rgba(15, 23, 42, 0.3)
+      );
+      border: 1px solid var(--border-soft);
+      padding: 10px 10px 9px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .app-id {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-pill {
+      width: 30px;
+      height: 30px;
+      border-radius: 12px;
+      background: radial-gradient(circle at 20% 0%, #38bdf8, #0ea5e9 45%, #020617 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #e0f2fe;
+      font-weight: 700;
+      font-size: 16px;
+      box-shadow:
+        0 0 0 1px rgba(15, 23, 42, 0.8),
+        0 10px 22px rgba(8, 47, 73, 0.9);
+    }
+
+    .app-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .app-name {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .app-sub {
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .header-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      font-size: 10px;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .chip {
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: linear-gradient(
+        135deg,
+        rgba(15, 23, 42, 0.8),
+        rgba(15, 23, 42, 0.4)
+      );
+      padding: 2px 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .chip-accent {
+      border-color: rgba(56, 189, 248, 0.9);
+      background: linear-gradient(
+        135deg,
+        rgba(56, 189, 248, 0.18),
+        rgba(15, 23, 42, 0.7)
+      );
+      color: #e0f2fe;
+    }
+
+    .chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25);
+    }
+
+    .chip-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+
+    .chip-value {
+      font-variant-numeric: tabular-nums;
+      font-size: 10px;
+    }
+
+    .hint {
+      color: var(--text-soft);
+      opacity: 0.85;
+    }
+
+    /* Segmented control row */
+    .segments {
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .segment-toggle {
+      flex: 1;
+      display: inline-flex;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(148, 163, 184, 0.75);
+      background: linear-gradient(
+        135deg,
+        rgba(15, 23, 42, 0.9),
+        rgba(15, 23, 42, 0.6)
+      );
+      overflow: hidden;
+      font-size: 10px;
+    }
+
+    .segment-toggle button {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 4px 0;
+      background: transparent;
+      color: var(--text-soft);
+      cursor: default;
+      font-size: 10px;
+      font-family: inherit;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .segment-toggle button.active {
+      background: radial-gradient(
+        circle at top,
+        rgba(56, 189, 248, 0.22),
+        rgba(15, 23, 42, 0.8)
+      );
+      color: #e0f2fe;
+    }
+
+    .segments-right {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      font-size: 10px;
+      color: var(--text-soft);
+    }
+
+    .tiny-pill {
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      padding: 2px 7px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(15, 23, 42, 0.7);
+    }
+
+    .tiny-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+    }
+
+    .tiny-dot-amber {
+      background: #facc15;
+      box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.22);
+    }
+
+    .tiny-dot-muted {
+      background: #6b7280;
+    }
+
+    /* Main status rows */
+    .sections {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    .row {
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-soft);
+      background: radial-gradient(
+        circle at top left,
+        var(--glass-bg),
+        rgba(15, 23, 42, 0.25)
+      );
+      padding: 7px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .row-left {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .row-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-soft);
+    }
+
+    .row-main {
+      font-size: 11px;
+    }
+
+    .row-sub {
+      font-size: 10px;
+      color: var(--text-soft);
+    }
+
+    .row-right {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: flex-end;
+      font-size: 10px;
+    }
+
+    .pill-btn {
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(56, 189, 248, 0.85);
+      background: radial-gradient(
+        circle at top,
+        rgba(56, 189, 248, 0.22),
+        rgba(15, 23, 42, 0.9)
+      );
+      color: #e0f2fe;
+      padding: 3px 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      cursor: default;
+    }
+
+    .pill-btn .icon {
+      font-size: 11px;
+    }
+
+    .metric-text {
+      font-variant-numeric: tabular-nums;
+      color: var(--text-soft);
+    }
+
+    .metric-strong {
+      color: var(--text);
+    }
+
+    /* Footer */
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(148, 163, 184, 0.3);
+      font-size: 10px;
+      color: var(--text-soft);
+    }
+
+    .footer-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .status-pill {
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(34, 197, 94, 0.85);
+      background: radial-gradient(
+        circle at top,
+        rgba(34, 197, 94, 0.2),
+        rgba(15, 23, 42, 0.8)
+      );
+      padding: 2px 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #bbf7d0;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.24);
+    }
+
+    .footer-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 3px;
+    }
+
+    .link-ghost {
+      text-decoration: none;
+      color: #c4d4ff;
+      border-bottom: 1px dashed rgba(129, 140, 248, 0.7);
+      padding-bottom: 1px;
+      opacity: 0.9;
+    }
+
+    .link-ghost:hover {
+      opacity: 1;
+    }
+
+    @media (max-width: 380px) {
+      .window {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="window">
+    <div class="titlebar">
+      <div class="traffic-lights">
+        <div class="traffic-dot red"></div>
+        <div class="traffic-dot yellow"></div>
+        <div class="traffic-dot green"></div>
+      </div>
+      <div class="title-label">QPOPCV</div>
+      <div class="title-spacer"></div>
+    </div>
+
+    <div class="card">
+      <!-- Header -->
+      <div class="card-header">
+        <div class="app-id">
+          <div class="logo-pill">Q</div>
+          <div class="app-text">
+            <div class="app-name">QPopCV</div>
+            <div class="app-sub">Solo Shuffle Queue Watcher</div>
+          </div>
+        </div>
+        <div class="header-meta">
+          <div class="badge-row">
+            <div class="chip chip-accent">
+              <div class="chip-dot"></div>
+              <div class="chip-label">Status</div>
+              <div class="chip-value">Watching</div>
+            </div>
+            <div class="chip">
+              <span class="chip-label">v</span>
+              <span class="chip-value">1.0.4</span>
+            </div>
+          </div>
+          <div class="hint">Pixel-only detection · Discord ping</div>
+        </div>
+      </div>
+
+      <!-- Segmented controls -->
+      <div class="segments">
+        <div class="segment-toggle">
+          <button class="active">Detection</button>
+          <button>Webhook</button>
+          <button>AFK</button>
+        </div>
+        <div class="segments-right">
+          <div class="tiny-pill">
+            <span class="tiny-dot tiny-dot-amber"></span>
+            <span>Throttle 15s</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sections (minimal, no long descriptions) -->
+      <div class="sections">
+        <!-- Queue detection row -->
+        <div class="row">
+          <div class="row-left">
+            <div class="row-label">Queue</div>
+            <div class="row-main">Solo Shuffle · 1440p</div>
+            <div class="row-sub">Last pop · 12:41</div>
+          </div>
+          <div class="row-right">
+            <div class="pill-btn">
+              <span class="icon">🎯</span>
+              <span>Align Overlay</span>
+            </div>
+            <div class="metric-text">
+              Overlay <span class="metric-strong">OK</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Webhook row -->
+        <div class="row">
+          <div class="row-left">
+            <div class="row-label">Discord</div>
+            <div class="row-main">#qpopcv-alerts</div>
+            <div class="row-sub">Last ping · 3 min ago</div>
+          </div>
+          <div class="row-right">
+            <div class="pill-btn">
+              <span class="icon">🔔</span>
+              <span>Test Ping</span>
+            </div>
+            <div class="metric-text">Mobile-only: <span class="metric-strong">On</span></div>
+          </div>
+        </div>
+
+        <!-- AFK row -->
+        <div class="row">
+          <div class="row-left">
+            <div class="row-label">AFK</div>
+            <div class="row-main">Idle timer · 18:00</div>
+            <div class="row-sub">Warnings muted</div>
+          </div>
+          <div class="row-right">
+            <div class="pill-btn" style="border-color: rgba(248, 113, 113, 0.85);
+                 background: radial-gradient(circle at top,
+                   rgba(248, 113, 113, 0.2),
+                   rgba(15, 23, 42, 0.9));">
+              <span class="icon">⏱</span>
+              <span>Arm AFK</span>
+            </div>
+            <div class="metric-text">Safe window: <span class="metric-strong">On</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <div class="footer-left">
+          <div class="status-pill">
+            <div class="status-dot"></div>
+            <span>Watching · Main monitor</span>
+          </div>
+          <div>Tip: keep Discord open on phone only for clean pings.</div>
+        </div>
+        <div class="footer-right">
+          <a href="#" class="link-ghost">Logs</a>
+          <a href="#" class="link-ghost">Discord</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

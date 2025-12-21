@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>QPopCV – Visual Mock</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #050814;
+      --bg-elevated: #0b1120;
+      --bg-elevated-soft: #0f172a;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.1);
+      --accent-strong: #0ea5e9;
+      --danger: #fb7185;
+      --text: #e5e7eb;
+      --text-soft: #9ca3af;
+      --border-subtle: rgba(148, 163, 184, 0.35);
+      --radius-xl: 18px;
+      --radius-lg: 12px;
+      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.7);
+      --inner-glow: 0 0 0 1px rgba(148, 163, 184, 0.1);
+      --blur: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at top left, #1e293b 0, transparent 55%),
+        radial-gradient(circle at bottom right, #020617 0, #000 60%);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+      color: var(--text);
+    }
+
+    .window {
+      position: relative;
+      width: 480px;
+      max-width: 95vw;
+      padding: 18px 18px 16px;
+      border-radius: 22px;
+      background: radial-gradient(circle at top left, #020617, #020617 40%, #000 100%);
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      backdrop-filter: blur(var(--blur));
+    }
+
+    /* macOS-style title bar */
+    .titlebar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding: 2px 4px 2px;
+    }
+
+    .traffic-lights {
+      display: flex;
+      gap: 6px;
+    }
+
+    .traffic-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.4);
+    }
+
+    .traffic-dot.red {
+      background: #f97373;
+    }
+
+    .traffic-dot.yellow {
+      background: #facc15;
+    }
+
+    .traffic-dot.green {
+      background: #4ade80;
+    }
+
+    .titlebar-center {
+      flex: 1;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-soft);
+      letter-spacing: 0.02em;
+    }
+
+    /* Card content */
+    .card {
+      border-radius: var(--radius-xl);
+      background: linear-gradient(135deg, #020617, #020617 55%, #0b1120);
+      box-shadow: var(--inner-glow);
+      padding: 16px 16px 14px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .app-id {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-pill {
+      width: 34px;
+      height: 34px;
+      border-radius: 14px;
+      background: radial-gradient(circle at 20% 0%, #38bdf8, #0ea5e9 38%, #0f172a 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #e0f2fe;
+      font-weight: 700;
+      font-size: 17px;
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.7), 0 8px 18px rgba(8, 47, 73, 0.8);
+    }
+
+    .app-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .app-name {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .app-subtitle {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .header-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .badge {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      padding: 2px 9px;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-soft);
+      background: radial-gradient(circle at top, #020617, #020617 60%, rgba(15, 23, 42, 0.9));
+    }
+
+    .badge-accent {
+      border-color: rgba(56, 189, 248, 0.8);
+      color: #e0f2fe;
+      background: radial-gradient(circle at top, rgba(56, 189, 248, 0.25), #020617 55%);
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+    }
+
+    .dot-green {
+      background: #4ade80;
+      box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.18);
+    }
+
+    .dot-amber {
+      background: #facc15;
+      box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.18);
+    }
+
+    .dot-red {
+      background: #fb7185;
+      box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.22);
+    }
+
+    .badge-label {
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      opacity: 0.9;
+    }
+
+    .badge-value {
+      font-variant-numeric: tabular-nums;
+      font-size: 11px;
+    }
+
+    .hint-text {
+      font-size: 11px;
+      color: var(--text-soft);
+      opacity: 0.9;
+    }
+
+    /* Sections */
+    .sections {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .section {
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.85), #020617 80%);
+      padding: 10px 11px 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title {
+      font-size: 12px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+    }
+
+    .section-title span {
+      color: #e5e7eb;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+    }
+
+    .pill-toggle {
+      display: inline-flex;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.8);
+      overflow: hidden;
+      font-size: 11px;
+    }
+
+    .pill-toggle button {
+      border: none;
+      outline: none;
+      padding: 4px 10px;
+      background: transparent;
+      color: var(--text-soft);
+      cursor: default;
+      font-size: 11px;
+      font-family: inherit;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .pill-toggle button.active {
+      background: var(--accent-soft);
+      color: #e0f2fe;
+    }
+
+    /* Simple ghost buttons (non-functional) */
+    .ghost-button {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.7), #020617);
+      padding: 5px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text);
+      cursor: default;
+      font-family: inherit;
+    }
+
+    .ghost-button.primary {
+      border-color: rgba(56, 189, 248, 0.9);
+      background: radial-gradient(circle at top, rgba(56, 189, 248, 0.24), #020617);
+      color: #e0f2fe;
+      box-shadow: 0 0 0 1px rgba(8, 47, 73, 0.75);
+    }
+
+    .ghost-button .indicator-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
+    }
+
+    .ghost-button .icon {
+      font-size: 11px;
+      opacity: 0.9;
+    }
+
+    .section-body {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .section-text {
+      font-size: 11px;
+      color: var(--text-soft);
+      line-height: 1.5;
+    }
+
+    .section-text strong {
+      color: #e5e7eb;
+      font-weight: 500;
+    }
+
+    .section-metrics {
+      font-size: 11px;
+      text-align: right;
+      color: var(--text-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .metric-label {
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 10px;
+      opacity: 0.9;
+    }
+
+    .metric-value {
+      font-variant-numeric: tabular-nums;
+      color: #e5e7eb;
+    }
+
+    .metric-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 2px 9px;
+      border: 1px dashed rgba(148, 163, 184, 0.6);
+      font-size: 10px;
+      align-self: flex-end;
+      color: var(--text-soft);
+    }
+
+    /* Footer */
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      padding-top: 9px;
+      border-top: 1px solid rgba(15, 23, 42, 0.9);
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .footer-left {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .status-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .status-label {
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 10px;
+      opacity: 0.95;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 2px 9px;
+      background: rgba(22, 163, 74, 0.08);
+      color: #bbf7d0;
+      border: 1px solid rgba(34, 197, 94, 0.65);
+    }
+
+    .status-pill .dot-green {
+      width: 7px;
+      height: 7px;
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+    }
+
+    .footer-right {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .link-ghost {
+      font-size: 11px;
+      color: #93c5fd;
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(129, 140, 248, 0.65);
+      padding-bottom: 1px;
+      opacity: 0.9;
+    }
+
+    .link-ghost:hover {
+      opacity: 1;
+    }
+
+    @media (max-width: 480px) {
+      .window {
+        padding: 14px 10px 12px;
+      }
+      .card {
+        padding: 12px 11px 11px;
+      }
+      .section-body {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .section-metrics {
+        align-items: flex-start;
+        text-align: left;
+      }
+      .footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+      .footer-right {
+        align-self: flex-end;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="window">
+    <div class="titlebar">
+      <div class="traffic-lights">
+        <div class="traffic-dot red"></div>
+        <div class="traffic-dot yellow"></div>
+        <div class="traffic-dot green"></div>
+      </div>
+      <div class="titlebar-center">QPopCV – Solo Shuffle Queue Watcher</div>
+      <div style="width: 40px;"></div>
+    </div>
+
+    <div class="card">
+      <!-- Header -->
+      <div class="card-header">
+        <div class="app-id">
+          <div class="logo-pill">Q</div>
+          <div class="app-text">
+            <div class="app-name">QPopCV</div>
+            <div class="app-subtitle">Visual queue watcher → Discord ping</div>
+          </div>
+        </div>
+        <div class="header-meta">
+          <div class="badge-row">
+            <div class="badge badge-accent">
+              <div class="dot dot-green"></div>
+              <div class="badge-label">Status</div>
+              <div class="badge-value">Watching</div>
+            </div>
+            <div class="badge">
+              <span class="badge-label">v</span>
+              <span class="badge-value">1.0.4</span>
+            </div>
+          </div>
+          <div class="hint-text">
+            Solo Shuffle queue pops are routed to your phone via Discord.
+          </div>
+        </div>
+      </div>
+
+      <!-- Sections -->
+      <div class="sections">
+        <!-- Queue detection -->
+        <div class="section">
+          <div class="section-header">
+            <div class="section-title">
+              Queue <span>Detection</span>
+            </div>
+            <div class="pill-toggle">
+              <button class="active">Solo Shuffle</button>
+              <button>Custom Region</button>
+            </div>
+          </div>
+          <div class="section-body">
+            <div class="section-text">
+              <strong>Watching queue pop graphic</strong> on your main monitor using
+              visual detection only. No memory reads, no injection – just pixels.
+            </div>
+            <div class="section-metrics">
+              <div>
+                <div class="metric-label">Last Match</div>
+                <div class="metric-value">Today · 12:41</div>
+              </div>
+              <div>
+                <div class="metric-label">Throttle</div>
+                <div class="metric-value">15s cooldown</div>
+              </div>
+              <div class="metric-pill">
+                <span class="dot dot-amber"></span>
+                <span>Overlay alignment ok</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Discord webhook -->
+        <div class="section">
+          <div class="section-header">
+            <div class="section-title">
+              Discord <span>Webhook</span>
+            </div>
+            <button class="ghost-button primary">
+              <span class="icon">🔔</span>
+              <span>Test Ping</span>
+            </button>
+          </div>
+          <div class="section-body">
+            <div class="section-text">
+              Pings a private Discord channel when a queue pops. Point your mobile
+              app notifications at that channel and roam freely without missing pops.
+            </div>
+            <div class="section-metrics">
+              <div>
+                <div class="metric-label">Destination</div>
+                <div class="metric-value">#qpopcv-alerts</div>
+              </div>
+              <div>
+                <div class="metric-label">Last Ping</div>
+                <div class="metric-value">3 min ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AFK / safety -->
+        <div class="section">
+          <div class="section-header">
+            <div class="section-title">
+              AFK <span>Safeguards</span>
+            </div>
+            <div class="ghost-button">
+              <span class="indicator-dot"></span>
+              <span>AFK timer armed</span>
+            </div>
+          </div>
+          <div class="section-body">
+            <div class="section-text">
+              Soft AFK reminder after <strong>18 min idle</strong> so you don’t lose
+              rating to timeouts. Optional “panic nudge” if your queue pops while
+              you’re alt-tabbed.
+            </div>
+            <div class="section-metrics">
+              <div class="metric-label">Idle Threshold</div>
+              <div class="metric-value">18:00</div>
+              <div class="metric-pill">
+                <span class="dot dot-red"></span>
+                <span>AFK warnings muted</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <div class="footer-left">
+          <div class="status-row">
+            <div class="status-label">Watching</div>
+            <div class="status-pill">
+              <div class="dot dot-green"></div>
+              <span>Solo Shuffle · 1440p</span>
+            </div>
+          </div>
+          <div class="hint-text">
+            Tip: quit desktop Discord and open on mobile only if you want
+            phone-exclusive pings.
+          </div>
+        </div>
+        <div class="footer-right">
+          <a href="#" class="link-ghost">View logs</a>
+          <a href="#" class="link-ghost">Join Discord</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
