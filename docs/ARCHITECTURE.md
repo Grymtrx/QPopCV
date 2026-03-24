@@ -6,7 +6,7 @@
 
 ## What is QPopCV?
 
-A lightweight Windows desktop app that watches the screen for a World of Warcraft Solo Shuffle queue popup and fires a Discord webhook notification (with a user mention) the moment it appears. Users can alt-tab away or step away from their PC while queuing, and be pinged on phone or desktop Discord.
+A lightweight Windows desktop app that watches the screen for a World of Warcraft Solo Shuffle queue popup and fires a Discord webhook notification (with a user mention) the moment it appears. Users can step away from their PC while queuing, and be pinged on phone or desktop Discord. All while stayin within Blizzards TOS.
 
 **Current version:** `1.0.4`
 **Target OS:** Windows (uses `pyautogui`, `os.startfile`, batch scripts)
@@ -15,17 +15,17 @@ A lightweight Windows desktop app that watches the screen for a World of Warcraf
 
 ## Module Map
 
-| File | Role |
-|------|------|
-| `main.py` | Entry point — configures logging, creates `QPopApp`, starts mainloop |
-| `qpopcv/__init__.py` | Re-exports `QPopApp` |
-| `qpopcv/app_ui.py` | All GUI logic (`QPopApp` class, CustomTkinter) |
-| `qpopcv/watcher.py` | Screen detection engine (`QPopWatcher`, `WatcherSettings`) |
-| `qpopcv/config.py` | Config constants, `load_config`, `save_config` |
-| `qpopcv/discord_client.py` | Thin wrapper around Discord webhook HTTP calls |
-| `qpopcv/validators.py` | Input validation (webhook, user ID, reference image path) |
-| `qpopcv/theme.py` | UI color constants (Tailwind-inspired palette) |
-| `qpopcv/updater.py` | GitHub release checker and installer (`UpdateManager`, `UpdateInfo`) |
+| File                       | Role                                                                 |
+| -------------------------- | -------------------------------------------------------------------- |
+| `main.py`                  | Entry point — configures logging, creates `QPopApp`, starts mainloop |
+| `qpopcv/__init__.py`       | Re-exports `QPopApp`                                                 |
+| `qpopcv/app_ui.py`         | All GUI logic (`QPopApp` class, CustomTkinter)                       |
+| `qpopcv/watcher.py`        | Screen detection engine (`QPopWatcher`, `WatcherSettings`)           |
+| `qpopcv/config.py`         | Config constants, `load_config`, `save_config`                       |
+| `qpopcv/discord_client.py` | Thin wrapper around Discord webhook HTTP calls                       |
+| `qpopcv/validators.py`     | Input validation (webhook, user ID, reference image path)            |
+| `qpopcv/theme.py`          | UI color constants (Tailwind-inspired palette)                       |
+| `qpopcv/updater.py`        | GitHub release checker and installer (`UpdateManager`, `UpdateInfo`) |
 
 ---
 
@@ -33,19 +33,19 @@ A lightweight Windows desktop app that watches the screen for a World of Warcraf
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                   main.py                        │
-│  configure logging → QPopApp() → app.run()       │
+│                   main.py                       │
+│  configure logging → QPopApp() → app.run()      │
 └────────────────────┬────────────────────────────┘
                      │
                      ▼
 ┌─────────────────────────────────────────────────┐
-│              QPopApp  (app_ui.py)                │
-│                                                  │
+│              QPopApp  (app_ui.py)               │
+│                                                 │
 │  ┌─────────┐  ┌──────────┐  ┌───────────────┐   │
 │  │ config  │  │validators│  │  theme colors │   │
 │  └─────────┘  └──────────┘  └───────────────┘   │
-│                                                  │
-│  Buttons: Save │ Test │ Watch │ Discord │ Update  │
+│                                                 │
+│ Buttons: Save │ Test │ Watch │ Discord │ Update │
 └─────┬───────────────────────┬───────────────────┘
       │                       │
       ▼ (background thread)   ▼ (background thread)
@@ -140,13 +140,13 @@ QPopApp.config dict  ←→  UI StringVars (webhook_var, user_var, ref_var)
 
 **Config keys:**
 
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| `webhook_url` | str | (hardcoded — see KNOWN_ISSUES) | Discord webhook endpoint |
-| `user_id` | str | `""` | 18-digit Discord snowflake ID |
-| `check_interval` | float | `0.15` | Seconds between screen captures |
-| `confidence` | float | `0.6` | Template match confidence threshold (0–1) |
-| `reference_image_path` | str | `""` | Path to user's custom queue popup screenshot |
+| Key                    | Type  | Default                        | Description                                  |
+| ---------------------- | ----- | ------------------------------ | -------------------------------------------- |
+| `webhook_url`          | str   | (hardcoded — see KNOWN_ISSUES) | Discord webhook endpoint                     |
+| `user_id`              | str   | `""`                           | 18-digit Discord snowflake ID                |
+| `check_interval`       | float | `0.15`                         | Seconds between screen captures              |
+| `confidence`           | float | `0.6`                          | Template match confidence threshold (0–1)    |
+| `reference_image_path` | str   | `""`                           | Path to user's custom queue popup screenshot |
 
 ---
 
@@ -180,23 +180,23 @@ User clicks "Update available: x.x.x"
 
 ## Key Constants
 
-| Constant | Location | Value | Description |
-|----------|----------|-------|-------------|
-| `THROTTLE_SECONDS` | `watcher.py:14` | `15` | Min seconds between Discord pings |
-| `APP_VERSION` | `config.py:11` | `"1.0.4"` | Current version string |
-| `CONFIG_PATH` | `config.py:12` | `<app_dir>/config.json` | Config file location |
-| `DISCORD_SERVER_URL` | `config.py:13` | Discord invite | Community Discord link |
-| `GITHUB_API` | `updater.py:20` | GitHub releases endpoint | Update check URL template |
-| `MEDIA_DIR` | `watcher.py:23` | `<package>/media/` | Built-in reference images |
+| Constant             | Location        | Value                    | Description                       |
+| -------------------- | --------------- | ------------------------ | --------------------------------- |
+| `THROTTLE_SECONDS`   | `watcher.py:14` | `15`                     | Min seconds between Discord pings |
+| `APP_VERSION`        | `config.py:11`  | `"1.0.4"`                | Current version string            |
+| `CONFIG_PATH`        | `config.py:12`  | `<app_dir>/config.json`  | Config file location              |
+| `DISCORD_SERVER_URL` | `config.py:13`  | Discord invite           | Community Discord link            |
+| `GITHUB_API`         | `updater.py:20` | GitHub releases endpoint | Update check URL template         |
+| `MEDIA_DIR`          | `watcher.py:23` | `<package>/media/`       | Built-in reference images         |
 
 ---
 
 ## External Dependencies
 
-| Package | Used For | Notes |
-|---------|----------|-------|
-| `customtkinter` | GUI framework | Modern Tkinter widgets |
-| `pyautogui` | Screenshot + template matching | `locate()`, `screenshot()`, `size()` |
-| `Pillow` | Image loading and scaling | `Image.open`, `Image.resize` |
-| `requests` | Discord webhooks + GitHub API + update download | All HTTP calls |
-| `opencv-python` | *(listed in requirements.txt)* | **Not imported or used — should be removed** |
+| Package         | Used For                                        | Notes                                        |
+| --------------- | ----------------------------------------------- | -------------------------------------------- |
+| `customtkinter` | GUI framework                                   | Modern Tkinter widgets                       |
+| `pyautogui`     | Screenshot + template matching                  | `locate()`, `screenshot()`, `size()`         |
+| `Pillow`        | Image loading and scaling                       | `Image.open`, `Image.resize`                 |
+| `requests`      | Discord webhooks + GitHub API + update download | All HTTP calls                               |
+| `opencv-python` | *(listed in requirements.txt)*                  | **Not imported or used — should be removed** |

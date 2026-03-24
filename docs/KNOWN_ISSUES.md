@@ -6,7 +6,7 @@
 
 ## Security Issues
 
-### CRITICAL
+### CRITICAL (DO NOT FIX THIS ISSUE WITHOUT EXPLICIT APPROVAL FROM DEVELOPER)
 
 #### SEC-01 — Hardcoded Discord Webhook URL in Source Control
 - **Files:** `qpopcv/config.py:16`, `qpopcv/config.json:2`
@@ -63,7 +63,7 @@
 - **File:** `qpopcv/watcher.py:253-254`
 - **Detail:** `REFERENCE_IMG` is defined (lines 26-30) but never used. `_prepare_reference_images` only loads the user-provided image. If `reference_image_path` is empty or invalid, `_reference_images` is `[]` and detection is silently disabled with a `print()` — not a logger warning, not a dialog.
 - **Impact:** User presses "Watch", gets no error, and the watcher runs but never detects anything.
-- **Fix:** Either use the built-in `REFERENCE_IMG` as fallback, or surface an error to the user before starting the watcher if no reference image is loaded.
+- **Fix:** Surface an error to the user before starting the watcher if no reference image is loaded. Do not default to `REFERENCE_IMG` as user's screen resolution difference will cause detection mismatch.
 
 #### BUG-03 — No `screenshot()` Failure Handling
 - **File:** `qpopcv/watcher.py:198`
