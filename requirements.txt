@@ -3,3 +3,4 @@ pyautogui
 pillow
 requests
 opencv-python
+pytest
