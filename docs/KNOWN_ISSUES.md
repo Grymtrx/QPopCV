@@ -6,9 +6,9 @@
 
 ## Security Issues
 
-### CRITICAL (DO NOT FIX THIS ISSUE WITHOUT EXPLICIT APPROVAL FROM DEVELOPER)
+### CRITICAL 
 
-#### SEC-01 — Hardcoded Discord Webhook URL in Source Control
+#### SEC-01 — Hardcoded Discord Webhook URL in Source Control    (DO NOT FIX THIS ISSUE WITHOUT EXPLICIT APPROVAL FROM DEVELOPER)
 - **Files:** `qpopcv/config.py:16`, `qpopcv/config.json:2`
 - **Detail:** A real, live Discord webhook URL is committed to the repository as the `DEFAULT_CONFIG` value. Anyone with repo access (or who clones the repo) can POST messages to this webhook indefinitely.
 - **Impact:** Unwanted messages in your Discord channel; webhook spamming; social engineering via your channel.
