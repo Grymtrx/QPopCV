@@ -310,8 +310,6 @@ class QPopApp:
         self._window.setWindowFlags(
             Qt.WindowType.FramelessWindowHint | Qt.WindowType.Window
         )
-        self._window.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
-        self._window.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self._window.resize(440, 320)
         self._window.setMinimumSize(400, 240)
 
@@ -334,9 +332,7 @@ class QPopApp:
 
         # Web view
         view = QWebEngineView()
-        view.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
-        view.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
-        view.page().setBackgroundColor(QColor(Qt.GlobalColor.transparent))
+        view.page().setBackgroundColor(QColor(49, 51, 56))
         s = view.settings()
         s.setAttribute(QWebEngineSettings.WebAttribute.JavascriptEnabled, True)
         s.setAttribute(QWebEngineSettings.WebAttribute.LocalStorageEnabled, True)

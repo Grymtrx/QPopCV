@@ -1,24 +1,25 @@
 /* ═══════════════════════════════════════════════════════════════
-   QPopCV — Midnight Glass
-   Palette: monochromatic dark glass + functional greens/oranges
+   QPopCV — Discord Theme
+   Palette: Discord dark mode colors
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  --glass-bg:        rgba(9, 9, 18, 0.90);
-  --glass-surface:   rgba(255, 255, 255, 0.03);
-  --glass-raised:    rgba(255, 255, 255, 0.055);
-  --border:          rgba(255, 255, 255, 0.08);
-  --border-bright:   rgba(255, 255, 255, 0.18);
-  --border-subtle:   rgba(255, 255, 255, 0.045);
-  --text:            rgba(255, 255, 255, 0.88);
-  --text-muted:      rgba(255, 255, 255, 0.38);
-  --text-dim:        rgba(255, 255, 255, 0.13);
-  --green:           #4ade80;
-  --green-glow:      rgba(74, 222, 128, 0.22);
-  --orange:          #fb923c;
-  --orange-glow:     rgba(251, 146, 60, 0.40);
-  --red:             #f87171;
-  --blue:            #93c5fd;
+  --glass-bg:        #313338;
+  --glass-surface:   #2b2d31;
+  --glass-raised:    #383a40;
+  --border:          #3f4147;
+  --border-bright:   #5c5f66;
+  --border-subtle:   #2e3035;
+  --text:            #f2f3f5;
+  --text-secondary:  #b5bac1;
+  --text-muted:      #80848e;
+  --text-dim:        #4e5058;
+  --green:           #23a55a;
+  --green-glow:      rgba(35, 165, 90, 0.22);
+  --orange:          #f0b232;
+  --orange-glow:     rgba(240, 178, 50, 0.35);
+  --red:             #f23f42;
+  --blue:            #00a8fc;
   --discord:         #5865f2;
   --discord-hover:   #4752c4;
   --radius-sm:       6px;
@@ -37,7 +38,7 @@
 
 html, body {
   height: auto;
-  background: transparent;
+  background: var(--glass-bg);
   color: var(--text);
   font-family: 'Inter', system-ui, sans-serif;
   font-size: 13px;
@@ -55,8 +56,6 @@ html, body {
   flex-direction: column;
   height: auto;
   background: var(--glass-bg);
-  backdrop-filter: blur(32px) saturate(140%);
-  -webkit-backdrop-filter: blur(32px) saturate(140%);
   border: 1px solid var(--border);
   border-radius: 0;
   overflow: hidden;

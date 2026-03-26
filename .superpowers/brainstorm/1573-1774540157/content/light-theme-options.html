@@ -1,0 +1,189 @@
+<h2>Light glassmorphic theme — pick a direction</h2>
+<p class="subtitle">Three distinct palettes, same ultra-clean layout. Click to select.</p>
+
+<style>
+  .app-mock {
+    font-family: 'Inter', -apple-system, sans-serif;
+    width: 100%;
+    max-width: 340px;
+    margin: 0 auto;
+    font-size: 12px;
+    overflow: hidden;
+    border-radius: 12px;
+  }
+
+  /* ── Option A: Pearl ── */
+  .pearl { background: rgba(255,255,255,0.82); border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 8px 32px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.9); }
+  .pearl .bar  { background: rgba(255,255,255,0.6); border-bottom: 1px solid rgba(0,0,0,0.07); }
+  .pearl .tabs { background: transparent; border-bottom: 1px solid rgba(0,0,0,0.07); }
+  .pearl .tab.active { color: #1a1a2e; border-bottom: 2px solid #5865f2; }
+  .pearl .tab  { color: #9098a9; }
+  .pearl .content { background: transparent; }
+  .pearl .lbl  { color: #6b7280; }
+  .pearl .inp  { background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.10); color: #1a1a2e; }
+  .pearl .footer { background: rgba(255,255,255,0.5); border-top: 1px solid rgba(0,0,0,0.07); }
+  .pearl .save  { background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.10); color: #374151; }
+  .pearl .watch { background: #5865f2; border: none; color: #fff; box-shadow: 0 4px 14px rgba(88,101,242,0.35); }
+  .pearl .ver   { color: #9098a9; }
+  .pearl .logo  { color: #1a1a2e; }
+  .pearl .dot   { background: #5865f2; box-shadow: 0 0 8px rgba(88,101,242,0.4); }
+  .pearl .status{ background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08); color: #6b7280; }
+  .pearl .win   { color: #9098a9; }
+
+  /* ── Option B: Sky Frost ── */
+  .sky { background: rgba(235,242,255,0.85); border: 1px solid rgba(88,101,242,0.15); box-shadow: 0 8px 32px rgba(88,101,242,0.10), inset 0 1px 0 rgba(255,255,255,0.95); }
+  .sky .bar  { background: rgba(255,255,255,0.55); border-bottom: 1px solid rgba(88,101,242,0.10); }
+  .sky .tabs { background: transparent; border-bottom: 1px solid rgba(88,101,242,0.10); }
+  .sky .tab.active { color: #3730a3; border-bottom: 2px solid #5865f2; }
+  .sky .tab  { color: #94a3b8; }
+  .sky .content { background: transparent; }
+  .sky .lbl  { color: #6366f1; }
+  .sky .inp  { background: rgba(255,255,255,0.65); border: 1px solid rgba(88,101,242,0.15); color: #1e1b4b; }
+  .sky .footer { background: rgba(255,255,255,0.4); border-top: 1px solid rgba(88,101,242,0.10); }
+  .sky .save  { background: rgba(255,255,255,0.6); border: 1px solid rgba(88,101,242,0.18); color: #4338ca; }
+  .sky .watch { background: linear-gradient(135deg, #5865f2, #4338ca); border: none; color: #fff; box-shadow: 0 4px 14px rgba(88,101,242,0.35); }
+  .sky .ver   { color: #94a3b8; }
+  .sky .logo  { color: #3730a3; }
+  .sky .dot   { background: #5865f2; box-shadow: 0 0 8px rgba(88,101,242,0.5); }
+  .sky .status{ background: rgba(255,255,255,0.6); border: 1px solid rgba(88,101,242,0.15); color: #6366f1; }
+  .sky .win   { color: #94a3b8; }
+
+  /* ── Option C: Warm Ivory ── */
+  .ivory { background: rgba(255,253,247,0.88); border: 1px solid rgba(0,0,0,0.07); box-shadow: 0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1); }
+  .ivory .bar  { background: rgba(255,255,255,0.65); border-bottom: 1px solid rgba(0,0,0,0.06); }
+  .ivory .tabs { background: transparent; border-bottom: 1px solid rgba(0,0,0,0.06); }
+  .ivory .tab.active { color: #111827; border-bottom: 2px solid #5865f2; }
+  .ivory .tab  { color: #a8a09a; }
+  .ivory .content { background: transparent; }
+  .ivory .lbl  { color: #78716c; }
+  .ivory .inp  { background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.09); color: #111827; }
+  .ivory .footer { background: rgba(255,255,255,0.45); border-top: 1px solid rgba(0,0,0,0.06); }
+  .ivory .save  { background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.09); color: #44403c; }
+  .ivory .watch { background: #5865f2; border: none; color: #fff; box-shadow: 0 4px 14px rgba(88,101,242,0.30); }
+  .ivory .ver   { color: #a8a09a; }
+  .ivory .logo  { color: #111827; }
+  .ivory .dot   { background: #5865f2; box-shadow: 0 0 8px rgba(88,101,242,0.35); }
+  .ivory .status{ background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.07); color: #78716c; }
+  .ivory .win   { color: #a8a09a; }
+
+  /* ── Shared structure ── */
+  .bar { display:flex; align-items:center; justify-content:space-between; height:36px; padding:0 10px 0 12px; }
+  .logo-wrap { display:flex; align-items:center; gap:6px; }
+  .dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .logo { font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; }
+  .status { font-size:9px; font-weight:600; letter-spacing:0.07em; padding:2px 8px; border-radius:20px; text-transform:uppercase; }
+  .win  { font-size:12px; display:flex; gap:4px; }
+  .win span { width:24px; height:24px; display:flex; align-items:center; justify-content:center; border-radius:4px; cursor:pointer; }
+
+  .tabs { display:flex; gap:2px; padding:0 10px; }
+  .tab  { padding:7px 12px; font-size:10px; font-weight:500; border-bottom:2px solid transparent; margin-bottom:-1px; cursor:pointer; }
+
+  .content { padding:12px 14px; display:flex; flex-direction:column; gap:8px; }
+  .row { display:flex; align-items:center; gap:8px; }
+  .lbl { flex:0 0 52px; font-size:10px; font-weight:500; text-align:right; }
+  .inp { flex:1; height:26px; border-radius:5px; padding:0 8px; font-size:10px; display:flex; align-items:center; }
+  .inp.placeholder { font-size:9px; opacity:0.5; }
+
+  .footer { padding:10px 12px 12px; display:flex; flex-direction:column; gap:7px; }
+  .save { width:100%; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:500; cursor:pointer; }
+  .watch { width:100%; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; letter-spacing:0.03em; gap:6px; cursor:pointer; }
+  .ver { font-size:9px; text-align:center; }
+
+  .cards { gap: 16px; }
+  .card { cursor: pointer; }
+  .card .content-wrap { margin-top: 10px; }
+</style>
+
+<div class="cards">
+
+  <!-- A: Pearl White -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Pearl White</h3>
+      <p>Pure white glass, blurple accents. Crisp and professional.</p>
+      <div class="app-mock pearl" style="margin-top:10px">
+        <div class="bar">
+          <div class="logo-wrap"><div class="dot"></div><span class="logo">QPopCV</span></div>
+          <span class="status">Stopped</span>
+          <div class="win"><span>−</span><span>✕</span></div>
+        </div>
+        <div class="tabs">
+          <div class="tab active">Discord</div>
+          <div class="tab">Capture</div>
+          <div class="tab">Images</div>
+        </div>
+        <div class="content">
+          <div class="row"><span class="lbl">Webhook</span><div class="inp placeholder">https://discord.com/api/…</div></div>
+          <div class="row"><span class="lbl">User ID</span><div class="inp placeholder">17–19 digit snowflake</div></div>
+        </div>
+        <div class="footer">
+          <div class="save">Save Configuration</div>
+          <div class="watch">▶ &nbsp;Watch</div>
+          <div class="ver">v1.0.35 · Up to date</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- B: Sky Frost -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Sky Frost</h3>
+      <p>Blue-tinted glass, indigo labels. Softer, more Discord-native feel.</p>
+      <div class="app-mock sky" style="margin-top:10px">
+        <div class="bar">
+          <div class="logo-wrap"><div class="dot"></div><span class="logo">QPopCV</span></div>
+          <span class="status">Stopped</span>
+          <div class="win"><span>−</span><span>✕</span></div>
+        </div>
+        <div class="tabs">
+          <div class="tab active">Discord</div>
+          <div class="tab">Capture</div>
+          <div class="tab">Images</div>
+        </div>
+        <div class="content">
+          <div class="row"><span class="lbl">Webhook</span><div class="inp placeholder">https://discord.com/api/…</div></div>
+          <div class="row"><span class="lbl">User ID</span><div class="inp placeholder">17–19 digit snowflake</div></div>
+        </div>
+        <div class="footer">
+          <div class="save">Save Configuration</div>
+          <div class="watch">▶ &nbsp;Watch</div>
+          <div class="ver">v1.0.35 · Up to date</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- C: Warm Ivory -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Warm Ivory</h3>
+      <p>Cream-tinted glass, warm neutral text. Soft and easy on the eyes.</p>
+      <div class="app-mock ivory" style="margin-top:10px">
+        <div class="bar">
+          <div class="logo-wrap"><div class="dot"></div><span class="logo">QPopCV</span></div>
+          <span class="status">Stopped</span>
+          <div class="win"><span>−</span><span>✕</span></div>
+        </div>
+        <div class="tabs">
+          <div class="tab active">Discord</div>
+          <div class="tab">Capture</div>
+          <div class="tab">Images</div>
+        </div>
+        <div class="content">
+          <div class="row"><span class="lbl">Webhook</span><div class="inp placeholder">https://discord.com/api/…</div></div>
+          <div class="row"><span class="lbl">User ID</span><div class="inp placeholder">17–19 digit snowflake</div></div>
+        </div>
+        <div class="footer">
+          <div class="save">Save Configuration</div>
+          <div class="watch">▶ &nbsp;Watch</div>
+          <div class="ver">v1.0.35 · Up to date</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
