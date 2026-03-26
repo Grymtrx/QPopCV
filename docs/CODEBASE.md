@@ -17,8 +17,8 @@ QPopCV/
 │   └── KNOWN_ISSUES.md              Bugs, security issues, tech debt
 ├── qpopcv/                          Main package
 │   ├── __init__.py                  Re-exports QPopApp
-│   ├── app_ui.py                    GUI (507 lines)
-│   ├── config.py                    Config management (37 lines)
+│   ├── app_ui.py                    GUI (656 lines)
+│   ├── config.py                    Config management (45 lines)
 │   ├── config.json                  Runtime config (user-editable)
 │   ├── discord_client.py            Discord HTTP wrapper (23 lines)
 │   ├── watcher.py                   Detection engine (255 lines)
@@ -71,7 +71,7 @@ Central config constants and JSON load/save. Single source of truth for path res
 | `APP_DIR` | `Path(sys.executable).parent` or `Path(__file__).parent` | Root dir (frozen vs source) |
 | `_MEDIA_ROOT` | `sys._MEIPASS` (frozen) or `APP_DIR` (source) | Base for media assets; uses PyInstaller's temp dir when frozen onefile |
 | `MEDIA_DIR` | `_MEDIA_ROOT / "media"` | Built-in reference image directory |
-| `APP_VERSION` | `"1.0.10"` | Bumped for releases |
+| `APP_VERSION` | `"1.0.13"` | Bumped for releases |
 | `CONFIG_PATH` | `APP_DIR / "config.json"` | Config file path |
 | `DISCORD_SERVER_URL` | `"https://discord.gg/KpupS6N3Zj"` | Community invite (permanent link) |
 | `DEFAULT_CONFIG` | dict | Fallback values when config.json missing or corrupt |
@@ -81,7 +81,7 @@ Central config constants and JSON load/save. Single source of truth for path res
 ```python
 def load_config() -> Dict[str, object]
 ```
-Reads `config.json`, merges over `DEFAULT_CONFIG`. On any read/parse error logs `logger.warning("Failed to load config, using defaults: %s", exc)` and returns `DEFAULT_CONFIG.copy()`.
+Reads `config.json`, merges over `DEFAULT_CONFIG`. Migrates the old `reference_image_path` (str) key into `reference_image_paths` (list) if present. On any read/parse error logs `logger.warning("Failed to load config, using defaults: %s", exc)` and returns `DEFAULT_CONFIG.copy()`.
 
 ```python
 def save_config(config: Dict[str, object]) -> None
@@ -92,9 +92,9 @@ Serialises the dict as indented JSON and writes to `CONFIG_PATH`. No error handl
 
 ## `qpopcv/app_ui.py`
 
-**Lines:** 507
+**Lines:** 656
 
-All GUI code. Built with `customtkinter` (CTk). Uses a single `card` frame inside a `CTk` root window (360×220 min size).
+All GUI code. Built with `customtkinter` (CTk). Uses a single `card` frame inside a `CTk` root window (360×280 min size).
 
 ### Class `QPopApp`
 
@@ -116,7 +116,10 @@ class QPopApp:
 | `update_manager` | `UpdateManager` | Update check/install coordinator |
 | `webhook_var` | `ctk.StringVar` | Bound to webhook URL entry |
 | `user_var` | `ctk.StringVar` | Bound to user ID entry |
-| `ref_var` | `ctk.StringVar` | Bound to reference image path entry |
+| `_ref_rows` | `List[Tuple]` | `(row_frame, StringVar, browse_btn, remove_btn)` per reference image row |
+| `_ref_section` | `ctk.CTkFrame` | Container for the full reference images section |
+| `_ref_rows_frame` | `ctk.CTkFrame` | Inner container holding the dynamic entry rows |
+| `_add_ref_btn` | `ctk.CTkButton` | "Add additional ref image" button; hidden at 5-image limit |
 | `status_label` | `ctk.CTkLabel` | Shows ● Stopped / ● Watching / ● Detected! |
 | `version_and_update` | `ctk.CTkLabel` | Shows version + update status (clickable) |
 
@@ -126,9 +129,10 @@ class QPopApp:
 |-----|---------|
 | 0 | Discord Webhook label + entry |
 | 1 | Discord User ID label + entry |
-| 2 | Reference Image label + entry + "Add" button |
-| 3 | Button row: Discord | Test Connection | Save Config | Watch |
-| 4 | Status label (centered) + Version/update label |
+| 2 | Reference Images sub-frame (dynamic: 1–5 rows of entry + browse + remove; "+ Add additional ref image" button) |
+| 3 | Game Monitor label + dropdown |
+| 4 | Button row: Discord | Test Connection | Save Config | Watch |
+| 5 | Status label (centered) + Version/update label |
 
 #### Key Methods
 
@@ -144,6 +148,19 @@ def _flash_detected_status(self) -> None
 Status label helpers. `_flash_detected_status` shows "● Detected!" for 1.6s then restores previous state.
 
 ```python
+def _add_ref_row(self, path: str = "") -> None
+def _remove_ref_row(self, idx: int) -> None
+def _refresh_remove_btns(self) -> None
+def _refresh_add_btn_position(self) -> None
+```
+Dynamic reference image row management. `_add_ref_row` creates an entry + browse + remove row (max 5). `_remove_ref_row` destroys the row and re-indexes remaining buttons (min 1). Remove button is disabled when only 1 row remains; Add button is hidden when 5 rows exist.
+
+```python
+def _get_ref_paths(self) -> List[str]
+```
+Returns list of stripped path strings from all current `_ref_rows`.
+
+```python
 def _update_config_from_ui(self) -> None
 ```
 Pulls current StringVar values into `self.config`. Called before save and before starting watcher.
@@ -151,7 +168,7 @@ Pulls current StringVar values into `self.config`. Called before save and before
 ```python
 def on_save(self) -> None
 ```
-Validates via `validate_discord_core` + `validate_reference_image`, then calls `save_config`.
+Validates via `validate_discord_core` + `validate_reference_images`, then calls `save_config`.
 
 ```python
 def on_test_discord(self) -> None
@@ -207,13 +224,14 @@ class WatcherSettings:
     user_id: str
     check_interval: float = 0.5
     confidence: float = 0.6
-    reference_image_path: Optional[Path] = None
+    reference_image_paths: List[Path] = field(default_factory=list)
+    monitor_index: int = 0
 
     @classmethod
     def from_config(cls, config: Dict[str, object]) -> "WatcherSettings"
 ```
 
-`from_config` converts the loose `dict` from `load_config()` into a typed dataclass. Handles empty `reference_image_path` → `None`.
+`from_config` converts the loose `dict` from `load_config()` into a typed dataclass. Reads `reference_image_paths` as a list of strings, converts each to `Path`, filters blanks.
 
 ### Class `QPopWatcher`
 
@@ -246,7 +264,7 @@ Returns `(screen_w//3, 0, screen_w//3, screen_h//2)` — middle third of screen,
 ```python
 def _prepare_reference_images(self) -> List[Tuple[str, Image.Image]]
 ```
-Loads user reference image at 0.9×, 1.0×, 1.1× scales. Returns empty list if no valid path (disables detection).
+Loads each path in `reference_image_paths` at 0.9×, 1.0×, 1.1× scales (up to 15 variants total). Skips missing paths with a warning. Returns empty list if none are valid (disables detection).
 
 ```python
 def _find_queue_popup(self, screenshot) -> Optional[str]
@@ -291,7 +309,7 @@ Calls `send_discord_mention` with the message `"connected ✅"`.
 
 ## `qpopcv/validators.py`
 
-**Lines:** 50
+**Lines:** 72
 
 Input validation functions. Each shows a `messagebox` on failure and returns `bool`.
 
@@ -306,9 +324,13 @@ def validate_discord_core(webhook_url: str, user_id: str) -> bool
 ```python
 def validate_reference_image(path_str: str) -> bool
 ```
-- Rejects empty path
-- Rejects non-existent path
-- Rejects directories
+- Rejects empty path, non-existent path, or directories (single-path legacy helper)
+
+```python
+def validate_reference_images(paths: List[str]) -> bool
+```
+- Requires at least one non-empty path
+- Each non-empty path must exist and not be a directory; shows the specific bad path on failure
 
 
 ---
@@ -400,7 +422,7 @@ Color constants, Tailwind CSS palette inspired.
 User input (GUI StringVars)
     │
     ▼ on_save() / _start_watch()
-validate_discord_core() + validate_reference_image()
+validate_discord_core() + validate_reference_images()
     │
     ▼
 _update_config_from_ui() → self.config dict

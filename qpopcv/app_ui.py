@@ -136,29 +136,21 @@ class QPopApp:
         ).grid(row=1, column=1, columnspan=2, padx=(4, 6), pady=3, sticky="we")
 
         # Row 2: Reference Images (dynamic sub-frame)
-        ref_section = ctk.CTkFrame(card, fg_color="transparent")
-        ref_section.grid(row=2, column=0, columnspan=3, padx=0, pady=0, sticky="we")
-        ref_section.grid_columnconfigure(0, weight=0)
-        ref_section.grid_columnconfigure(1, weight=1)
-        ref_section.grid_columnconfigure(2, weight=0)
-        ref_section.grid_columnconfigure(3, weight=0)
-        self._ref_section = ref_section
-
         ctk.CTkLabel(
-            ref_section,
+            card,
             text="Ref Images",
             text_color=TEXT_PRIMARY,
             font=("Segoe UI", 10),
-        ).grid(row=0, column=0, padx=6, pady=3, sticky="nw")
+        ).grid(row=2, column=0, padx=6, pady=3, sticky="nw")
 
-        # Container for image rows (rows 0..N inside _ref_rows_frame)
-        self._ref_rows_frame = ctk.CTkFrame(ref_section, fg_color="transparent")
-        self._ref_rows_frame.grid(row=0, column=1, columnspan=3, padx=0, pady=0, sticky="we")
-        self._ref_rows_frame.grid_columnconfigure(0, weight=1)
-        self._ref_rows_frame.grid_columnconfigure(1, weight=0)
-        self._ref_rows_frame.grid_columnconfigure(2, weight=0)
+        ref_section = ctk.CTkFrame(card, fg_color="transparent")
+        ref_section.grid(row=2, column=1, columnspan=2, padx=(4, 6), pady=0, sticky="we")
+        ref_section.grid_columnconfigure(0, weight=1)
+        ref_section.grid_columnconfigure(1, weight=0)
+        ref_section.grid_columnconfigure(2, weight=0)
+        self._ref_section = ref_section
 
-        # Add button row (always last inside ref_section)
+        # Add button (placed dynamically by _refresh_add_btn_position)
         self._add_ref_btn = ctk.CTkButton(
             ref_section,
             text="+ Add Image",
@@ -173,7 +165,6 @@ class QPopApp:
             font=("Segoe UI", 9),
             command=self._add_ref_row,
         )
-        # Will be placed dynamically by _refresh_add_btn_position()
 
         # Populate from config
         saved_paths: list = self.config.get("reference_image_paths", [])  # type: ignore[assignment]
@@ -191,7 +182,7 @@ class QPopApp:
             font=("Segoe UI", 10),
         ).grid(row=3, column=0, padx=6, pady=3, sticky="w")
 
-        saved_idx = int(self.config.get("monitor_index", 0))
+        saved_idx = int(str(self.config.get("monitor_index", 0)))
         saved_idx = max(0, min(saved_idx, len(self._monitor_labels) - 1))
         self.monitor_var = ctk.StringVar(value=self._monitor_labels[saved_idx])
         ctk.CTkOptionMenu(
@@ -335,7 +326,7 @@ class QPopApp:
         idx = len(self._ref_rows)
         var = ctk.StringVar(value=path)
 
-        row_frame = ctk.CTkFrame(self._ref_rows_frame, fg_color="transparent")
+        row_frame = ctk.CTkFrame(self._ref_section, fg_color="transparent")
         row_frame.grid(row=idx, column=0, columnspan=3, padx=0, pady=1, sticky="we")
         row_frame.grid_columnconfigure(0, weight=1)
         row_frame.grid_columnconfigure(1, weight=0)
@@ -350,7 +341,7 @@ class QPopApp:
             border_width=1,
             text_color=TEXT_PRIMARY,
         )
-        entry.grid(row=0, column=0, padx=(4, 2), pady=0, sticky="we")
+        entry.grid(row=0, column=0, padx=(0, 2), pady=0, sticky="we")
 
         browse_btn = ctk.CTkButton(
             row_frame,
@@ -410,8 +401,8 @@ class QPopApp:
     def _refresh_add_btn_position(self) -> None:
         if len(self._ref_rows) < self.MAX_REF_IMAGES:
             self._add_ref_btn.grid(
-                row=1, column=1, columnspan=2,
-                padx=(4, 6), pady=(1, 3), sticky="w",
+                row=len(self._ref_rows), column=0, columnspan=3,
+                padx=0, pady=(1, 3), sticky="w",
             )
         else:
             self._add_ref_btn.grid_remove()
