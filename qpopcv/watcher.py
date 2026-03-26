@@ -244,12 +244,13 @@ class QPopWatcher:
                     variant = base.resize((new_w, new_h), Image.BICUBIC)
                 prepared.append((f"user_ref_{factor:.1f}", variant))
 
-            print(
-                f"Loaded ONLY user reference image with {len(prepared)} scale variants "
-                f"from: {self._reference_path}"
+            logger.info(
+                "Loaded user reference image with %d scale variants from: %s",
+                len(prepared),
+                self._reference_path,
             )
             return prepared
 
         # No fallback at all while testing
-        print("No valid user reference image; detection will be disabled (no fallbacks).")
+        logger.warning("No valid user reference image; detection will be disabled (no fallbacks).")
         return prepared
