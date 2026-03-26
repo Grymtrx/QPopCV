@@ -68,7 +68,7 @@ class QPopApp:
         # Window title
         self.root.title("QPopCV Watcher App")
         self.root.geometry("360x280")
-        self.root.minsize(360, 280)
+        self.root.minsize(360, 1)
         self.root.resizable(True, True)
         self.root.configure(fg_color=BG_COLOR)
 
@@ -141,10 +141,10 @@ class QPopApp:
             text="Ref Images",
             text_color=TEXT_PRIMARY,
             font=("Segoe UI", 10),
-        ).grid(row=2, column=0, padx=6, pady=3, sticky="nw")
+        ).grid(row=3, column=0, padx=6, pady=3, sticky="nw")
 
         ref_section = ctk.CTkFrame(card, fg_color="transparent")
-        ref_section.grid(row=2, column=1, columnspan=2, padx=(4, 6), pady=0, sticky="we")
+        ref_section.grid(row=3, column=1, columnspan=2, padx=(4, 6), pady=0, sticky="we")
         ref_section.grid_columnconfigure(0, weight=1)
         ref_section.grid_columnconfigure(1, weight=0)
         ref_section.grid_columnconfigure(2, weight=0)
@@ -173,14 +173,15 @@ class QPopApp:
         for p in saved_paths:
             self._add_ref_row(str(p))
         self._refresh_add_btn_position()
+        self.root.after(0, self._fit_window)
 
-        # Row 3: Game Monitor
+        # Row 2: Game Monitor
         ctk.CTkLabel(
             card,
             text="Game Monitor",
             text_color=TEXT_PRIMARY,
             font=("Segoe UI", 10),
-        ).grid(row=3, column=0, padx=6, pady=3, sticky="w")
+        ).grid(row=2, column=0, padx=6, pady=3, sticky="w")
 
         saved_idx = int(str(self.config.get("monitor_index", 0)))
         saved_idx = max(0, min(saved_idx, len(self._monitor_labels) - 1))
@@ -198,7 +199,7 @@ class QPopApp:
             dropdown_text_color=TEXT_PRIMARY,
             dropdown_hover_color="#e5e7eb",
             font=("Segoe UI", 10),
-        ).grid(row=3, column=1, columnspan=2, padx=(4, 6), pady=3, sticky="we")
+        ).grid(row=2, column=1, columnspan=2, padx=(4, 6), pady=3, sticky="we")
 
         # Row 4: Buttons row
         btn_frame = ctk.CTkFrame(card, fg_color="transparent")
@@ -295,6 +296,10 @@ class QPopApp:
         self.version_and_update.bind("<Button-1>", self.on_update_click)
 
 
+    def _fit_window(self) -> None:
+        self.root.update_idletasks()
+        self.root.geometry(f"360x{self.root.winfo_reqheight()}")
+
     # --------- Status label helpers ---------
 
     def _set_status(self, text: str, color: str) -> None:
@@ -374,6 +379,7 @@ class QPopApp:
         self._ref_rows.append((row_frame, var, browse_btn, remove_btn))
         self._refresh_remove_btns()
         self._refresh_add_btn_position()
+        self.root.after(0, self._fit_window)
 
     def _remove_ref_row(self, idx: int) -> None:
         if len(self._ref_rows) <= 1:
@@ -391,6 +397,7 @@ class QPopApp:
 
         self._refresh_remove_btns()
         self._refresh_add_btn_position()
+        self.root.after(0, self._fit_window)
 
     def _refresh_remove_btns(self) -> None:
         """Disable remove button when only 1 row remains."""
