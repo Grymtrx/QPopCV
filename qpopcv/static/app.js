@@ -299,6 +299,26 @@ async function doStopWatch() {
   }
 }
 
+// ── Save config ────────────────────────────────────────────────────────────────
+
+$('btn-save').addEventListener('click', async () => {
+  const btn = $('btn-save');
+  btn.textContent = 'Saving…';
+  try {
+    const result = await apiPost('/api/save_config', collectFormData());
+    if (result.ok) {
+      btn.textContent = 'Saved!';
+      setTimeout(() => { btn.textContent = 'Save'; }, 1500);
+    } else {
+      btn.textContent = 'Save';
+      showToast('error', result.error || 'Save failed.');
+    }
+  } catch (e) {
+    btn.textContent = 'Save';
+    showToast('error', 'Save request failed.');
+  }
+});
+
 // ── Discord buttons ────────────────────────────────────────────────────────────
 
 $('btn-test').addEventListener('click', async () => {
@@ -341,6 +361,10 @@ function addRefRow(path) {
   const row = document.createElement('div');
   row.className = 'ref-row';
 
+  const label = document.createElement('span');
+  label.className = 'field-label';
+  label.textContent = 'Ref Image';
+
   const input = document.createElement('input');
   input.type = 'text';
   input.className = 'field-input';
@@ -375,6 +399,7 @@ function addRefRow(path) {
     measureAndResize();
   });
 
+  row.appendChild(label);
   row.appendChild(input);
   row.appendChild(browseBtn);
   row.appendChild(removeBtn);

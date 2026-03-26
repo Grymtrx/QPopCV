@@ -697,6 +697,30 @@ html, body {
   line-height: 1;
 }
 
+/* ── Save button ─────────────────────────────────────────────── */
+
+.save-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  transition: color var(--transition);
+}
+
+.save-btn:hover {
+  color: var(--text);
+}
+
+.save-btn:active {
+  opacity: 0.6;
+}
+
 /* ── Version / update row ────────────────────────────────────── */
 
 .version-row {

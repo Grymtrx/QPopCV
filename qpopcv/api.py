@@ -144,6 +144,16 @@ class Api:
             self._watcher = None
         return {"ok": True}
 
+    def save_config_data(self, data: dict) -> dict:
+        """Save settings without starting the watcher."""
+        self.config["webhook_url"] = str(data.get("webhook_url", "")).strip()
+        self.config["user_id"] = str(data.get("user_id", "")).strip()
+        paths = [str(p) for p in data.get("reference_image_paths", [])]
+        self.config["reference_image_paths"] = [p for p in paths if p.strip()]
+        self.config["monitor_index"] = int(data.get("monitor_index", 0))
+        save_config(self.config)
+        return {"ok": True}
+
     # ── Discord ────────────────────────────────────────────────────────────────
 
     def test_discord(self, data: dict) -> dict:
