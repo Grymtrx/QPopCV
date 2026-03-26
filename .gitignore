@@ -35,8 +35,8 @@ dist/
 # ------------------------------
 *.log
 
-# Config generated at runtime (if ever moved outside package)
-config.json
+# User-specific config (personal webhook, user ID, ref images — never committed)
+config.local.json
 
 # ------------------------------
 # OS / editor cruft
