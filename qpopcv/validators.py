@@ -17,6 +17,13 @@ def validate_discord_core(webhook_url: str, user_id: str) -> bool:
         )
         return False
 
+    if not webhook_url.startswith("https://discord.com/api/webhooks/"):
+        messagebox.showwarning(
+            "Invalid Discord Webhook URL",
+            "Webhook URL must start with https://discord.com/api/webhooks/",
+        )
+        return False
+
     if not user_id:
         messagebox.showwarning(
             "Missing Discord user ID",

@@ -58,6 +58,19 @@ class TestValidateDiscordCore:
         assert validate_discord_core("   ", VALID_USER_ID) is False
         mb_stub.showwarning.assert_called_once()
 
+    def test_non_discord_url_returns_false(self):
+        assert validate_discord_core("https://example.com/webhook", VALID_USER_ID) is False
+        mb_stub.showwarning.assert_called_once()
+
+    def test_http_discord_url_returns_false(self):
+        # Must be HTTPS
+        assert validate_discord_core("http://discord.com/api/webhooks/123/token", VALID_USER_ID) is False
+        mb_stub.showwarning.assert_called_once()
+
+    def test_discord_wrong_path_returns_false(self):
+        assert validate_discord_core("https://discord.com/channels/123", VALID_USER_ID) is False
+        mb_stub.showwarning.assert_called_once()
+
     # --- User ID ---
 
     def test_empty_user_id_returns_false(self):

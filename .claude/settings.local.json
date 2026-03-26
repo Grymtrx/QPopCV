@@ -5,7 +5,18 @@
       "Bash(pip show:*)",
       "Bash(py -3.11 -m pytest -v)",
       "Bash(py -3.11 -m pip install pytest)",
-      "Bash(py -3.11 -m pip install requests pillow pyautogui customtkinter)"
+      "Bash(py -3.11 -m pip install requests pillow pyautogui customtkinter)",
+      "Bash(.venv/Scripts/python -m pytest tests/test_validators.py tests/test_config.py tests/test_updater.py tests/test_watcher.py -v)",
+      "Bash(.venv/Scripts/pip install:*)",
+      "Bash(.venv/Scripts/pip.exe install:*)",
+      "Bash(python -c \"import pytest; print\\(pytest.__version__\\)\")",
+      "Bash(pip install:*)",
+      "Bash(python -m pytest tests/test_validators.py tests/test_config.py tests/test_updater.py tests/test_watcher.py -v)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(where python:*)",
+      "Bash(python -c \"import sys; print\\(sys.executable\\)\")",
+      "Bash(C:/Python314/python.exe -m pytest --version)",
+      "Bash(C:/Python314/python.exe -m pip install pytest -q)"
     ]
   }
 }

@@ -2,5 +2,4 @@ customtkinter
 pyautogui
 pillow
 requests
-opencv-python
 pytest

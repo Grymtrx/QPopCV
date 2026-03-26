@@ -19,7 +19,6 @@ dependencies = [
   "pyautogui",
   "pillow",
   "requests",
-  "opencv-python"
 ]
 
 keywords = ["wow", "world-of-warcraft", "discord", "queue", "vision", "gaming"]
@@ -39,6 +38,10 @@ Source = "https://github.com/Grymtrx/QPopCV"
 #   After `pip install .`, user can run `qpopcv` from terminal.
 [project.scripts]
 qpopcv = "qpopcv:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["qpopcv"]

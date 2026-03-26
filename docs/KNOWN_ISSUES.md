@@ -21,10 +21,8 @@
 
 ### High
 
-#### SEC-02 — No Webhook URL Format Validation
-- **File:** `qpopcv/validators.py:8-34`
-- **Detail:** `validate_discord_core` only checks that `webhook_url` is non-empty. Any string (including non-HTTPS or non-Discord URLs) will be accepted and POSTed to by the watcher.
-- **Fix:** Add a regex or prefix check: `webhook_url.startswith("https://discord.com/api/webhooks/")`.
+#### ~~SEC-02 — No Webhook URL Format Validation~~ ✅ Fixed in 1.0.7
+- `validate_discord_core` now rejects any URL that does not start with `https://discord.com/api/webhooks/`.
 
 #### SEC-03 — Discord User ID Allows Any 18-Digit Number
 - **File:** `qpopcv/validators.py:27`
@@ -104,10 +102,8 @@
 
 ## Missing Features / Gaps
 
-#### GAP-01 — Zero Automated Tests
-- **Detail:** The `tests/` directory contains only manual utility scripts. There is no pytest setup, no unit tests, no mocks.
-- **Impact:** Every change is manually tested. Regressions are hard to catch.
-- **Suggested test targets:** `validators.py` (pure functions), `updater._normalize_version`, `updater._is_newer_version`, `watcher._compute_top_center_region`, config load/save round-trip.
+#### ~~GAP-01 — Zero Automated Tests~~ ✅ Fixed in 1.0.7
+- 93 pytest tests across `test_validators.py`, `test_config.py`, `test_updater.py`, and `test_watcher.py`. Run with: `python -m pytest`.
 
 #### GAP-02 — No Log File Output
 - **Detail:** Logging goes only to console (stdout). If the app is run from a `.exe` with no terminal, all log output is lost.
@@ -128,10 +124,8 @@
 #### GAP-06 — `check_interval` Not Exposed in UI
 - **Detail:** Same as above for `check_interval` (default `0.15s` = ~6.7 FPS capture). Power users may want to reduce CPU usage.
 
-#### GAP-07 — `opencv-python` in Requirements but Not Used
-- **File:** `requirements.txt`
-- **Detail:** `opencv-python` is listed as a dependency but is never imported in any source file.
-- **Fix:** Remove from `requirements.txt`. This reduces install size (~40MB) and avoids false dependency expectations.
+#### ~~GAP-07 — `opencv-python` in Requirements but Not Used~~ ✅ Fixed in 1.0.7
+- Removed from `requirements.txt` and `pyproject.toml`.
 
 ---
 
@@ -142,9 +136,9 @@ Priority order for a future Claude session:
 1. **SEC-01** — Remove hardcoded webhook (security critical, 5 min fix)
 2. ~~**BUG-02** — Surface detection disabled state to user (UX critical)~~ ✅ Fixed in 1.0.5
 3. ~~**AP-01** — Replace all `print()` in watcher with `logger` calls (code quality)~~ ✅ Fixed in 1.0.6
-4. **GAP-07** — Remove unused `opencv-python` from requirements
-5. **SEC-02** — Add webhook URL domain validation
-6. **GAP-01** — Add pytest + a few unit tests for pure functions
+4. ~~**GAP-07** — Remove unused `opencv-python` from requirements~~ ✅ Fixed in 1.0.7
+5. ~~**SEC-02** — Add webhook URL domain validation~~ ✅ Fixed in 1.0.7
+6. ~~**GAP-01** — Add pytest + a few unit tests for pure functions~~ ✅ Fixed in 1.0.7
 7. **GAP-02** — Add rotating file log handler
 8. **AP-02** — Consolidate `MEDIA_DIR` into `config.py`
 9. **GAP-03** — Multi-monitor region support
