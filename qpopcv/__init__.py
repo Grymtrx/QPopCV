@@ -2,10 +2,10 @@
 QPopCV — World of Warcraft queue pop computer-vision discord notifier.
 
 This package contains:
-- The CustomTkinter UI (`QPopApp`)
+- The pywebview UI (`QPopApp`)
 - The queue watcher (`QPopWatcher`)
 - The updater manager
-- Helpers for Discord, validation, and theme
+- Helpers for Discord, validation, and configuration
 """
 
 from .app_ui import QPopApp

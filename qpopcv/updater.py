@@ -1,10 +1,9 @@
 from __future__ import annotations
-import tkinter.messagebox as messagebox
-
 
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Sequence
+import logging
 import os
 import subprocess
 import re
@@ -14,6 +13,8 @@ import tempfile
 import zipfile
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 GITHUB_API = "https://api.github.com/repos/{owner}/{repo}/releases/latest"
@@ -296,12 +297,6 @@ endlocal
         try:
             os.startfile(str(bat_path))
         except Exception as exc:
-            # Last-resort debug message; if this fires, we know launch failed.
-            try:
-                messagebox.showerror(
-                    "QPopCV Updater",
-                    f"Failed to launch updater script:\n{exc}",
-                )
-            except Exception:
-                pass
+            logger.error("Failed to launch updater script: %s", exc)
+            raise
 

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QPopCV</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="scanlines"></div>
+
+  <div class="app-card">
+
+    <!-- ── Header ─────────────────────────────────────────────────── -->
+    <header class="header">
+      <div class="logo">
+        <span class="logo-gem">◆</span>
+        <span class="logo-text">QPopCV</span>
+      </div>
+      <div class="status-pill" id="status-pill" data-state="idle">
+        <span class="status-orb" id="status-orb"></span>
+        <span class="status-text" id="status-text">Stopped</span>
+      </div>
+    </header>
+
+    <!-- ── Tab bar ────────────────────────────────────────────────── -->
+    <nav class="tab-bar">
+      <button class="tab-btn active" data-tab="discord">Discord</button>
+      <button class="tab-btn" data-tab="capture">Capture</button>
+      <button class="tab-btn" data-tab="images">Images</button>
+    </nav>
+
+    <!-- ── Discord tab ────────────────────────────────────────────── -->
+    <div class="tab-panel active" id="tab-discord">
+      <div class="field-row">
+        <label class="field-label" for="webhook-url">Webhook</label>
+        <input class="field-input" type="text" id="webhook-url"
+               placeholder="https://discord.com/api/webhooks/…" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field-row">
+        <label class="field-label" for="user-id">User ID</label>
+        <input class="field-input" type="text" id="user-id"
+               placeholder="17–19 digit Discord snowflake" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" id="btn-test">Test Connection</button>
+        <button class="btn btn-discord" id="btn-discord">Join Discord</button>
+      </div>
+    </div>
+
+    <!-- ── Capture tab ────────────────────────────────────────────── -->
+    <div class="tab-panel" id="tab-capture">
+      <div class="field-row">
+        <label class="field-label" for="monitor-select">Monitor</label>
+        <select class="field-select" id="monitor-select"></select>
+      </div>
+      <div class="divider"></div>
+      <div class="section-label">Detection Zone</div>
+      <div class="zone-grid">
+        <label class="zone-label">X</label>
+        <input class="field-input zone-input" disabled placeholder="auto">
+        <label class="zone-label">Y</label>
+        <input class="field-input zone-input" disabled placeholder="auto">
+        <label class="zone-label">W</label>
+        <input class="field-input zone-input" disabled placeholder="auto">
+        <label class="zone-label">H</label>
+        <input class="field-input zone-input" disabled placeholder="auto">
+      </div>
+      <p class="hint-text">Custom detection zone — coming in a future update</p>
+    </div>
+
+    <!-- ── Images tab ─────────────────────────────────────────────── -->
+    <div class="tab-panel" id="tab-images">
+      <div class="ref-list" id="ref-list"></div>
+      <button class="btn btn-add-image" id="btn-add-image">+ Add Image</button>
+    </div>
+
+    <!-- ── Footer ─────────────────────────────────────────────────── -->
+    <footer class="footer">
+      <button class="watch-btn" id="watch-btn">
+        <span class="watch-btn-icon">▶</span>
+        <span class="watch-btn-text">Watch</span>
+      </button>
+      <div class="version-row">
+        <span class="version-text" id="version-text">v…</span>
+        <span class="update-dot">·</span>
+        <span class="update-text" id="update-text">Checking…</span>
+      </div>
+    </footer>
+
+  </div><!-- /.app-card -->
+
+  <!-- ── Toast container ────────────────────────────────────────── -->
+  <div class="toast-container" id="toasts"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
