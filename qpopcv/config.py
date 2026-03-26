@@ -1,14 +1,21 @@
 from pathlib import Path
 from typing import Dict
 import json
+import logging
 import sys
 
 if getattr(sys, "frozen", False):
     APP_DIR = Path(sys.executable).parent
+    _MEDIA_ROOT = Path(getattr(sys, "_MEIPASS", APP_DIR))
 else:
     APP_DIR = Path(__file__).resolve().parent
+    _MEDIA_ROOT = APP_DIR
 
-APP_VERSION = "1.0.8"
+MEDIA_DIR = _MEDIA_ROOT / "media"
+
+logger = logging.getLogger(__name__)
+
+APP_VERSION = "1.0.9"
 CONFIG_PATH = APP_DIR / "config.json"
 DISCORD_SERVER_URL = "https://discord.gg/KpupS6N3Zj"  # QPopCV Discord Server (PermaLink)
 
@@ -28,8 +35,8 @@ def load_config() -> Dict[str, object]:
             merged = DEFAULT_CONFIG.copy()
             merged.update(data)
             return merged
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("Failed to load config, using defaults: %s", exc)
     return DEFAULT_CONFIG.copy()
 
 

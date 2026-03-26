@@ -39,10 +39,8 @@
 
 ### Medium
 
-#### SEC-06 — `load_config` Silent Exception Swallowing
-- **File:** `qpopcv/config.py:31`
-- **Detail:** `except Exception: pass` silently falls back to `DEFAULT_CONFIG` on any read or JSON parse error. The user gets no feedback that their config was lost.
-- **Fix:** `except Exception: logger.warning("Failed to load config, using defaults: %s", exc)`.
+#### ~~SEC-06 — `load_config` Silent Exception Swallowing~~ ✅ Fixed in 1.0.9
+- `except Exception as exc` now logs `logger.warning("Failed to load config, using defaults: %s", exc)` instead of silently passing.
 
 ---
 
@@ -65,10 +63,8 @@
 #### ~~AP-01 — Mixed `print()` and `logging` Throughout Watcher~~ ✅ Fixed in 1.0.6
 - All `print()` calls in `watcher.py` replaced with appropriate `logger.info()` / `logger.debug()` / `logger.error()` calls.
 
-#### AP-02 — `MEDIA_DIR` Frozen/Source Logic Duplicated
-- **Files:** `qpopcv/watcher.py:18-23`, `qpopcv/updater.py:59-64`
-- **Detail:** Both modules implement their own frozen-vs-source path detection. `config.py` already has `APP_DIR` doing this for one directory.
-- **Fix:** Export `MEDIA_DIR` from `config.py` and import it in `watcher.py`.
+#### ~~AP-02 — `MEDIA_DIR` Frozen/Source Logic Duplicated~~ ✅ Fixed in 1.0.9
+- `MEDIA_DIR` (with `_MEIPASS` frozen support) now lives in `config.py`; `watcher.py` imports it from there.
 
 #### AP-03 — `assert` Used as Control Flow in Production Code
 - **File:** `qpopcv/app_ui.py:466`
@@ -135,7 +131,8 @@ Priority order for a future Claude session:
 8. ~~**SEC-05** — Batch script delayed expansion risk~~ ✅ Fixed in 1.0.8
 9. ~~**BUG-01** — Duplicate `subprocess` import~~ ✅ Fixed in 1.0.8
 10. ~~**BUG-03** — No `screenshot()` None guard~~ ✅ Fixed in 1.0.8
-11. **GAP-02** — Add rotating file log handler
-12. **AP-02** — Consolidate `MEDIA_DIR` into `config.py`
+11. ~~**SEC-06** — `load_config` silent exception swallowing~~ ✅ Fixed in 1.0.9
+12. ~~**AP-02** — Consolidate `MEDIA_DIR` into `config.py`~~ ✅ Fixed in 1.0.9
+13. **GAP-02** — Add rotating file log handler
 13. **GAP-03** — Multi-monitor region support
 14. **GAP-05/06** — Expose confidence + interval in UI

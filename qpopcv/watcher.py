@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Dict, Optional, Tuple, Callable, List
 import threading
 import time
-import sys
 from dataclasses import dataclass
 import logging
 
@@ -11,16 +10,11 @@ from pyautogui import ImageNotFoundException
 import requests
 from PIL import Image
 
+from qpopcv.config import MEDIA_DIR
+
 THROTTLE_SECONDS = 15
 
 logger = logging.getLogger(__name__)
-
-if getattr(sys, "frozen", False):
-    MEDIA_ROOT = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
-else:
-    MEDIA_ROOT = Path(__file__).resolve().parent
-
-MEDIA_DIR = MEDIA_ROOT / "media"
 
 # Built-in fallback references (for your own setup)
 REFERENCE_IMG = [
