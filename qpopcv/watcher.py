@@ -30,6 +30,7 @@ class WatcherSettings:
     check_interval: float = 0.5
     confidence: float = 0.6
     reference_image_path: Optional[Path] = None
+    watch_region: str = ""
 
     @classmethod
     def from_config(cls, config: Dict[str, object]) -> "WatcherSettings":
@@ -42,6 +43,7 @@ class WatcherSettings:
             check_interval=float(config.get("check_interval", 0.5)),
             confidence=float(config.get("confidence", 0.6)),
             reference_image_path=ref_path,
+            watch_region=str(config.get("watch_region", "")).strip(),
         )
 
 
@@ -78,7 +80,9 @@ class QPopWatcher:
         self._last_qpop_time: float = 0.0
         self._seen_once: bool = False
 
-        self._region = self._compute_top_center_region()
+        manual = self._parse_watch_region(settings.watch_region)
+        self._region = manual if manual is not None else self._compute_top_center_region()
+        self._region_source = "manual" if manual is not None else "auto (top-center)"
         self._reference_images = self._prepare_reference_images()
 
 
@@ -93,7 +97,7 @@ class QPopWatcher:
         self._thread.start()
 
         logger.info("QPopCV screen watcher started.")
-        logger.info("Region (top-center): %s", self._region)
+        logger.info("Region (%s): %s", self._region_source, self._region)
         logger.info(
             "Interval: %ss, confidence: %s",
             self._check_interval,
@@ -116,6 +120,19 @@ class QPopWatcher:
         return self._thread is not None and self._thread.is_alive()
 
     # --------- Internal Helpers ---------
+
+    @staticmethod
+    def _parse_watch_region(region_str: str) -> Optional[Tuple[int, int, int, int]]:
+        """Parse a 'x,y,w,h' region string. Returns None for empty (auto)."""
+        region_str = region_str.strip()
+        if not region_str:
+            return None
+        try:
+            x, y, w, h = (int(p.strip()) for p in region_str.split(","))
+            return x, y, w, h
+        except (ValueError, TypeError):
+            logger.warning("Invalid watch_region '%s'; falling back to auto.", region_str)
+            return None
 
     @staticmethod
     def _compute_top_center_region() -> Tuple[int, int, int, int]:

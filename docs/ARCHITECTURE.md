@@ -8,7 +8,7 @@
 
 A lightweight Windows desktop app that watches the screen for a World of Warcraft Solo Shuffle queue popup and fires a Discord webhook notification (with a user mention) the moment it appears. Users can step away from their PC while queuing, and be pinged on phone or desktop Discord. All while stayin within Blizzards TOS.
 
-**Current version:** `1.0.9`
+**Current version:** `1.0.10`
 **Target OS:** Windows (uses `pyautogui`, `os.startfile`, batch scripts)
 
 ---
@@ -157,7 +157,7 @@ Startup (250ms delay)
     │
     └─► check_for_update()
             GET https://api.github.com/repos/Grymtrx/QPopCV/releases/latest
-            Compare tag_name vs APP_VERSION ("1.0.9")
+            Compare tag_name vs APP_VERSION ("1.0.10")
             → UpdateInfo { available, latest_version, download_url }
 
 User clicks "Update available: x.x.x"
@@ -182,8 +182,9 @@ User clicks "Update available: x.x.x"
 
 | Constant             | Location        | Value                    | Description                       |
 | -------------------- | --------------- | ------------------------ | --------------------------------- |
-| `THROTTLE_SECONDS`   | `watcher.py:14` | `15`                     | Min seconds between Discord pings |
-| `APP_VERSION`        | `config.py:18`  | `"1.0.9"`                | Current version string            |
+| `THROTTLE_SECONDS`     | `watcher.py:14` | `15`                     | Min seconds between watcher Discord pings |
+| `TEST_THROTTLE_SECONDS`| `app_ui.py:21`  | `1`                      | Min seconds between test button pings     |
+| `APP_VERSION`          | `config.py:18`  | `"1.0.10"`               | Current version string                    |
 | `CONFIG_PATH`        | `config.py:19`  | `<app_dir>/config.json`  | Config file location              |
 | `DISCORD_SERVER_URL` | `config.py:20`  | Discord invite           | Community Discord link            |
 | `GITHUB_API`         | `updater.py:19` | GitHub releases endpoint | Update check URL template         |

@@ -32,7 +32,7 @@ from .theme import (
     SUCCESS,
     DETECTED,
 )
-from .validators import validate_discord_core, validate_reference_image
+from .validators import validate_discord_core, validate_reference_image, validate_watch_region
 from .discord_client import send_test_message
 
 logger = logging.getLogger(__name__)
@@ -159,9 +159,31 @@ class QPopApp:
         )
         self.ref_button.grid(row=2, column=2, padx=(2, 6), pady=3, sticky="e")
 
-        # Row 3: Buttons row
+        # Row 3: Watch Region
+        ctk.CTkLabel(
+            card,
+            text="Watch Region",
+            text_color=TEXT_PRIMARY,
+            font=("Segoe UI", 10),
+        ).grid(row=3, column=0, padx=6, pady=3, sticky="w")
+
+        self.region_var = ctk.StringVar(
+            value=str(self.config.get("watch_region", ""))
+        )
+        ctk.CTkEntry(
+            card,
+            textvariable=self.region_var,
+            placeholder_text="auto  (or x,y,w,h for multi-monitor)",
+            corner_radius=8,
+            fg_color="white",
+            border_color=CARD_BORDER,
+            border_width=1,
+            text_color=TEXT_PRIMARY,
+        ).grid(row=3, column=1, columnspan=2, padx=(4, 6), pady=3, sticky="we")
+
+        # Row 4: Buttons row
         btn_frame = ctk.CTkFrame(card, fg_color="transparent")
-        btn_frame.grid(row=3, column=0, columnspan=3, padx=6, pady=(4, 3), sticky="we")
+        btn_frame.grid(row=4, column=0, columnspan=3, padx=6, pady=(4, 3), sticky="we")
 
         btn_frame.grid_columnconfigure(0, weight=0)
         btn_frame.grid_columnconfigure(1, weight=0)
@@ -224,10 +246,10 @@ class QPopApp:
         )
         self.watch_btn.grid(row=0, column=3, padx=(0, 0), sticky="e")
 
-        # Row 4: Status + Version + Update (inline)
+        # Row 5: Status + Version + Update (inline)
         status_frame = ctk.CTkFrame(card, fg_color="transparent")
         status_frame.grid(
-            row=4, column=0, columnspan=3, padx=6, pady=(0, 2), sticky="we"
+            row=5, column=0, columnspan=3, padx=6, pady=(0, 2), sticky="we"
         )
 
         status_frame.grid_columnconfigure(0, weight=1)
@@ -281,6 +303,7 @@ class QPopApp:
         self.config["webhook_url"] = self.webhook_var.get().strip()
         self.config["user_id"] = self.user_var.get().strip()
         self.config["reference_image_path"] = self.ref_var.get().strip()
+        self.config["watch_region"] = self.region_var.get().strip()
 
 
     # --------- Button handlers ---------
@@ -304,6 +327,8 @@ class QPopApp:
         ):
             return
         if not validate_reference_image(self.ref_var.get()):
+            return
+        if not validate_watch_region(self.region_var.get()):
             return
 
         save_config(self.config)
@@ -352,6 +377,8 @@ class QPopApp:
         ):
             return
         if not validate_reference_image(self.ref_var.get()):
+            return
+        if not validate_watch_region(self.region_var.get()):
             return
 
         save_config(self.config)

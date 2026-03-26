@@ -10,7 +10,7 @@ from pathlib import Path
 import sys
 
 # tkinter is stubbed globally in conftest.py before this imports
-from qpopcv.validators import validate_discord_core, validate_reference_image
+from qpopcv.validators import validate_discord_core, validate_reference_image, validate_watch_region
 
 # Grab the shared mock so we can assert on it
 mb_stub = sys.modules["tkinter.messagebox"]
@@ -86,13 +86,13 @@ class TestValidateDiscordCore:
         mb_stub.showwarning.assert_called_once()
 
     def test_user_id_too_short_returns_false(self):
-        # 17 digits — currently fails (validator requires exactly 18)
-        assert validate_discord_core(VALID_WEBHOOK, "12345678901234567") is False
+        # 16 digits — below the 17-digit minimum
+        assert validate_discord_core(VALID_WEBHOOK, "1234567890123456") is False
         mb_stub.showwarning.assert_called_once()
 
     def test_user_id_too_long_returns_false(self):
-        # 19 digits — currently fails (validator requires exactly 18)
-        assert validate_discord_core(VALID_WEBHOOK, "1234567890123456789") is False
+        # 20 digits — above the 19-digit maximum
+        assert validate_discord_core(VALID_WEBHOOK, "12345678901234567890") is False
         mb_stub.showwarning.assert_called_once()
 
     def test_user_id_exactly_18_digits_passes(self):
@@ -145,4 +145,63 @@ class TestValidateReferenceImage:
 
     def test_whitespace_only_returns_false(self):
         assert validate_reference_image("   ") is False
+        mb_stub.showwarning.assert_called_once()
+
+
+# ===========================================================================
+# validate_watch_region
+# ===========================================================================
+
+class TestValidateWatchRegion:
+
+    def setup_method(self):
+        reset_mocks()
+
+    def test_empty_string_returns_true(self):
+        assert validate_watch_region("") is True
+        mb_stub.showwarning.assert_not_called()
+
+    def test_whitespace_only_returns_true(self):
+        assert validate_watch_region("   ") is True
+        mb_stub.showwarning.assert_not_called()
+
+    def test_valid_region_returns_true(self):
+        assert validate_watch_region("1920,0,960,540") is True
+        mb_stub.showwarning.assert_not_called()
+
+    def test_valid_region_with_spaces_returns_true(self):
+        assert validate_watch_region(" 1920 , 0 , 960 , 540 ") is True
+        mb_stub.showwarning.assert_not_called()
+
+    def test_zero_origin_returns_true(self):
+        assert validate_watch_region("0,0,1920,1080") is True
+        mb_stub.showwarning.assert_not_called()
+
+    def test_negative_origin_returns_true(self):
+        # Negative x/y is valid for multi-monitor setups (left/above primary)
+        assert validate_watch_region("-1920,0,1920,1080") is True
+        mb_stub.showwarning.assert_not_called()
+
+    def test_too_few_parts_returns_false(self):
+        assert validate_watch_region("1920,0,960") is False
+        mb_stub.showwarning.assert_called_once()
+
+    def test_too_many_parts_returns_false(self):
+        assert validate_watch_region("1920,0,960,540,extra") is False
+        mb_stub.showwarning.assert_called_once()
+
+    def test_non_integer_returns_false(self):
+        assert validate_watch_region("1920,0,960,abc") is False
+        mb_stub.showwarning.assert_called_once()
+
+    def test_zero_width_returns_false(self):
+        assert validate_watch_region("0,0,0,540") is False
+        mb_stub.showwarning.assert_called_once()
+
+    def test_zero_height_returns_false(self):
+        assert validate_watch_region("0,0,960,0") is False
+        mb_stub.showwarning.assert_called_once()
+
+    def test_negative_width_returns_false(self):
+        assert validate_watch_region("0,0,-1,540") is False
         mb_stub.showwarning.assert_called_once()

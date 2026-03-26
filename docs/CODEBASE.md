@@ -44,15 +44,17 @@ QPopCV/
 
 ## `main.py`
 
-**Lines:** 16
+**Lines:** 28
 
-Entry point. Configures stdlib `logging` at INFO level, instantiates `QPopApp`, calls `app.run()`.
+Entry point. Configures logging and starts the app.
 
 ```python
 def main() -> None
 ```
 
-Logging format: `%(asctime)s [%(levelname)s] %(name)s: %(message)s`
+Sets up two handlers on the root logger (both using format `%(asctime)s [%(levelname)s] %(name)s: %(message)s`):
+- `StreamHandler` (console) via `logging.basicConfig` at INFO level
+- `RotatingFileHandler` → `APP_DIR / "qpopcv.log"` (1 MB max, 3 backups, UTF-8)
 
 ---
 
@@ -69,7 +71,7 @@ Central config constants and JSON load/save. Single source of truth for path res
 | `APP_DIR` | `Path(sys.executable).parent` or `Path(__file__).parent` | Root dir (frozen vs source) |
 | `_MEDIA_ROOT` | `sys._MEIPASS` (frozen) or `APP_DIR` (source) | Base for media assets; uses PyInstaller's temp dir when frozen onefile |
 | `MEDIA_DIR` | `_MEDIA_ROOT / "media"` | Built-in reference image directory |
-| `APP_VERSION` | `"1.0.9"` | Bumped for releases |
+| `APP_VERSION` | `"1.0.10"` | Bumped for releases |
 | `CONFIG_PATH` | `APP_DIR / "config.json"` | Config file path |
 | `DISCORD_SERVER_URL` | `"https://discord.gg/KpupS6N3Zj"` | Community invite (permanent link) |
 | `DEFAULT_CONFIG` | dict | Fallback values when config.json missing or corrupt |
@@ -154,7 +156,7 @@ Validates via `validate_discord_core` + `validate_reference_image`, then calls `
 ```python
 def on_test_discord(self) -> None
 ```
-Checks 15s throttle, validates inputs, calls `send_test_message`. Shows result dialog.
+Checks 1s throttle (`TEST_THROTTLE_SECONDS`), validates inputs, calls `send_test_message`. Shows result dialog.
 
 ```python
 def on_toggle_watch(self) -> None
