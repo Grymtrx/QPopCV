@@ -30,6 +30,7 @@ from .theme import (
     ACCENT_HOVER,
     TEXT_PRIMARY,
     TEXT_MUTED,
+    TEXT_SECTION,
     DANGER,
     SUCCESS,
     DETECTED,
@@ -78,8 +79,8 @@ class QPopApp:
 
         self.root = ctk.CTk()
         self.root.title("QPopCV")
-        self.root.geometry("420x280")
-        self.root.minsize(420, 200)
+        self.root.geometry("480x280")
+        self.root.minsize(480, 200)
         self.root.resizable(True, True)
         self.root.configure(fg_color=BG_COLOR)
 
@@ -102,18 +103,38 @@ class QPopApp:
             border_width=1,
             border_color=CARD_BORDER,
         )
-        card.grid(row=0, column=0, padx=8, pady=8, sticky="new")
+        card.grid(row=0, column=0, padx=12, pady=10, sticky="new")
 
         card.grid_columnconfigure(0, weight=0, minsize=90)
         card.grid_columnconfigure(1, weight=1)
         card.grid_columnconfigure(2, weight=0)
 
         # ── DISCORD section ───────────────────────────────────────────────
+        discord_hdr = ctk.CTkFrame(card, fg_color="transparent")
+        discord_hdr.grid(row=0, column=0, columnspan=3, padx=10, pady=(12, 2), sticky="we")
+        discord_hdr.grid_columnconfigure(0, weight=1)
+        discord_hdr.grid_columnconfigure(1, weight=0)
+
         ctk.CTkLabel(
-            card, text="Discord",
-            text_color=TEXT_PRIMARY,
-            font=("Inter", 12, "bold"),
-        ).grid(row=0, column=0, columnspan=3, padx=10, pady=(10, 2), sticky="w")
+            discord_hdr, text="Discord",
+            text_color=TEXT_SECTION,
+            font=("Inter", 11, "bold"),
+        ).grid(row=0, column=0, sticky="w")
+
+        self.btn_test = ctk.CTkButton(
+            discord_hdr,
+            text="Test",
+            width=54, height=22,
+            corner_radius=6,
+            fg_color="transparent",
+            hover_color="#e5e7eb",
+            text_color=TEXT_MUTED,
+            border_width=1,
+            border_color=CARD_BORDER,
+            font=("Inter", 9),
+            command=self.on_test_discord,
+        )
+        self.btn_test.grid(row=0, column=1, sticky="e")
 
         # Row 1: Webhook
         ctk.CTkLabel(
@@ -153,9 +174,9 @@ class QPopApp:
         # ── DETECTION section ─────────────────────────────────────────────
         ctk.CTkLabel(
             card, text="Detection",
-            text_color=TEXT_PRIMARY,
-            font=("Inter", 12, "bold"),
-        ).grid(row=4, column=0, columnspan=3, padx=10, pady=(8, 2), sticky="w")
+            text_color=TEXT_SECTION,
+            font=("Inter", 11, "bold"),
+        ).grid(row=4, column=0, columnspan=3, padx=10, pady=(10, 2), sticky="w")
 
         # Row 5: Game Monitor
         ctk.CTkLabel(
@@ -217,31 +238,17 @@ class QPopApp:
 
         # ── Action buttons ────────────────────────────────────────────────
         btn_frame = ctk.CTkFrame(card, fg_color="transparent")
-        btn_frame.grid(row=7, column=0, columnspan=3, padx=10, pady=(6, 4), sticky="we")
+        btn_frame.grid(row=7, column=0, columnspan=3, padx=10, pady=(10, 4), sticky="we")
 
-        btn_frame.grid_columnconfigure(0, weight=0)
-        btn_frame.grid_columnconfigure(1, weight=0)
-        btn_frame.grid_columnconfigure(2, weight=1)
+        btn_frame.grid_columnconfigure(0, weight=0)  # Save
+        btn_frame.grid_columnconfigure(1, weight=1)  # status pill (center)
+        btn_frame.grid_columnconfigure(2, weight=0)  # Watch
 
-        # Test — ghost style
-        self.btn_test = ctk.CTkButton(
-            btn_frame,
-            text="Test Connection",
-            width=120, height=28,
-            corner_radius=6,
-            fg_color="transparent",
-            hover_color="#e5e7eb",
-            text_color=TEXT_MUTED,
-            font=("Inter", 10),
-            command=self.on_test_discord,
-        )
-        self.btn_test.grid(row=0, column=0, padx=(0, 4), sticky="w")
-
-        # Save — outlined secondary
+        # Save — outlined secondary (left)
         self.btn_save = ctk.CTkButton(
             btn_frame,
             text="Save Configuration",
-            width=148, height=28,
+            width=148, height=32,
             corner_radius=6,
             fg_color="transparent",
             hover_color="#e5e7eb",
@@ -251,13 +258,37 @@ class QPopApp:
             font=("Inter", 10),
             command=self.on_save,
         )
-        self.btn_save.grid(row=0, column=1, padx=(0, 4), sticky="w")
+        self.btn_save.grid(row=0, column=0, sticky="w")
 
-        # Watch — primary CTA
+        # Status pill — centered between Save and Watch
+        pill_holder = ctk.CTkFrame(btn_frame, fg_color="transparent")
+        pill_holder.grid(row=0, column=1, sticky="nswe")
+        pill_holder.grid_columnconfigure(0, weight=1)
+        pill_holder.grid_columnconfigure(1, weight=0)
+        pill_holder.grid_columnconfigure(2, weight=1)
+
+        self._status_pill_frame = ctk.CTkFrame(
+            pill_holder,
+            corner_radius=8,
+            fg_color=PILL_IDLE_BG,
+            border_width=1,
+            border_color=PILL_IDLE_BORDER,
+        )
+        self._status_pill_frame.grid(row=0, column=1, pady=2)
+
+        self.status_label = ctk.CTkLabel(
+            self._status_pill_frame,
+            text="● Stopped",
+            font=("Inter", 12, "bold"),
+            text_color=STATUS_IDLE,
+        )
+        self.status_label.grid(padx=22, pady=5)
+
+        # Watch — primary CTA (right)
         self.watch_btn = ctk.CTkButton(
             btn_frame,
             text="▶  Watch",
-            width=96, height=28,
+            width=96, height=32,
             corner_radius=6,
             fg_color=ACCENT,
             hover_color=ACCENT_HOVER,
@@ -269,7 +300,7 @@ class QPopApp:
 
         # ── Footer: Join Discord + mobile hint + version ──────────────────
         footer_frame = ctk.CTkFrame(card, fg_color="transparent")
-        footer_frame.grid(row=8, column=0, columnspan=3, padx=10, pady=(0, 4), sticky="we")
+        footer_frame.grid(row=8, column=0, columnspan=3, padx=10, pady=(2, 10), sticky="we")
         footer_frame.grid_columnconfigure(0, weight=0)
         footer_frame.grid_columnconfigure(1, weight=1)
         footer_frame.grid_columnconfigure(2, weight=0)
@@ -291,9 +322,9 @@ class QPopApp:
         # Mobile hint — centered, small
         ctk.CTkLabel(
             footer_frame,
-            text="QUIT DISCORD IN SYSTEM TRAY FOR MOBILE NOTIFICATIONS",
+            text="Quit Discord in system tray for mobile notifications",
             text_color=TEXT_MUTED,
-            font=("Inter", 8),
+            font=("Inter", 9),
         ).grid(row=0, column=1, padx=4, sticky="w")
 
         # Version + update status (right-aligned, clickable)
@@ -306,34 +337,11 @@ class QPopApp:
         self.version_and_update.grid(row=0, column=2, sticky="e")
         self.version_and_update.bind("<Button-1>", self.on_update_click)
 
-        # ── Status pill ───────────────────────────────────────────────────
-        pill_container = ctk.CTkFrame(card, fg_color="transparent")
-        pill_container.grid(row=9, column=0, columnspan=3, padx=10, pady=(2, 10), sticky="we")
-        pill_container.grid_columnconfigure(0, weight=1)
-        pill_container.grid_columnconfigure(1, weight=0)
-        pill_container.grid_columnconfigure(2, weight=1)
-
-        self._status_pill_frame = ctk.CTkFrame(
-            pill_container,
-            corner_radius=8,
-            fg_color=PILL_IDLE_BG,
-            border_width=1,
-            border_color=PILL_IDLE_BORDER,
-        )
-        self._status_pill_frame.grid(row=0, column=1)
-
-        self.status_label = ctk.CTkLabel(
-            self._status_pill_frame,
-            text="● Stopped",
-            font=("Inter", 13, "bold"),
-            text_color=STATUS_IDLE,
-        )
-        self.status_label.grid(padx=22, pady=6)
 
 
     def _fit_window(self) -> None:
         self.root.update_idletasks()
-        self.root.geometry(f"420x{self.root.winfo_reqheight()}")
+        self.root.geometry(f"480x{self.root.winfo_reqheight()}")
 
     # --------- Status label helpers ---------
 
@@ -402,16 +410,16 @@ class QPopApp:
 
         browse_btn = ctk.CTkButton(
             row_frame,
-            text="⊞",
-            width=28,
+            text="...",
+            width=32,
             height=26,
             corner_radius=5,
             fg_color="white",
             hover_color="#e5e7eb",
-            text_color=TEXT_PRIMARY,
+            text_color=TEXT_MUTED,
             border_width=1,
             border_color=CARD_BORDER,
-            font=("Inter", 13),
+            font=("Inter", 10),
             command=lambda v=var: self._browse_reference(v),
         )
         browse_btn.grid(row=0, column=1, padx=(0, 2), pady=1)
