@@ -11,3 +11,15 @@ DANGER = "#dc2626"
 SUCCESS = "#16a34a"
 DETECTED = "#f97316"
 STATUS_IDLE = "#6b7280"  # neutral gray for stopped/idle state (not an error)
+
+# Discord brand color
+DISCORD_BLURPLE = "#5865F2"
+DISCORD_BLURPLE_HOVER = "#eef2ff"
+
+# Status pill backgrounds (idle / running / detected)
+PILL_IDLE_BG = "#f3f4f6"
+PILL_IDLE_BORDER = "#d1d5db"
+PILL_RUNNING_BG = "#dcfce7"
+PILL_RUNNING_BORDER = "#86efac"
+PILL_DETECTED_BG = "#fff7ed"
+PILL_DETECTED_BORDER = "#fdba74"

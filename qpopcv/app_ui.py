@@ -32,6 +32,14 @@ from .theme import (
     SUCCESS,
     DETECTED,
     STATUS_IDLE,
+    DISCORD_BLURPLE,
+    DISCORD_BLURPLE_HOVER,
+    PILL_IDLE_BG,
+    PILL_IDLE_BORDER,
+    PILL_RUNNING_BG,
+    PILL_RUNNING_BORDER,
+    PILL_DETECTED_BG,
+    PILL_DETECTED_BORDER,
 )
 from .validators import validate_discord_core, validate_reference_images
 from .monitor_utils import get_monitors
@@ -67,8 +75,8 @@ class QPopApp:
 
         self.root = ctk.CTk()
         self.root.title("QPopCV")
-        self.root.geometry("360x280")
-        self.root.minsize(360, 200)
+        self.root.geometry("420x280")
+        self.root.minsize(420, 200)
         self.root.resizable(True, True)
         self.root.configure(fg_color=BG_COLOR)
 
@@ -91,60 +99,90 @@ class QPopApp:
             border_width=1,
             border_color=CARD_BORDER,
         )
-        card.grid(row=0, column=0, padx=8, pady=8 , sticky="new")
+        card.grid(row=0, column=0, padx=8, pady=8, sticky="new")
 
-        card.grid_columnconfigure(0, weight=0)
+        card.grid_columnconfigure(0, weight=0, minsize=90)
         card.grid_columnconfigure(1, weight=1)
         card.grid_columnconfigure(2, weight=0)
 
-        # Row 0: Webhook (extra top padding)
+        # ── DISCORD section ───────────────────────────────────────────────
         ctk.CTkLabel(
-            card,
-            text="Discord Webhook",
+            card, text="DISCORD",
+            text_color=TEXT_MUTED,
+            font=("Segoe UI", 8, "bold"),
+        ).grid(row=0, column=0, columnspan=3, padx=10, pady=(10, 2), sticky="w")
+
+        # Row 1: Webhook
+        ctk.CTkLabel(
+            card, text="Webhook",
             text_color=TEXT_PRIMARY,
             font=("Segoe UI", 10),
-        ).grid(row=0, column=0, padx=6, pady=(10, 3), sticky="w")
+        ).grid(row=1, column=0, padx=(10, 4), pady=3, sticky="w")
 
         self.webhook_var = ctk.StringVar(value=str(self.config.get("webhook_url", "")))
         ctk.CTkEntry(
-            card,
-            textvariable=self.webhook_var,
-            corner_radius=8,
-            fg_color="white",
-            border_color=CARD_BORDER,
-            border_width=1,
+            card, textvariable=self.webhook_var,
+            corner_radius=8, fg_color="white",
+            border_color=CARD_BORDER, border_width=1,
             text_color=TEXT_PRIMARY,
-        ).grid(row=0, column=1, columnspan=2, padx=(4, 6), pady=(10, 3), sticky="we")
+        ).grid(row=1, column=1, columnspan=2, padx=(0, 10), pady=3, sticky="we")
 
-        # Row 1: User ID
+        # Row 2: User ID
         ctk.CTkLabel(
-            card,
-            text="Discord User ID",
+            card, text="User ID",
             text_color=TEXT_PRIMARY,
             font=("Segoe UI", 10),
-        ).grid(row=1, column=0, padx=6, pady=3, sticky="w")
+        ).grid(row=2, column=0, padx=(10, 4), pady=(3, 6), sticky="w")
 
         self.user_var = ctk.StringVar(value=str(self.config.get("user_id", "")))
         ctk.CTkEntry(
-            card,
-            textvariable=self.user_var,
-            corner_radius=8,
-            fg_color="white",
-            border_color=CARD_BORDER,
-            border_width=1,
+            card, textvariable=self.user_var,
+            corner_radius=8, fg_color="white",
+            border_color=CARD_BORDER, border_width=1,
             text_color=TEXT_PRIMARY,
-        ).grid(row=1, column=1, columnspan=2, padx=(4, 6), pady=3, sticky="we")
+        ).grid(row=2, column=1, columnspan=2, padx=(0, 10), pady=(3, 6), sticky="we")
 
-        # Row 2: Reference Images (dynamic sub-frame)
+        # Row 3: Separator
+        ctk.CTkFrame(
+            card, height=1, fg_color=CARD_BORDER, corner_radius=0,
+        ).grid(row=3, column=0, columnspan=3, padx=10, pady=0, sticky="we")
+
+        # ── DETECTION section ─────────────────────────────────────────────
         ctk.CTkLabel(
-            card,
-            text="Ref Images",
+            card, text="DETECTION",
+            text_color=TEXT_MUTED,
+            font=("Segoe UI", 8, "bold"),
+        ).grid(row=4, column=0, columnspan=3, padx=10, pady=(8, 2), sticky="w")
+
+        # Row 5: Game Monitor
+        ctk.CTkLabel(
+            card, text="Game Monitor",
             text_color=TEXT_PRIMARY,
             font=("Segoe UI", 10),
-        ).grid(row=3, column=0, padx=6, pady=3, sticky="nw")
+        ).grid(row=5, column=0, padx=(10, 4), pady=3, sticky="w")
+
+        saved_idx = int(str(self.config.get("monitor_index", 0)))
+        saved_idx = max(0, min(saved_idx, len(self._monitor_labels) - 1))
+        self.monitor_var = ctk.StringVar(value=self._monitor_labels[saved_idx])
+        ctk.CTkComboBox(
+            card, variable=self.monitor_var, values=self._monitor_labels,
+            corner_radius=8, fg_color="white",
+            border_color=CARD_BORDER, border_width=1,
+            button_color=CARD_BORDER, button_hover_color=ACCENT_HOVER,
+            text_color=TEXT_PRIMARY, dropdown_fg_color="white",
+            dropdown_text_color=TEXT_PRIMARY, dropdown_hover_color="#e5e7eb",
+            font=("Segoe UI", 10), state="readonly",
+        ).grid(row=5, column=1, columnspan=2, padx=(0, 10), pady=3, sticky="we")
+
+        # Row 6: Ref Images
+        ctk.CTkLabel(
+            card, text="Ref Images",
+            text_color=TEXT_PRIMARY,
+            font=("Segoe UI", 10),
+        ).grid(row=6, column=0, padx=(10, 4), pady=3, sticky="nw")
 
         ref_section = ctk.CTkFrame(card, fg_color="transparent")
-        ref_section.grid(row=3, column=1, columnspan=2, padx=(4, 6), pady=0, sticky="we")
+        ref_section.grid(row=6, column=1, columnspan=2, padx=(0, 10), pady=0, sticky="we")
         ref_section.grid_columnconfigure(0, weight=1)
         ref_section.grid_columnconfigure(1, weight=0)
         ref_section.grid_columnconfigure(2, weight=0)
@@ -154,12 +192,11 @@ class QPopApp:
         self._add_ref_btn = ctk.CTkButton(
             ref_section,
             text="+ Add Image",
-            width=90,
-            height=24,
+            width=90, height=26,
             corner_radius=10,
-            fg_color="white",
+            fg_color="transparent",
             hover_color="#e5e7eb",
-            text_color=TEXT_PRIMARY,
+            text_color=TEXT_MUTED,
             border_width=1,
             border_color=CARD_BORDER,
             font=("Segoe UI", 9),
@@ -175,143 +212,138 @@ class QPopApp:
         self._refresh_add_btn_position()
         self.root.after(0, self._fit_window)
 
-        # Row 2: Game Monitor
-        ctk.CTkLabel(
-            card,
-            text="Game Monitor",
-            text_color=TEXT_PRIMARY,
-            font=("Segoe UI", 10),
-        ).grid(row=2, column=0, padx=6, pady=3, sticky="w")
-
-        saved_idx = int(str(self.config.get("monitor_index", 0)))
-        saved_idx = max(0, min(saved_idx, len(self._monitor_labels) - 1))
-        self.monitor_var = ctk.StringVar(value=self._monitor_labels[saved_idx])
-        ctk.CTkOptionMenu(
-            card,
-            variable=self.monitor_var,
-            values=self._monitor_labels,
-            corner_radius=8,
-            fg_color="white",
-            button_color=CARD_BORDER,
-            button_hover_color=ACCENT_HOVER,
-            text_color=TEXT_PRIMARY,
-            dropdown_fg_color="white",
-            dropdown_text_color=TEXT_PRIMARY,
-            dropdown_hover_color="#e5e7eb",
-            font=("Segoe UI", 10),
-        ).grid(row=2, column=1, columnspan=2, padx=(4, 6), pady=3, sticky="we")
-
-        # Row 4: Buttons row
+        # ── Action buttons ────────────────────────────────────────────────
         btn_frame = ctk.CTkFrame(card, fg_color="transparent")
-        btn_frame.grid(row=4, column=0, columnspan=3, padx=6, pady=(4, 3), sticky="we")
+        btn_frame.grid(row=7, column=0, columnspan=3, padx=10, pady=(6, 4), sticky="we")
 
         btn_frame.grid_columnconfigure(0, weight=0)
         btn_frame.grid_columnconfigure(1, weight=0)
-        btn_frame.grid_columnconfigure(2, weight=0)
-        btn_frame.grid_columnconfigure(3, weight=1)
+        btn_frame.grid_columnconfigure(2, weight=1)
 
-        self.btn_discord = ctk.CTkButton(
-            btn_frame,
-            text="Join Discord",
-            width=82,
-            height=24,
-            corner_radius=12,
-            fg_color="white",
-            hover_color="#e5e7eb",
-            text_color=TEXT_PRIMARY,
-            font=("Segoe UI", 10),
-            command=self.on_open_discord,
-        )
-        self.btn_discord.grid(row=0, column=0, padx=(0, 3), sticky="w")
-
+        # Test — ghost style
         self.btn_test = ctk.CTkButton(
             btn_frame,
             text="Test",
-            width=48,
-            height=24,
+            width=50, height=28,
             corner_radius=12,
-            fg_color="white",
+            fg_color="transparent",
             hover_color="#e5e7eb",
-            text_color=TEXT_PRIMARY,
+            text_color=TEXT_MUTED,
             font=("Segoe UI", 10),
             command=self.on_test_discord,
         )
-        self.btn_test.grid(row=0, column=1, padx=3, sticky="w")
+        self.btn_test.grid(row=0, column=0, padx=(0, 4), sticky="w")
 
+        # Save — outlined secondary
         self.btn_save = ctk.CTkButton(
             btn_frame,
             text="Save",
-            width=48,
-            height=24,
+            width=54, height=28,
             corner_radius=12,
-            fg_color="white",
+            fg_color="transparent",
             hover_color="#e5e7eb",
             text_color=TEXT_PRIMARY,
+            border_width=1,
+            border_color=CARD_BORDER,
             font=("Segoe UI", 10),
             command=self.on_save,
         )
-        self.btn_save.grid(row=0, column=2, padx=3, sticky="w")
+        self.btn_save.grid(row=0, column=1, padx=(0, 4), sticky="w")
 
+        # Watch — primary CTA
         self.watch_btn = ctk.CTkButton(
             btn_frame,
-            text="Watch",
-            width=70,
-            height=24,
+            text="▶  Watch",
+            width=96, height=28,
             corner_radius=12,
             fg_color=ACCENT,
             hover_color=ACCENT_HOVER,
             text_color="white",
-            font=("Segoe UI", 10),
+            font=("Segoe UI", 10, "bold"),
             command=self.on_toggle_watch,
         )
-        self.watch_btn.grid(row=0, column=3, padx=(0, 0), sticky="e")
+        self.watch_btn.grid(row=0, column=2, sticky="e")
 
-        # Row 5: Mobile hint (persistent, non-intrusive)
+        # ── Footer: Join Discord + mobile hint + version ──────────────────
+        footer_frame = ctk.CTkFrame(card, fg_color="transparent")
+        footer_frame.grid(row=8, column=0, columnspan=3, padx=10, pady=(0, 4), sticky="we")
+        footer_frame.grid_columnconfigure(0, weight=0)
+        footer_frame.grid_columnconfigure(1, weight=1)
+        footer_frame.grid_columnconfigure(2, weight=0)
+
+        # Join Discord — community/support link (blurple, prominent)
+        self.btn_discord = ctk.CTkButton(
+            footer_frame,
+            text="Join Discord",
+            width=88, height=22,
+            corner_radius=11,
+            fg_color="transparent",
+            hover_color=DISCORD_BLURPLE_HOVER,
+            text_color=DISCORD_BLURPLE,
+            font=("Segoe UI", 9, "bold"),
+            command=self.on_open_discord,
+        )
+        self.btn_discord.grid(row=0, column=0, sticky="w")
+
+        # Mobile hint — centered, small
         ctk.CTkLabel(
-            card,
-            text="For mobile alerts: quit Discord from the system tray",
+            footer_frame,
+            text="Mobile: quit Discord system tray",
+            text_color=TEXT_MUTED,
+            font=("Segoe UI", 8),
+        ).grid(row=0, column=1, padx=4, sticky="w")
+
+        # Version + update status (right-aligned, clickable)
+        self.version_and_update = ctk.CTkLabel(
+            footer_frame,
+            text=f"v{APP_VERSION} · Checking...",
             text_color=TEXT_MUTED,
             font=("Segoe UI", 9),
-        ).grid(row=5, column=0, columnspan=3, padx=6, pady=(0, 2), sticky="we")
-
-        # Row 6: Status + Version + Update (inline)
-        status_frame = ctk.CTkFrame(card, fg_color="transparent")
-        status_frame.grid(
-            row=6, column=0, columnspan=3, padx=6, pady=(0, 6), sticky="we"
         )
+        self.version_and_update.grid(row=0, column=2, sticky="e")
+        self.version_and_update.bind("<Button-1>", self.on_update_click)
 
-        status_frame.grid_columnconfigure(0, weight=1)
+        # ── Status pill ───────────────────────────────────────────────────
+        pill_container = ctk.CTkFrame(card, fg_color="transparent")
+        pill_container.grid(row=9, column=0, columnspan=3, padx=10, pady=(2, 10), sticky="we")
+        pill_container.grid_columnconfigure(0, weight=1)
+        pill_container.grid_columnconfigure(1, weight=0)
+        pill_container.grid_columnconfigure(2, weight=1)
+
+        self._status_pill_frame = ctk.CTkFrame(
+            pill_container,
+            corner_radius=16,
+            fg_color=PILL_IDLE_BG,
+            border_width=1,
+            border_color=PILL_IDLE_BORDER,
+        )
+        self._status_pill_frame.grid(row=0, column=1)
 
         self.status_label = ctk.CTkLabel(
-            status_frame,
+            self._status_pill_frame,
             text="● Stopped",
-            font=("Segoe UI", 15),
+            font=("Segoe UI", 13, "bold"),
             text_color=STATUS_IDLE,
         )
-        self.status_label.grid(row=0, column=0, columnspan=2, pady=(0, 2), sticky="n")
-
-        # Version + update status (clickable)
-        self.version_and_update = ctk.CTkLabel(
-            status_frame,
-            text=f"v{APP_VERSION} · Checking updates...",
-            text_color=TEXT_MUTED,
-            font=("Segoe UI", 10),
-        )
-        self.version_and_update.grid(row=1, column=0, pady=(0, 2), sticky="s")
-        self.version_and_update.bind("<Button-1>", self.on_update_click)
+        self.status_label.grid(padx=22, pady=6)
 
 
     def _fit_window(self) -> None:
         self.root.update_idletasks()
-        self.root.geometry(f"360x{self.root.winfo_reqheight()}")
+        self.root.geometry(f"420x{self.root.winfo_reqheight()}")
 
     # --------- Status label helpers ---------
 
     def _set_status(self, text: str, color: str) -> None:
-        self.status_label.configure(
-            text=text,
-            text_color=color,
-        )
+        # Map status color to appropriate pill background
+        if color == DETECTED:
+            pill_bg, pill_border = PILL_DETECTED_BG, PILL_DETECTED_BORDER
+        elif color == SUCCESS and text.startswith("●"):
+            pill_bg, pill_border = PILL_RUNNING_BG, PILL_RUNNING_BORDER
+        else:
+            pill_bg, pill_border = PILL_IDLE_BG, PILL_IDLE_BORDER
+        self.status_label.configure(text=text, text_color=color)
+        self._status_pill_frame.configure(fg_color=pill_bg, border_color=pill_border)
 
     def _flash_detected_status(self) -> None:
         """Flash 'Detected!' for ~1.6s, then restore."""
@@ -367,33 +399,33 @@ class QPopApp:
 
         browse_btn = ctk.CTkButton(
             row_frame,
-            text="...",
+            text="⊞",
             width=28,
-            height=24,
+            height=26,
             corner_radius=8,
             fg_color="white",
             hover_color="#e5e7eb",
             text_color=TEXT_PRIMARY,
             border_width=1,
             border_color=CARD_BORDER,
-            font=("Segoe UI", 11),
+            font=("Segoe UI", 13),
             command=lambda v=var: self._browse_reference(v),
         )
-        browse_btn.grid(row=0, column=1, padx=(0, 2), pady=0)
+        browse_btn.grid(row=0, column=1, padx=(0, 2), pady=1)
 
         remove_btn = ctk.CTkButton(
             row_frame,
-            text="×",
-            width=24,
-            height=24,
+            text="✕",
+            width=26,
+            height=26,
             corner_radius=8,
-            fg_color="#e5e7eb",
-            hover_color=DANGER,
-            text_color=TEXT_PRIMARY,
-            font=("Segoe UI", 12),
+            fg_color="transparent",
+            hover_color="#fee2e2",
+            text_color=TEXT_MUTED,
+            font=("Segoe UI", 11),
             command=lambda i=idx: self._remove_ref_row(i),
         )
-        remove_btn.grid(row=0, column=2, padx=(0, 2), pady=0)
+        remove_btn.grid(row=0, column=2, padx=(0, 2), pady=1)
 
         self._ref_rows.append((row_frame, var, browse_btn, remove_btn))
         self._refresh_remove_btns()
@@ -530,9 +562,10 @@ class QPopApp:
 
         self._set_status("● Watching", SUCCESS)
         self.watch_btn.configure(
-            text="■ Stop",
+            text="■  Stop",
             fg_color=SUCCESS,
             hover_color="#15803d",
+            font=("Segoe UI", 10, "bold"),
         )
 
     def _stop_watch(self) -> None:
@@ -541,7 +574,10 @@ class QPopApp:
 
         self._set_status("● Stopped", STATUS_IDLE)
         self.watch_btn.configure(
-            text="Watch", fg_color=ACCENT, hover_color=ACCENT_HOVER
+            text="▶  Watch",
+            fg_color=ACCENT,
+            hover_color=ACCENT_HOVER,
+            font=("Segoe UI", 10, "bold"),
         )
 
     def _check_test_throttle(self):
