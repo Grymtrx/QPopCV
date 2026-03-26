@@ -20,6 +20,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from PyQt6.QtCore import QObject, QUrl, Qt, pyqtSignal
+from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QApplication, QFileDialog, QMainWindow
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEngineSettings
@@ -307,7 +308,7 @@ class QPopApp:
         self._window.setWindowFlags(
             Qt.WindowType.FramelessWindowHint | Qt.WindowType.Window
         )
-        self._window.setStyleSheet("QMainWindow { background: #09090f; }")
+        self._window.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self._window.resize(440, 320)
         self._window.setMinimumSize(400, 240)
 
@@ -330,6 +331,7 @@ class QPopApp:
 
         # Web view
         view = QWebEngineView()
+        view.page().setBackgroundColor(QColor(Qt.GlobalColor.transparent))
         s = view.settings()
         s.setAttribute(QWebEngineSettings.WebAttribute.JavascriptEnabled, True)
         s.setAttribute(QWebEngineSettings.WebAttribute.LocalStorageEnabled, True)
