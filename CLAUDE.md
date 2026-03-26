@@ -14,7 +14,7 @@ WoW Solo Shuffle queue-pop detector. Windows-only Python app — CustomTkinter G
 - Python 3.11+, Windows only
 
 ## Versioning
-Increment the patch version (`APP_VERSION` in `qpopcv/config.py`) on every code change. Current version: `1.0.12`.
+Increment the patch version (`APP_VERSION` in `qpopcv/config.py`) on every code change. Current version: `1.0.15`.
 
 ## Active work order (see KNOWN_ISSUES.md for full list)
-SEC-01 is deferred. BUG-02 fixed (v1.0.5), AP-01 fixed (v1.0.6), GAP-07/SEC-02/GAP-01 fixed (v1.0.7), SEC-03/SEC-05/BUG-01/BUG-03 fixed (v1.0.8), SEC-06/AP-02 fixed (v1.0.9), GAP-02/GAP-04 fixed (v1.0.10), GAP-03 fixed (v1.0.12). Start from GAP-05.
+SEC-01 is deferred. BUG-02 fixed (v1.0.5), AP-01 fixed (v1.0.6), GAP-07/SEC-02/GAP-01 fixed (v1.0.7), SEC-03/SEC-05/BUG-01/BUG-03 fixed (v1.0.8), SEC-06/AP-02 fixed (v1.0.9), GAP-02/GAP-04 fixed (v1.0.10), GAP-03 fixed (v1.0.12). UI/UX audit pass done (v1.0.15). Start from GAP-05.

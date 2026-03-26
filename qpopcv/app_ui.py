@@ -31,6 +31,7 @@ from .theme import (
     DANGER,
     SUCCESS,
     DETECTED,
+    STATUS_IDLE,
 )
 from .validators import validate_discord_core, validate_reference_images
 from .monitor_utils import get_monitors
@@ -65,10 +66,9 @@ class QPopApp:
         ctk.set_default_color_theme("blue")
 
         self.root = ctk.CTk()
-        # Window title
-        self.root.title("QPopCV Watcher App")
+        self.root.title("QPopCV")
         self.root.geometry("360x280")
-        self.root.minsize(360, 1)
+        self.root.minsize(360, 200)
         self.root.resizable(True, True)
         self.root.configure(fg_color=BG_COLOR)
 
@@ -155,7 +155,7 @@ class QPopApp:
             ref_section,
             text="+ Add Image",
             width=90,
-            height=20,
+            height=24,
             corner_radius=10,
             fg_color="white",
             hover_color="#e5e7eb",
@@ -212,8 +212,8 @@ class QPopApp:
 
         self.btn_discord = ctk.CTkButton(
             btn_frame,
-            text="Discord",
-            width=68,
+            text="Join Discord",
+            width=82,
             height=24,
             corner_radius=12,
             fg_color="white",
@@ -226,8 +226,8 @@ class QPopApp:
 
         self.btn_test = ctk.CTkButton(
             btn_frame,
-            text="Test Connection",
-            width=54,
+            text="Test",
+            width=48,
             height=24,
             corner_radius=12,
             fg_color="white",
@@ -240,8 +240,8 @@ class QPopApp:
 
         self.btn_save = ctk.CTkButton(
             btn_frame,
-            text="Save Config",
-            width=54,
+            text="Save",
+            width=48,
             height=24,
             corner_radius=12,
             fg_color="white",
@@ -266,33 +266,38 @@ class QPopApp:
         )
         self.watch_btn.grid(row=0, column=3, padx=(0, 0), sticky="e")
 
-        # Row 5: Status + Version + Update (inline)
+        # Row 5: Mobile hint (persistent, non-intrusive)
+        ctk.CTkLabel(
+            card,
+            text="For mobile alerts: quit Discord from the system tray",
+            text_color=TEXT_MUTED,
+            font=("Segoe UI", 9),
+        ).grid(row=5, column=0, columnspan=3, padx=6, pady=(0, 2), sticky="we")
+
+        # Row 6: Status + Version + Update (inline)
         status_frame = ctk.CTkFrame(card, fg_color="transparent")
         status_frame.grid(
-            row=5, column=0, columnspan=3, padx=6, pady=(0, 2), sticky="we"
+            row=6, column=0, columnspan=3, padx=6, pady=(0, 6), sticky="we"
         )
 
         status_frame.grid_columnconfigure(0, weight=1)
 
-        # Centered status text (less button-y)
         self.status_label = ctk.CTkLabel(
             status_frame,
             text="● Stopped",
-            font=("Segoe UI Semibold", 15),
-            text_color=DANGER,
+            font=("Segoe UI", 15),
+            text_color=STATUS_IDLE,
         )
         self.status_label.grid(row=0, column=0, columnspan=2, pady=(0, 2), sticky="n")
 
-        # Bottom-right inline: Version + update status
+        # Version + update status (clickable)
         self.version_and_update = ctk.CTkLabel(
             status_frame,
-            text=f"Version: {APP_VERSION}   •   Checking updates...",
+            text=f"v{APP_VERSION} · Checking updates...",
             text_color=TEXT_MUTED,
             font=("Segoe UI", 10),
         )
         self.version_and_update.grid(row=1, column=0, pady=(0, 2), sticky="s")
-
-        # make it clickable
         self.version_and_update.bind("<Button-1>", self.on_update_click)
 
 
@@ -319,6 +324,18 @@ class QPopApp:
             self._set_status(prev_text, prev_color)
 
         self.status_label.after(1600, restore)
+
+    def _flash_status(self, text: str, color: str, duration_ms: int = 2000) -> None:
+        """Temporarily show a status message, then restore the previous state."""
+        prev_text = self.status_label.cget("text")
+        prev_color = self.status_label.cget("text_color")
+
+        self._set_status(text, color)
+
+        def restore():
+            self._set_status(prev_text, prev_color)
+
+        self.status_label.after(duration_ms, restore)
 
 
     # --------- Reference image row management ---------
@@ -354,9 +371,11 @@ class QPopApp:
             width=28,
             height=24,
             corner_radius=8,
-            fg_color=ACCENT,
-            hover_color=ACCENT_HOVER,
-            text_color="white",
+            fg_color="white",
+            hover_color="#e5e7eb",
+            text_color=TEXT_PRIMARY,
+            border_width=1,
+            border_color=CARD_BORDER,
             font=("Segoe UI", 11),
             command=lambda v=var: self._browse_reference(v),
         )
@@ -374,7 +393,7 @@ class QPopApp:
             font=("Segoe UI", 12),
             command=lambda i=idx: self._remove_ref_row(i),
         )
-        remove_btn.grid(row=0, column=2, padx=(0, 6), pady=0)
+        remove_btn.grid(row=0, column=2, padx=(0, 2), pady=0)
 
         self._ref_rows.append((row_frame, var, browse_btn, remove_btn))
         self._refresh_remove_btns()
@@ -452,7 +471,7 @@ class QPopApp:
             return
 
         save_config(self.config)
-        messagebox.showinfo("Saved", "Configuration saved.")
+        self._flash_status("✓ Saved", SUCCESS, duration_ms=2000)
 
     def on_test_discord(self) -> None:
         throttled, remaining, now = self._check_test_throttle()
@@ -501,12 +520,6 @@ class QPopApp:
 
         save_config(self.config)
 
-        messagebox.showinfo(
-            "Mobile Discord Notifications",
-            "If you would like Discord notifications to be directed to your phone "
-            "INSTEAD of your PC, please 'Quit Discord' in your system tray.",
-        )
-
         # Build watcher settings from config and start watcher
         settings = WatcherSettings.from_config(self.config)
         self._watcher = QPopWatcher(
@@ -517,7 +530,7 @@ class QPopApp:
 
         self._set_status("● Watching", SUCCESS)
         self.watch_btn.configure(
-            text="Watching",
+            text="■ Stop",
             fg_color=SUCCESS,
             hover_color="#15803d",
         )
@@ -526,7 +539,7 @@ class QPopApp:
         if self._watcher:
             self._watcher.stop()
 
-        self._set_status("● Stopped", DANGER)
+        self._set_status("● Stopped", STATUS_IDLE)
         self.watch_btn.configure(
             text="Watch", fg_color=ACCENT, hover_color=ACCENT_HOVER
         )
@@ -573,7 +586,7 @@ class QPopApp:
 
     def _set_update_status(self, text: str, clickable: bool, color: str) -> None:
         self.version_and_update.configure(
-            text=f"Version: {APP_VERSION}   •   {text}",
+            text=f"v{APP_VERSION} · {text}",
             text_color=color,
         )
         self._update_clickable = clickable

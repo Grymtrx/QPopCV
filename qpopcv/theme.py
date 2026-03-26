@@ -10,3 +10,4 @@ TEXT_MUTED = "#6b7280"
 DANGER = "#dc2626"
 SUCCESS = "#16a34a"
 DETECTED = "#f97316"
+STATUS_IDLE = "#6b7280"  # neutral gray for stopped/idle state (not an error)
