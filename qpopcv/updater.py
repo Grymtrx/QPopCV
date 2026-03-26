@@ -12,7 +12,6 @@ import shutil
 import sys
 import tempfile
 import zipfile
-import subprocess
 
 import requests
 
@@ -259,7 +258,7 @@ class UpdateManager:
         exe_str = str(exe_path.resolve())
 
         script = f"""@echo off
-setlocal ENABLEDELAYEDEXPANSION
+setlocal DISABLEDELAYEDEXPANSION
 
 set "SRC={src_str}"
 set "DEST={dest_str}"

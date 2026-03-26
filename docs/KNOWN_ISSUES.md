@@ -24,20 +24,16 @@
 #### ~~SEC-02 — No Webhook URL Format Validation~~ ✅ Fixed in 1.0.7
 - `validate_discord_core` now rejects any URL that does not start with `https://discord.com/api/webhooks/`.
 
-#### SEC-03 — Discord User ID Allows Any 18-Digit Number
-- **File:** `qpopcv/validators.py:27`
-- **Detail:** Validator accepts any 18-digit numeric string. Discord snowflake IDs are 18–19 digits and could be 17 digits for old accounts.
-- **Fix:** Accept 17–19 digits: `user_id.isdigit() and 17 <= len(user_id) <= 19`.
+#### ~~SEC-03 — Discord User ID Allows Any 18-Digit Number~~ ✅ Fixed in 1.0.8
+- Validator now accepts 17–19 digit IDs to cover old accounts and 19-digit snowflakes.
 
 #### SEC-04 — No Checksum/Signature Verification on Update ZIPs
 - **File:** `qpopcv/updater.py:133-137`
 - **Detail:** The downloaded release ZIP is extracted without verifying integrity. A compromised GitHub release asset could execute malicious code.
 - **Fix:** GitHub releases expose an SHA-256 in their API (`assets[].digest`). Verify before extracting.
 
-#### SEC-05 — Batch Script Path Injection Risk (Low Exploitability)
-- **File:** `qpopcv/updater.py:261-291`
-- **Detail:** `source_root`, `app_dir`, and `exe_path` are interpolated into an f-string batch script. Paths with special characters (e.g., `!`, `%`) could break or exploit the script.
-- **Fix:** Paths are wrapped in quotes which handles spaces, but `!` and `%` in paths could expand unexpectedly with `ENABLEDELAYEDEXPANSION`. Sanitise or escape these characters, or use PowerShell instead of batch.
+#### ~~SEC-05 — Batch Script Path Injection Risk (Low Exploitability)~~ ✅ Fixed in 1.0.8
+- Replaced `ENABLEDELAYEDEXPANSION` with `DISABLEDELAYEDEXPANSION` so `!` characters in paths are never expanded.
 
 ---
 
@@ -52,19 +48,15 @@
 
 ## Bugs
 
-#### BUG-01 — `subprocess` Imported Twice
-- **File:** `qpopcv/updater.py:9,15`
-- **Detail:** `import subprocess` appears on both line 9 and line 15. The second import is dead code.
-- **Fix:** Remove the duplicate import on line 15.
+#### ~~BUG-01 — `subprocess` Imported Twice~~ ✅ Fixed in 1.0.8
+- Removed duplicate `import subprocess` from `updater.py`.
 
 #### ~~BUG-02 — Watcher Has No Fallback Reference Images~~ ✅ Fixed in 1.0.5
 - `_start_watch()` in `app_ui.py` now calls `validate_reference_image()` and shows an error dialog before starting the watcher if no valid image is set.
 - Silent `print()` in `_prepare_reference_images` replaced with `logger.warning()`.
 
-#### BUG-03 — No `screenshot()` Failure Handling
-- **File:** `qpopcv/watcher.py:198`
-- **Detail:** `pyautogui.screenshot(region=self._region)` can return `None` or raise on some Windows configurations. This falls through to the generic `except Exception` handler which only prints a message and waits 2s — the watcher keeps "running" but does nothing useful.
-- **Fix:** Add explicit `if screenshot is None: continue` check, or log at ERROR level so it's visible.
+#### ~~BUG-03 — No `screenshot()` Failure Handling~~ ✅ Fixed in 1.0.8
+- Added explicit `if screenshot is None: logger.error(...); continue` guard in `watcher.py`.
 
 ---
 

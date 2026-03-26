@@ -31,7 +31,7 @@ def validate_discord_core(webhook_url: str, user_id: str) -> bool:
         )
         return False
 
-    if not (user_id.isdigit() and len(user_id) == 18):
+    if not (user_id.isdigit() and 17 <= len(user_id) <= 19):
         messagebox.showwarning(
             "Invalid Discord user ID",
             "Please enter Discord user ID NOT username.",

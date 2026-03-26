@@ -196,6 +196,9 @@ class QPopWatcher:
             try:
                 # Take a single screenshot of the region
                 screenshot = pyautogui.screenshot(region=self._region)
+                if screenshot is None:
+                    logger.error("Screenshot returned None; skipping frame.")
+                    continue
 
                 # Check all reference images against this single screenshot
                 match_name = self._find_queue_popup(screenshot)
