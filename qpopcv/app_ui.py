@@ -32,7 +32,8 @@ from .theme import (
     SUCCESS,
     DETECTED,
 )
-from .validators import validate_discord_core, validate_reference_image, validate_watch_region
+from .validators import validate_discord_core, validate_reference_image
+from .monitor_utils import get_monitors
 from .discord_client import send_test_message
 
 logger = logging.getLogger(__name__)
@@ -44,6 +45,14 @@ class QPopApp:
         self._watcher: Optional[QPopWatcher] = None
         self._update_info: Optional[UpdateInfo] = None
         self._update_clickable: bool = False
+
+        monitors = get_monitors()
+        self._monitor_labels = []
+        for i, m in enumerate(monitors):
+            label = f"Monitor {i + 1}"
+            if m["is_primary"]:
+                label += " \u2013 Primary"
+            self._monitor_labels.append(label)
 
         self.update_manager = UpdateManager(
             current_version=APP_VERSION, app_dir=APP_DIR
@@ -159,26 +168,30 @@ class QPopApp:
         )
         self.ref_button.grid(row=2, column=2, padx=(2, 6), pady=3, sticky="e")
 
-        # Row 3: Watch Region
+        # Row 3: Game Monitor
         ctk.CTkLabel(
             card,
-            text="Watch Region",
+            text="Game Monitor",
             text_color=TEXT_PRIMARY,
             font=("Segoe UI", 10),
         ).grid(row=3, column=0, padx=6, pady=3, sticky="w")
 
-        self.region_var = ctk.StringVar(
-            value=str(self.config.get("watch_region", ""))
-        )
-        ctk.CTkEntry(
+        saved_idx = int(self.config.get("monitor_index", 0))
+        saved_idx = max(0, min(saved_idx, len(self._monitor_labels) - 1))
+        self.monitor_var = ctk.StringVar(value=self._monitor_labels[saved_idx])
+        ctk.CTkOptionMenu(
             card,
-            textvariable=self.region_var,
-            placeholder_text="auto  (or x,y,w,h for multi-monitor)",
+            variable=self.monitor_var,
+            values=self._monitor_labels,
             corner_radius=8,
             fg_color="white",
-            border_color=CARD_BORDER,
-            border_width=1,
+            button_color=CARD_BORDER,
+            button_hover_color=ACCENT_HOVER,
             text_color=TEXT_PRIMARY,
+            dropdown_fg_color="white",
+            dropdown_text_color=TEXT_PRIMARY,
+            dropdown_hover_color="#e5e7eb",
+            font=("Segoe UI", 10),
         ).grid(row=3, column=1, columnspan=2, padx=(4, 6), pady=3, sticky="we")
 
         # Row 4: Buttons row
@@ -303,7 +316,9 @@ class QPopApp:
         self.config["webhook_url"] = self.webhook_var.get().strip()
         self.config["user_id"] = self.user_var.get().strip()
         self.config["reference_image_path"] = self.ref_var.get().strip()
-        self.config["watch_region"] = self.region_var.get().strip()
+        selected = self.monitor_var.get()
+        idx = self._monitor_labels.index(selected) if selected in self._monitor_labels else 0
+        self.config["monitor_index"] = idx
 
 
     # --------- Button handlers ---------
@@ -327,8 +342,6 @@ class QPopApp:
         ):
             return
         if not validate_reference_image(self.ref_var.get()):
-            return
-        if not validate_watch_region(self.region_var.get()):
             return
 
         save_config(self.config)
@@ -377,8 +390,6 @@ class QPopApp:
         ):
             return
         if not validate_reference_image(self.ref_var.get()):
-            return
-        if not validate_watch_region(self.region_var.get()):
             return
 
         save_config(self.config)

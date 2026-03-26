@@ -15,7 +15,7 @@ MEDIA_DIR = _MEDIA_ROOT / "media"
 
 logger = logging.getLogger(__name__)
 
-APP_VERSION = "1.0.11"
+APP_VERSION = "1.0.12"
 CONFIG_PATH = APP_DIR / "config.json"
 DISCORD_SERVER_URL = "https://discord.gg/KpupS6N3Zj"  # QPopCV Discord Server (PermaLink)
 
@@ -25,7 +25,7 @@ DEFAULT_CONFIG: Dict[str, object] = {
     "check_interval": 0.15,
     "confidence": 0.6,
     "reference_image_path": "",
-    "watch_region": "",
+    "monitor_index": 0,
 }
 
 

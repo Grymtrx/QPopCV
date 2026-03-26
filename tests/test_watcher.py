@@ -11,6 +11,7 @@ from unittest.mock import patch, MagicMock, call
 from PIL import Image
 
 from qpopcv.watcher import WatcherSettings, QPopWatcher, THROTTLE_SECONDS
+from qpopcv.monitor_utils import compute_top_center_region
 
 
 # ===========================================================================
@@ -41,8 +42,7 @@ def make_tiny_png(tmp_path: Path, name="ref.png") -> Path:
     return p
 
 
-# Patch pyautogui.size at module import so _compute_top_center_region works.
-MOCK_SCREEN = (1920, 1080)
+MOCK_MONITORS = [{"x": 0, "y": 0, "w": 1920, "h": 1080, "is_primary": True}]
 
 
 # ===========================================================================
@@ -100,37 +100,36 @@ class TestWatcherSettingsFromConfig:
 
 
 # ===========================================================================
-# QPopWatcher._compute_top_center_region
+# monitor_utils.compute_top_center_region
 # ===========================================================================
 
 class TestComputeTopCenterRegion:
 
     def test_region_for_1920x1080(self):
-        with patch("qpopcv.watcher.pyautogui.size", return_value=(1920, 1080)):
-            region = QPopWatcher._compute_top_center_region()
-        x, y, w, h = region
-        assert x == 640   # 1920 // 3
+        monitor = {"x": 0, "y": 0, "w": 1920, "h": 1080, "is_primary": True}
+        x, y, w, h = compute_top_center_region(monitor)
+        assert x == 640   # 0 + 1920 // 3
         assert y == 0
         assert w == 640   # 1920 // 3
         assert h == 540   # 1080 // 2
 
     def test_region_for_2560x1440(self):
-        with patch("qpopcv.watcher.pyautogui.size", return_value=(2560, 1440)):
-            region = QPopWatcher._compute_top_center_region()
-        x, y, w, h = region
+        monitor = {"x": 0, "y": 0, "w": 2560, "h": 1440, "is_primary": True}
+        x, y, w, h = compute_top_center_region(monitor)
         assert x == 853   # 2560 // 3
         assert y == 0
         assert w == 853
         assert h == 720   # 1440 // 2
 
-    def test_region_starts_at_top(self):
-        with patch("qpopcv.watcher.pyautogui.size", return_value=(1920, 1080)):
-            _, y, _, _ = QPopWatcher._compute_top_center_region()
-        assert y == 0
+    def test_region_starts_at_monitor_top(self):
+        monitor = {"x": 1920, "y": 100, "w": 1920, "h": 1080, "is_primary": False}
+        x, y, w, h = compute_top_center_region(monitor)
+        assert y == 100   # monitor's y origin
+        assert x == 1920 + 640   # monitor x + w//3
 
     def test_region_is_top_half(self):
-        with patch("qpopcv.watcher.pyautogui.size", return_value=(1920, 1080)):
-            _, _, _, h = QPopWatcher._compute_top_center_region()
+        monitor = {"x": 0, "y": 0, "w": 1920, "h": 1080, "is_primary": True}
+        _, _, _, h = compute_top_center_region(monitor)
         assert h == 1080 // 2
 
 
@@ -141,7 +140,7 @@ class TestComputeTopCenterRegion:
 class TestPrepareReferenceImages:
 
     def _make_watcher(self, settings):
-        with patch("qpopcv.watcher.pyautogui.size", return_value=MOCK_SCREEN):
+        with patch("qpopcv.watcher.get_monitors", return_value=MOCK_MONITORS):
             return QPopWatcher(settings)
 
     def test_no_reference_path_returns_empty(self):
@@ -189,7 +188,7 @@ class TestCheckThrottle:
 
     def _make_watcher(self):
         s = make_settings()
-        with patch("qpopcv.watcher.pyautogui.size", return_value=MOCK_SCREEN):
+        with patch("qpopcv.watcher.get_monitors", return_value=MOCK_MONITORS):
             return QPopWatcher(s)
 
     def test_not_throttled_initially(self):
@@ -225,7 +224,7 @@ class TestWatcherLifecycle:
 
     def _make_watcher(self):
         s = make_settings()
-        with patch("qpopcv.watcher.pyautogui.size", return_value=MOCK_SCREEN):
+        with patch("qpopcv.watcher.get_monitors", return_value=MOCK_MONITORS):
             return QPopWatcher(s)
 
     def test_not_running_before_start(self):
@@ -268,7 +267,7 @@ class TestHandleDetectedPopup:
 
     def _make_watcher(self, on_detect=None):
         s = make_settings()
-        with patch("qpopcv.watcher.pyautogui.size", return_value=MOCK_SCREEN):
+        with patch("qpopcv.watcher.get_monitors", return_value=MOCK_MONITORS):
             return QPopWatcher(s, on_detect=on_detect)
 
     def test_sends_discord_on_first_detection(self):

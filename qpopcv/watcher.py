@@ -11,6 +11,7 @@ import requests
 from PIL import Image
 
 from qpopcv.config import MEDIA_DIR
+from qpopcv.monitor_utils import get_monitors, compute_top_center_region
 
 THROTTLE_SECONDS = 15
 
@@ -30,7 +31,7 @@ class WatcherSettings:
     check_interval: float = 0.5
     confidence: float = 0.6
     reference_image_path: Optional[Path] = None
-    watch_region: str = ""
+    monitor_index: int = 0
 
     @classmethod
     def from_config(cls, config: Dict[str, object]) -> "WatcherSettings":
@@ -43,7 +44,7 @@ class WatcherSettings:
             check_interval=float(config.get("check_interval", 0.5)),
             confidence=float(config.get("confidence", 0.6)),
             reference_image_path=ref_path,
-            watch_region=str(config.get("watch_region", "")).strip(),
+            monitor_index=int(config.get("monitor_index", 0)),
         )
 
 
@@ -80,9 +81,11 @@ class QPopWatcher:
         self._last_qpop_time: float = 0.0
         self._seen_once: bool = False
 
-        manual = self._parse_watch_region(settings.watch_region)
-        self._region = manual if manual is not None else self._compute_top_center_region()
-        self._region_source = "manual" if manual is not None else "auto (top-center)"
+        monitors = get_monitors()
+        idx = max(0, min(settings.monitor_index, len(monitors) - 1))
+        monitor = monitors[idx]
+        self._region = compute_top_center_region(monitor)
+        self._region_source = f"Monitor {idx + 1}{' (primary)' if monitor['is_primary'] else ''}"
         self._reference_images = self._prepare_reference_images()
 
 
@@ -120,28 +123,6 @@ class QPopWatcher:
         return self._thread is not None and self._thread.is_alive()
 
     # --------- Internal Helpers ---------
-
-    @staticmethod
-    def _parse_watch_region(region_str: str) -> Optional[Tuple[int, int, int, int]]:
-        """Parse a 'x,y,w,h' region string. Returns None for empty (auto)."""
-        region_str = region_str.strip()
-        if not region_str:
-            return None
-        try:
-            x, y, w, h = (int(p.strip()) for p in region_str.split(","))
-            return x, y, w, h
-        except (ValueError, TypeError):
-            logger.warning("Invalid watch_region '%s'; falling back to auto.", region_str)
-            return None
-
-    @staticmethod
-    def _compute_top_center_region() -> Tuple[int, int, int, int]:
-        screen_w, screen_h = pyautogui.size()
-        region_x = screen_w // 3
-        region_y = 0
-        region_w = screen_w // 3
-        region_h = screen_h // 2
-        return region_x, region_y, region_w, region_h
 
     def _find_queue_popup(self, screenshot) -> Optional[str]:
         for name, reference in self._reference_images:
