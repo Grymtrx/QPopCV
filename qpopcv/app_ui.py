@@ -16,7 +16,9 @@ from .config import (
     load_config,
     save_config,
 )
-from .watcher import QPopWatcher, THROTTLE_SECONDS, WatcherSettings
+from .watcher import QPopWatcher, WatcherSettings
+
+TEST_THROTTLE_SECONDS = 1
 from .updater import UpdateInfo, UpdateManager
 from .theme import (
     BG_COLOR,
@@ -387,8 +389,8 @@ class QPopApp:
     def _check_test_throttle(self):
         now = time.time()
         elapsed = now - self._last_test_time
-        if elapsed < THROTTLE_SECONDS:
-            return True, int(THROTTLE_SECONDS - elapsed), now
+        if elapsed < TEST_THROTTLE_SECONDS:
+            return True, int(TEST_THROTTLE_SECONDS - elapsed), now
         return False, 0, now
 
     # --------- Updater logic ---------

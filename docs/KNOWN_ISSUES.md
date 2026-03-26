@@ -93,17 +93,15 @@
 #### ~~GAP-01 — Zero Automated Tests~~ ✅ Fixed in 1.0.7
 - 93 pytest tests across `test_validators.py`, `test_config.py`, `test_updater.py`, and `test_watcher.py`. Run with: `python -m pytest`.
 
-#### GAP-02 — No Log File Output
-- **Detail:** Logging goes only to console (stdout). If the app is run from a `.exe` with no terminal, all log output is lost.
-- **Fix:** Add a `logging.FileHandler` pointing to `APP_DIR / "qpopcv.log"` with a rotating handler.
+#### ~~GAP-02 — No Log File Output~~ ✅ Fixed in 1.0.10
+- `main.py` now attaches a `RotatingFileHandler` (1 MB, 3 backups) writing to `APP_DIR / "qpopcv.log"` alongside the console handler.
 
 #### GAP-03 — Multi-Monitor Support
 - **Detail:** `pyautogui.size()` returns the primary monitor's resolution. On multi-monitor setups, the game may be on a secondary display, and the computed region will be wrong.
 - **Fix:** Let the user manually configure the watch region, or detect the game window position.
 
-#### GAP-04 — No Rate Limiting on Test Discord Button
-- **Detail:** The 15-second throttle applies to the watcher, and `_check_test_throttle` reuses `THROTTLE_SECONDS`. However the throttle is per-session (resets on restart) and uses `_last_test_time` which is independent of watcher state — so a user can send a test message immediately after a detection notification.
-- **Impact:** Low — mostly a cosmetic inconsistency.
+#### ~~GAP-04 — No Rate Limiting on Test Discord Button~~ ✅ Fixed in 1.0.10
+- `TEST_THROTTLE_SECONDS = 1` introduced in `app_ui.py`; `_check_test_throttle` now uses it instead of the watcher's 15s `THROTTLE_SECONDS`.
 
 #### GAP-05 — `confidence` Not Exposed in UI
 - **Detail:** The `confidence` config key (default `0.6`) controls template match sensitivity but has no UI control. Users with unusual screen scaling or DPI may need to adjust it.
@@ -133,6 +131,7 @@ Priority order for a future Claude session:
 10. ~~**BUG-03** — No `screenshot()` None guard~~ ✅ Fixed in 1.0.8
 11. ~~**SEC-06** — `load_config` silent exception swallowing~~ ✅ Fixed in 1.0.9
 12. ~~**AP-02** — Consolidate `MEDIA_DIR` into `config.py`~~ ✅ Fixed in 1.0.9
-13. **GAP-02** — Add rotating file log handler
+13. ~~**GAP-02** — Add rotating file log handler~~ ✅ Fixed in 1.0.10
+14. ~~**GAP-04** — Test button reused watcher throttle~~ ✅ Fixed in 1.0.10
 13. **GAP-03** — Multi-monitor region support
 14. **GAP-05/06** — Expose confidence + interval in UI

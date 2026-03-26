@@ -15,7 +15,7 @@ MEDIA_DIR = _MEDIA_ROOT / "media"
 
 logger = logging.getLogger(__name__)
 
-APP_VERSION = "1.0.9"
+APP_VERSION = "1.0.10"
 CONFIG_PATH = APP_DIR / "config.json"
 DISCORD_SERVER_URL = "https://discord.gg/KpupS6N3Zj"  # QPopCV Discord Server (PermaLink)
 
