@@ -59,11 +59,9 @@
 - **Detail:** `import subprocess` appears on both line 9 and line 15. The second import is dead code.
 - **Fix:** Remove the duplicate import on line 15.
 
-#### BUG-02 — Watcher Has No Fallback Reference Images
-- **File:** `qpopcv/watcher.py:253-254`
-- **Detail:** `REFERENCE_IMG` is defined (lines 26-30) but never used. `_prepare_reference_images` only loads the user-provided image. If `reference_image_path` is empty or invalid, `_reference_images` is `[]` and detection is silently disabled with a `print()` — not a logger warning, not a dialog.
-- **Impact:** User presses "Watch", gets no error, and the watcher runs but never detects anything.
-- **Fix:** Surface an error to the user before starting the watcher if no reference image is loaded. Do not default to `REFERENCE_IMG` as user's screen resolution difference will cause detection mismatch.
+#### ~~BUG-02 — Watcher Has No Fallback Reference Images~~ ✅ Fixed in 1.0.5
+- `_start_watch()` in `app_ui.py` now calls `validate_reference_image()` and shows an error dialog before starting the watcher if no valid image is set.
+- Silent `print()` in `_prepare_reference_images` replaced with `logger.warning()`.
 
 #### BUG-03 — No `screenshot()` Failure Handling
 - **File:** `qpopcv/watcher.py:198`
@@ -74,10 +72,8 @@
 
 ## Anti-Patterns / Code Quality
 
-#### AP-01 — Mixed `print()` and `logging` Throughout Watcher
-- **File:** `qpopcv/watcher.py:169,174,182,184,191,211,222,247,254`
-- **Detail:** `_loop`, `_handle_detected_popup`, and `_prepare_reference_images` all use `print()` for operational output despite the module having a `logger`. This means output can't be redirected, filtered, or silenced via logging config.
-- **Fix:** Replace all `print()` calls in `watcher.py` with `logger.info()` / `logger.warning()` / `logger.error()`.
+#### ~~AP-01 — Mixed `print()` and `logging` Throughout Watcher~~ ✅ Fixed in 1.0.6
+- All `print()` calls in `watcher.py` replaced with appropriate `logger.info()` / `logger.debug()` / `logger.error()` calls.
 
 #### AP-02 — `MEDIA_DIR` Frozen/Source Logic Duplicated
 - **Files:** `qpopcv/watcher.py:18-23`, `qpopcv/updater.py:59-64`
@@ -144,8 +140,8 @@
 Priority order for a future Claude session:
 
 1. **SEC-01** — Remove hardcoded webhook (security critical, 5 min fix)
-2. **BUG-02** — Surface detection disabled state to user (UX critical)
-3. **AP-01** — Replace all `print()` in watcher with `logger` calls (code quality)
+2. ~~**BUG-02** — Surface detection disabled state to user (UX critical)~~ ✅ Fixed in 1.0.5
+3. ~~**AP-01** — Replace all `print()` in watcher with `logger` calls (code quality)~~ ✅ Fixed in 1.0.6
 4. **GAP-07** — Remove unused `opencv-python` from requirements
 5. **SEC-02** — Add webhook URL domain validation
 6. **GAP-01** — Add pytest + a few unit tests for pure functions

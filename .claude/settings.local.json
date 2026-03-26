@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest -v)",
+      "Bash(pip show:*)",
+      "Bash(py -3.11 -m pytest -v)",
+      "Bash(py -3.11 -m pip install pytest)",
+      "Bash(py -3.11 -m pip install requests pillow pyautogui customtkinter)"
+    ]
+  }
+}

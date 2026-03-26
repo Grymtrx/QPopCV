@@ -166,12 +166,12 @@ class QPopWatcher:
     def _handle_detected_popup(self, match_name: str) -> None:
         detected_at = time.time()
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(detected_at))
-        print(f"[{timestamp}] Queue popup detected via '{match_name}'")
+        logger.info("[%s] Queue popup detected via '%s'", timestamp, match_name)
 
         throttled, remaining, now = self._check_throttle()
 
         if throttled:
-            print(f"Qpop throttled - skipping (wait {remaining}s).")
+            logger.debug("Qpop throttled - skipping (wait %ds).", remaining)
         else:
             try:
                 send_start = time.time()
@@ -179,16 +179,16 @@ class QPopWatcher:
                 send_end = time.time()
 
                 self._last_qpop_time = now
-                print(f"Discord notification sent. HTTP took {send_end - send_start:.3f}s")
+                logger.info("Discord notification sent. HTTP took %.3fs", send_end - send_start)
             except Exception as e:
-                print("Error sending webhook:", e)
+                logger.error("Error sending webhook: %s", e)
 
         # local GUI feedback timing
         gui_start = time.time()
         if self._on_detect:
             self._on_detect()
         gui_end = time.time()
-        print(f"Local GUI detect effect took {gui_end - gui_start:.3f}s")
+        logger.debug("Local GUI detect effect took %.3fs", gui_end - gui_start)
 
     def _loop(self) -> None:
         # Main watcher loop running in a background thread.
@@ -208,18 +208,18 @@ class QPopWatcher:
 
                 # Transition: popup -> gone
                 elif not popup_active and self._seen_once:
-                    print("Popup gone, ready for next detection.")
+                    logger.info("Popup gone, ready for next detection.")
                     self._seen_once = False
 
                 if self._stop_event.wait(self._check_interval):
                     break
 
             except Exception as e:
-                print("Watcher error:", e)
+                logger.error("Watcher error: %s", e)
                 if self._stop_event.wait(2):
                     break
 
-        print("Watcher stopped.")
+        logger.info("Watcher stopped.")
 
     def _prepare_reference_images(self) -> List[Tuple[str, Image.Image]]:
         prepared: List[Tuple[str, Image.Image]] = []
@@ -231,7 +231,7 @@ class QPopWatcher:
                     base = img.convert("RGB")
                     base.load()
             except Exception as exc:
-                print(f"Failed to load user reference image: {exc}")
+                logger.error("Failed to load user reference image: %s", exc)
                 return prepared
 
             # Small multi-scale around 100% for robustness
