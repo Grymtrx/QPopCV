@@ -16,7 +16,7 @@ FONTS_DIR = _MEDIA_ROOT / "fonts"
 
 logger = logging.getLogger(__name__)
 
-APP_VERSION = "1.0.22"
+APP_VERSION = "1.0.23"
 # config.json  — tracked in git; contains shared defaults (webhook URL only)
 # config.local.json — gitignored; contains the user's personal settings
 BASE_CONFIG_PATH = APP_DIR / "config.json"
