@@ -96,6 +96,7 @@ class QPopWatcher:
         monitor = monitors[idx]
         self._region = compute_top_center_region(monitor)
         self._region_source = f"Monitor {idx + 1}{' (primary)' if monitor['is_primary'] else ''}"
+        self.oversized_refs: List[Path] = []
         self._reference_images = self._prepare_reference_images()
 
 
@@ -243,6 +244,8 @@ class QPopWatcher:
                 continue
 
             # Small multi-scale around 100% for robustness
+            region_w, region_h = self._region[2], self._region[3]
+            added_count = 0
             for factor in (0.9, 1.0, 1.1):
                 if factor == 1.0:
                     variant = base
@@ -250,7 +253,17 @@ class QPopWatcher:
                     new_w = max(1, int(round(base.width * factor)))
                     new_h = max(1, int(round(base.height * factor)))
                     variant = base.resize((new_w, new_h), Image.BICUBIC)
+                if variant.width > region_w or variant.height > region_h:
+                    logger.warning(
+                        "Ref image %d scale %.1fx (%dx%d) exceeds capture region (%dx%d) — skipping variant.",
+                        i, factor, variant.width, variant.height, region_w, region_h,
+                    )
+                    continue
                 prepared.append((f"user_ref_{i}_{factor:.1f}", variant))
+                added_count += 1
+
+            if added_count == 0:
+                self.oversized_refs.append(path)
 
             logger.info(
                 "Loaded reference image %d with 3 scale variants from: %s", i, path

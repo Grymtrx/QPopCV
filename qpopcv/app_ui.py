@@ -13,9 +13,11 @@ from .config import (
     APP_DIR,
     APP_VERSION,
     DISCORD_SERVER_URL,
+    FONTS_DIR,
     load_config,
     save_config,
 )
+from .font_loader import load_bundled_fonts
 from .watcher import QPopWatcher, WatcherSettings
 
 TEST_THROTTLE_SECONDS = 1
@@ -49,6 +51,7 @@ logger = logging.getLogger(__name__)
 
 class QPopApp:
     def __init__(self) -> None:
+        load_bundled_fonts(FONTS_DIR)
         self.config: Dict[str, object] = load_config()
         self._last_test_time: float = 0.0
         self._watcher: Optional[QPopWatcher] = None
@@ -94,7 +97,7 @@ class QPopApp:
 
         card = ctk.CTkFrame(
             self.root,
-            corner_radius=14,
+            corner_radius=8,
             fg_color=CARD_BG,
             border_width=1,
             border_color=CARD_BORDER,
@@ -107,22 +110,22 @@ class QPopApp:
 
         # ── DISCORD section ───────────────────────────────────────────────
         ctk.CTkLabel(
-            card, text="DISCORD",
-            text_color=TEXT_MUTED,
-            font=("Segoe UI", 8, "bold"),
+            card, text="Discord",
+            text_color=TEXT_PRIMARY,
+            font=("Inter", 12, "bold"),
         ).grid(row=0, column=0, columnspan=3, padx=10, pady=(10, 2), sticky="w")
 
         # Row 1: Webhook
         ctk.CTkLabel(
             card, text="Webhook",
             text_color=TEXT_PRIMARY,
-            font=("Segoe UI", 10),
+            font=("Inter", 10),
         ).grid(row=1, column=0, padx=(10, 4), pady=3, sticky="w")
 
         self.webhook_var = ctk.StringVar(value=str(self.config.get("webhook_url", "")))
         ctk.CTkEntry(
             card, textvariable=self.webhook_var,
-            corner_radius=8, fg_color="white",
+            corner_radius=5, fg_color="white",
             border_color=CARD_BORDER, border_width=1,
             text_color=TEXT_PRIMARY,
         ).grid(row=1, column=1, columnspan=2, padx=(0, 10), pady=3, sticky="we")
@@ -131,13 +134,13 @@ class QPopApp:
         ctk.CTkLabel(
             card, text="User ID",
             text_color=TEXT_PRIMARY,
-            font=("Segoe UI", 10),
+            font=("Inter", 10),
         ).grid(row=2, column=0, padx=(10, 4), pady=(3, 6), sticky="w")
 
         self.user_var = ctk.StringVar(value=str(self.config.get("user_id", "")))
         ctk.CTkEntry(
             card, textvariable=self.user_var,
-            corner_radius=8, fg_color="white",
+            corner_radius=5, fg_color="white",
             border_color=CARD_BORDER, border_width=1,
             text_color=TEXT_PRIMARY,
         ).grid(row=2, column=1, columnspan=2, padx=(0, 10), pady=(3, 6), sticky="we")
@@ -149,16 +152,16 @@ class QPopApp:
 
         # ── DETECTION section ─────────────────────────────────────────────
         ctk.CTkLabel(
-            card, text="DETECTION",
-            text_color=TEXT_MUTED,
-            font=("Segoe UI", 8, "bold"),
+            card, text="Detection",
+            text_color=TEXT_PRIMARY,
+            font=("Inter", 12, "bold"),
         ).grid(row=4, column=0, columnspan=3, padx=10, pady=(8, 2), sticky="w")
 
         # Row 5: Game Monitor
         ctk.CTkLabel(
             card, text="Game Monitor",
             text_color=TEXT_PRIMARY,
-            font=("Segoe UI", 10),
+            font=("Inter", 10),
         ).grid(row=5, column=0, padx=(10, 4), pady=3, sticky="w")
 
         saved_idx = int(str(self.config.get("monitor_index", 0)))
@@ -166,19 +169,19 @@ class QPopApp:
         self.monitor_var = ctk.StringVar(value=self._monitor_labels[saved_idx])
         ctk.CTkComboBox(
             card, variable=self.monitor_var, values=self._monitor_labels,
-            corner_radius=8, fg_color="white",
+            corner_radius=5, fg_color="white",
             border_color=CARD_BORDER, border_width=1,
             button_color=CARD_BORDER, button_hover_color=ACCENT_HOVER,
             text_color=TEXT_PRIMARY, dropdown_fg_color="white",
             dropdown_text_color=TEXT_PRIMARY, dropdown_hover_color="#e5e7eb",
-            font=("Segoe UI", 10), state="readonly",
+            font=("Inter", 10), state="readonly",
         ).grid(row=5, column=1, columnspan=2, padx=(0, 10), pady=3, sticky="we")
 
         # Row 6: Ref Images
         ctk.CTkLabel(
             card, text="Ref Images",
             text_color=TEXT_PRIMARY,
-            font=("Segoe UI", 10),
+            font=("Inter", 10),
         ).grid(row=6, column=0, padx=(10, 4), pady=3, sticky="nw")
 
         ref_section = ctk.CTkFrame(card, fg_color="transparent")
@@ -193,13 +196,13 @@ class QPopApp:
             ref_section,
             text="+ Add Image",
             width=90, height=26,
-            corner_radius=10,
+            corner_radius=5,
             fg_color="transparent",
             hover_color="#e5e7eb",
             text_color=TEXT_MUTED,
             border_width=1,
             border_color=CARD_BORDER,
-            font=("Segoe UI", 9),
+            font=("Inter", 9),
             command=self._add_ref_row,
         )
 
@@ -223,13 +226,13 @@ class QPopApp:
         # Test — ghost style
         self.btn_test = ctk.CTkButton(
             btn_frame,
-            text="Test",
-            width=50, height=28,
-            corner_radius=12,
+            text="Test Connection",
+            width=120, height=28,
+            corner_radius=6,
             fg_color="transparent",
             hover_color="#e5e7eb",
             text_color=TEXT_MUTED,
-            font=("Segoe UI", 10),
+            font=("Inter", 10),
             command=self.on_test_discord,
         )
         self.btn_test.grid(row=0, column=0, padx=(0, 4), sticky="w")
@@ -237,15 +240,15 @@ class QPopApp:
         # Save — outlined secondary
         self.btn_save = ctk.CTkButton(
             btn_frame,
-            text="Save",
-            width=54, height=28,
-            corner_radius=12,
+            text="Save Configuration",
+            width=148, height=28,
+            corner_radius=6,
             fg_color="transparent",
             hover_color="#e5e7eb",
             text_color=TEXT_PRIMARY,
             border_width=1,
             border_color=CARD_BORDER,
-            font=("Segoe UI", 10),
+            font=("Inter", 10),
             command=self.on_save,
         )
         self.btn_save.grid(row=0, column=1, padx=(0, 4), sticky="w")
@@ -255,11 +258,11 @@ class QPopApp:
             btn_frame,
             text="▶  Watch",
             width=96, height=28,
-            corner_radius=12,
+            corner_radius=6,
             fg_color=ACCENT,
             hover_color=ACCENT_HOVER,
             text_color="white",
-            font=("Segoe UI", 10, "bold"),
+            font=("Inter", 10, "bold"),
             command=self.on_toggle_watch,
         )
         self.watch_btn.grid(row=0, column=2, sticky="e")
@@ -276,11 +279,11 @@ class QPopApp:
             footer_frame,
             text="Join Discord",
             width=88, height=22,
-            corner_radius=11,
+            corner_radius=6,
             fg_color="transparent",
             hover_color=DISCORD_BLURPLE_HOVER,
             text_color=DISCORD_BLURPLE,
-            font=("Segoe UI", 9, "bold"),
+            font=("Inter", 9, "bold"),
             command=self.on_open_discord,
         )
         self.btn_discord.grid(row=0, column=0, sticky="w")
@@ -288,9 +291,9 @@ class QPopApp:
         # Mobile hint — centered, small
         ctk.CTkLabel(
             footer_frame,
-            text="Mobile: quit Discord system tray",
+            text="QUIT DISCORD IN SYSTEM TRAY FOR MOBILE NOTIFICATIONS",
             text_color=TEXT_MUTED,
-            font=("Segoe UI", 8),
+            font=("Inter", 8),
         ).grid(row=0, column=1, padx=4, sticky="w")
 
         # Version + update status (right-aligned, clickable)
@@ -298,7 +301,7 @@ class QPopApp:
             footer_frame,
             text=f"v{APP_VERSION} · Checking...",
             text_color=TEXT_MUTED,
-            font=("Segoe UI", 9),
+            font=("Inter", 9),
         )
         self.version_and_update.grid(row=0, column=2, sticky="e")
         self.version_and_update.bind("<Button-1>", self.on_update_click)
@@ -312,7 +315,7 @@ class QPopApp:
 
         self._status_pill_frame = ctk.CTkFrame(
             pill_container,
-            corner_radius=16,
+            corner_radius=8,
             fg_color=PILL_IDLE_BG,
             border_width=1,
             border_color=PILL_IDLE_BORDER,
@@ -322,7 +325,7 @@ class QPopApp:
         self.status_label = ctk.CTkLabel(
             self._status_pill_frame,
             text="● Stopped",
-            font=("Segoe UI", 13, "bold"),
+            font=("Inter", 13, "bold"),
             text_color=STATUS_IDLE,
         )
         self.status_label.grid(padx=22, pady=6)
@@ -389,7 +392,7 @@ class QPopApp:
         entry = ctk.CTkEntry(
             row_frame,
             textvariable=var,
-            corner_radius=8,
+            corner_radius=5,
             fg_color="white",
             border_color=CARD_BORDER,
             border_width=1,
@@ -402,13 +405,13 @@ class QPopApp:
             text="⊞",
             width=28,
             height=26,
-            corner_radius=8,
+            corner_radius=5,
             fg_color="white",
             hover_color="#e5e7eb",
             text_color=TEXT_PRIMARY,
             border_width=1,
             border_color=CARD_BORDER,
-            font=("Segoe UI", 13),
+            font=("Inter", 13),
             command=lambda v=var: self._browse_reference(v),
         )
         browse_btn.grid(row=0, column=1, padx=(0, 2), pady=1)
@@ -418,11 +421,11 @@ class QPopApp:
             text="✕",
             width=26,
             height=26,
-            corner_radius=8,
+            corner_radius=5,
             fg_color="transparent",
             hover_color="#fee2e2",
             text_color=TEXT_MUTED,
-            font=("Segoe UI", 11),
+            font=("Inter", 11),
             command=lambda i=idx: self._remove_ref_row(i),
         )
         remove_btn.grid(row=0, column=2, padx=(0, 2), pady=1)
@@ -560,12 +563,22 @@ class QPopApp:
         )
         self._watcher.start()
 
+        if self._watcher.oversized_refs:
+            names = "\n".join(f"  • {p.name}" for p in self._watcher.oversized_refs)
+            rw, rh = self._watcher._region[2], self._watcher._region[3]
+            messagebox.showwarning(
+                "Reference Image Too Large",
+                f"The following image(s) are larger than the detection zone ({rw}×{rh}px) "
+                f"and will be ignored:\n\n{names}\n\n"
+                "Take a cropped screenshot of just the queue popup dialog, not the full screen.",
+            )
+
         self._set_status("● Watching", SUCCESS)
         self.watch_btn.configure(
             text="■  Stop",
             fg_color=SUCCESS,
             hover_color="#15803d",
-            font=("Segoe UI", 10, "bold"),
+            font=("Inter", 10, "bold"),
         )
 
     def _stop_watch(self) -> None:
@@ -577,7 +590,7 @@ class QPopApp:
             text="▶  Watch",
             fg_color=ACCENT,
             hover_color=ACCENT_HOVER,
-            font=("Segoe UI", 10, "bold"),
+            font=("Inter", 10, "bold"),
         )
 
     def _check_test_throttle(self):

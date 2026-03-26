@@ -12,10 +12,11 @@ else:
     _MEDIA_ROOT = APP_DIR
 
 MEDIA_DIR = _MEDIA_ROOT / "media"
+FONTS_DIR = _MEDIA_ROOT / "fonts"
 
 logger = logging.getLogger(__name__)
 
-APP_VERSION = "1.0.16"
+APP_VERSION = "1.0.21"
 # config.json  — tracked in git; contains shared defaults (webhook URL only)
 # config.local.json — gitignored; contains the user's personal settings
 BASE_CONFIG_PATH = APP_DIR / "config.json"
