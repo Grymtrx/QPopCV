@@ -28,7 +28,7 @@
 - Validator now accepts 17–19 digit IDs to cover old accounts and 19-digit snowflakes.
 
 #### SEC-04 — No Checksum/Signature Verification on Update ZIPs
-- **File:** `qpopcv/updater.py:133-137`
+- **File:** `qpopcv/updater.py:135-136`
 - **Detail:** The downloaded release ZIP is extracted without verifying integrity. A compromised GitHub release asset could execute malicious code.
 - **Fix:** GitHub releases expose an SHA-256 in their API (`assets[].digest`). Verify before extracting.
 
@@ -81,7 +81,7 @@
 - **Fix:** This is acceptable for the update use case. Document with a comment explaining why `os._exit` is chosen over `sys.exit`.
 
 #### AP-05 — Bare `except Exception` in Update Check Loses Error Context
-- **File:** `qpopcv/updater.py:105`
+- **File:** `qpopcv/updater.py:104`
 - **Detail:** `except Exception:` with no logging means update check failures are completely invisible. `app_ui.py` handles this gracefully in the UI, but the underlying error (network timeout, SSL, JSON parse) is never recorded anywhere.
 - **Fix:** Add `logger.debug("Update check failed", exc_info=True)` inside the except.
 
@@ -131,7 +131,11 @@ Priority order for a future Claude session:
 4. ~~**GAP-07** — Remove unused `opencv-python` from requirements~~ ✅ Fixed in 1.0.7
 5. ~~**SEC-02** — Add webhook URL domain validation~~ ✅ Fixed in 1.0.7
 6. ~~**GAP-01** — Add pytest + a few unit tests for pure functions~~ ✅ Fixed in 1.0.7
-7. **GAP-02** — Add rotating file log handler
-8. **AP-02** — Consolidate `MEDIA_DIR` into `config.py`
-9. **GAP-03** — Multi-monitor region support
-10. **GAP-05/06** — Expose confidence + interval in UI
+7. ~~**SEC-03** — Broaden user ID digit range~~ ✅ Fixed in 1.0.8
+8. ~~**SEC-05** — Batch script delayed expansion risk~~ ✅ Fixed in 1.0.8
+9. ~~**BUG-01** — Duplicate `subprocess` import~~ ✅ Fixed in 1.0.8
+10. ~~**BUG-03** — No `screenshot()` None guard~~ ✅ Fixed in 1.0.8
+11. **GAP-02** — Add rotating file log handler
+12. **AP-02** — Consolidate `MEDIA_DIR` into `config.py`
+13. **GAP-03** — Multi-monitor region support
+14. **GAP-05/06** — Expose confidence + interval in UI
