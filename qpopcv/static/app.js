@@ -308,13 +308,13 @@ $('btn-save').addEventListener('click', async () => {
     const result = await apiPost('/api/save_config', collectFormData());
     if (result.ok) {
       btn.textContent = 'Saved!';
-      setTimeout(() => { btn.textContent = 'Save'; }, 1500);
+      setTimeout(() => { btn.textContent = 'Save Configuration'; }, 1500);
     } else {
-      btn.textContent = 'Save';
+      btn.textContent = 'Save Configuration';
       showToast('error', result.error || 'Save failed.');
     }
   } catch (e) {
-    btn.textContent = 'Save';
+    btn.textContent = 'Save Configuration';
     showToast('error', 'Save request failed.');
   }
 });

@@ -1,0 +1,250 @@
+<h2>Where should the Save button live?</h2>
+<p class="subtitle">Pick the placement that feels most natural — you need to save after filling all 3 tabs</p>
+
+<style>
+  /* App replica styles */
+  .app-mock {
+    background: rgba(15, 15, 20, 0.92);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, sans-serif;
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+    font-size: 12px;
+    color: #e0e0e0;
+  }
+  .app-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    height: 36px;
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .app-logo { font-weight: 700; font-size: 13px; color: #fff; }
+  .app-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; display: inline-block; margin-right: 6px; }
+  .status-pill {
+    font-size: 10px; padding: 2px 8px; border-radius: 20px;
+    background: rgba(255,255,255,0.08); color: #9ca3af;
+  }
+  .win-btns { display: flex; gap: 5px; }
+  .win-btn { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.2); }
+  .app-tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 0 10px;
+    gap: 2px;
+  }
+  .app-tab {
+    padding: 7px 12px; font-size: 11px; color: #6b7280; cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  .app-tab.active { color: #fff; border-bottom-color: #fff; }
+  .app-content { padding: 12px 14px; }
+  .app-field { margin-bottom: 8px; }
+  .app-label { font-size: 10px; color: #6b7280; margin-bottom: 3px; }
+  .app-input {
+    width: 100%; height: 28px; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;
+    padding: 0 8px; font-size: 11px; color: #9ca3af;
+    box-sizing: border-box;
+    display: flex; align-items: center;
+  }
+  .app-footer {
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 10px 12px;
+  }
+  .watch-btn {
+    width: 100%; height: 38px; background: rgba(74,222,128,0.12);
+    border: 1px solid rgba(74,222,128,0.25); border-radius: 8px;
+    color: #4ade80; font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .version-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px; margin-top: 7px; font-size: 10px; color: #374151;
+  }
+
+  /* Option-specific save button styles */
+  .save-tiny { font-size: 10px; color: #4b5563; cursor: pointer; }
+  .save-secondary {
+    height: 30px; padding: 0 14px;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px; color: #d1d5db; font-size: 11px; font-weight: 500;
+    display: flex; align-items: center;
+  }
+  .save-full-row {
+    width: 100%; height: 30px; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 7px;
+    color: #d1d5db; font-size: 11px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    margin-bottom: 8px;
+  }
+  .save-full-row .save-icon { font-size: 10px; opacity: 0.7; }
+  .save-banner {
+    background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.2);
+    border-radius: 7px; padding: 7px 10px; margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .save-banner-text { font-size: 10px; color: #4ade80; }
+  .save-banner-btn {
+    font-size: 10px; font-weight: 600; color: #4ade80;
+    padding: 3px 10px; border: 1px solid rgba(74,222,128,0.3);
+    border-radius: 4px; background: rgba(74,222,128,0.1);
+  }
+
+  .cards { gap: 14px; }
+  .card { cursor: pointer; }
+
+  .badge {
+    display: inline-block; font-size: 9px; padding: 1px 5px;
+    border-radius: 3px; background: rgba(251,146,60,0.2); color: #fb923c;
+    margin-left: 6px; vertical-align: middle;
+  }
+</style>
+
+<div class="cards">
+
+  <!-- Option A: Current (for reference) -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Current <span class="badge">existing</span></h3>
+      <p>Save is tiny text in the version row — easy to miss</p>
+      <div class="app-mock" style="margin-top:10px">
+        <div class="app-titlebar">
+          <span class="app-logo"><span class="app-dot"></span>QPopCV</span>
+          <span class="status-pill">Stopped</span>
+          <div class="win-btns"><div class="win-btn"></div><div class="win-btn"></div></div>
+        </div>
+        <div class="app-tabs">
+          <div class="app-tab active">Discord</div>
+          <div class="app-tab">Capture</div>
+          <div class="app-tab">Images</div>
+        </div>
+        <div class="app-content">
+          <div class="app-field"><div class="app-label">Webhook</div><div class="app-input" style="font-size:10px;color:#4b5563">https://discord.com/api/…</div></div>
+          <div class="app-field"><div class="app-label">User ID</div><div class="app-input" style="font-size:10px;color:#4b5563">17–19 digit snowflake</div></div>
+        </div>
+        <div class="app-footer">
+          <div class="watch-btn">▶ &nbsp;Watch</div>
+          <div class="version-row">
+            <span class="save-tiny">Save</span>
+            <span>·</span>
+            <span>v1.0.25</span>
+            <span>·</span>
+            <span>Up to date</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B: Save as styled secondary button alongside Watch -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Secondary button row</h3>
+      <p>Save becomes a styled button — same row as version info, clearly clickable</p>
+      <div class="app-mock" style="margin-top:10px">
+        <div class="app-titlebar">
+          <span class="app-logo"><span class="app-dot"></span>QPopCV</span>
+          <span class="status-pill">Stopped</span>
+          <div class="win-btns"><div class="win-btn"></div><div class="win-btn"></div></div>
+        </div>
+        <div class="app-tabs">
+          <div class="app-tab active">Discord</div>
+          <div class="app-tab">Capture</div>
+          <div class="app-tab">Images</div>
+        </div>
+        <div class="app-content">
+          <div class="app-field"><div class="app-label">Webhook</div><div class="app-input" style="font-size:10px;color:#4b5563">https://discord.com/api/…</div></div>
+          <div class="app-field"><div class="app-label">User ID</div><div class="app-input" style="font-size:10px;color:#4b5563">17–19 digit snowflake</div></div>
+        </div>
+        <div class="app-footer">
+          <div class="watch-btn">▶ &nbsp;Watch</div>
+          <div class="version-row">
+            <div class="save-secondary">Save</div>
+            <span style="color:#374151">·</span>
+            <span>v1.0.25</span>
+            <span style="color:#374151">·</span>
+            <span>Up to date</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C: Save as its own full-width row above Watch -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Full-width row above Watch</h3>
+      <p>Save gets its own row between tab content and the Watch button — obvious, always visible</p>
+      <div class="app-mock" style="margin-top:10px">
+        <div class="app-titlebar">
+          <span class="app-logo"><span class="app-dot"></span>QPopCV</span>
+          <span class="status-pill">Stopped</span>
+          <div class="win-btns"><div class="win-btn"></div><div class="win-btn"></div></div>
+        </div>
+        <div class="app-tabs">
+          <div class="app-tab active">Discord</div>
+          <div class="app-tab">Capture</div>
+          <div class="app-tab">Images</div>
+        </div>
+        <div class="app-content">
+          <div class="app-field"><div class="app-label">Webhook</div><div class="app-input" style="font-size:10px;color:#4b5563">https://discord.com/api/…</div></div>
+          <div class="app-field"><div class="app-label">User ID</div><div class="app-input" style="font-size:10px;color:#4b5563">17–19 digit snowflake</div></div>
+        </div>
+        <div class="app-footer">
+          <div class="save-full-row"><span class="save-icon">💾</span> Save Settings</div>
+          <div class="watch-btn">▶ &nbsp;Watch</div>
+          <div class="version-row" style="margin-top:7px">
+            <span>v1.0.25</span>
+            <span>·</span>
+            <span>Up to date</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option D: "Unsaved changes" banner -->
+  <div class="card" data-choice="d" onclick="toggleSelect(this)">
+    <div class="letter">D</div>
+    <div class="content">
+      <h3>Contextual save banner</h3>
+      <p>A green callout appears whenever there are unsaved changes — disappears after saving</p>
+      <div class="app-mock" style="margin-top:10px">
+        <div class="app-titlebar">
+          <span class="app-logo"><span class="app-dot"></span>QPopCV</span>
+          <span class="status-pill">Stopped</span>
+          <div class="win-btns"><div class="win-btn"></div><div class="win-btn"></div></div>
+        </div>
+        <div class="app-tabs">
+          <div class="app-tab active">Discord</div>
+          <div class="app-tab">Capture</div>
+          <div class="app-tab">Images</div>
+        </div>
+        <div class="app-content">
+          <div class="app-field"><div class="app-label">Webhook</div><div class="app-input" style="font-size:10px;color:#4b5563">https://discord.com/api/…</div></div>
+          <div class="app-field"><div class="app-label">User ID</div><div class="app-input" style="font-size:10px;color:#4b5563">17–19 digit snowflake</div></div>
+        </div>
+        <div class="app-footer">
+          <div class="save-banner">
+            <span class="save-banner-text">Unsaved changes</span>
+            <div class="save-banner-btn">Save</div>
+          </div>
+          <div class="watch-btn">▶ &nbsp;Watch</div>
+          <div class="version-row" style="margin-top:7px">
+            <span>v1.0.25</span><span>·</span><span>Up to date</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
