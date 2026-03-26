@@ -15,7 +15,7 @@ MEDIA_DIR = _MEDIA_ROOT / "media"
 
 logger = logging.getLogger(__name__)
 
-APP_VERSION = "1.0.12"
+APP_VERSION = "1.0.13"
 CONFIG_PATH = APP_DIR / "config.json"
 DISCORD_SERVER_URL = "https://discord.gg/KpupS6N3Zj"  # QPopCV Discord Server (PermaLink)
 
@@ -24,7 +24,7 @@ DEFAULT_CONFIG: Dict[str, object] = {
     "user_id": "",
     "check_interval": 0.15,
     "confidence": 0.6,
-    "reference_image_path": "",
+    "reference_image_paths": [],
     "monitor_index": 0,
 }
 
@@ -35,6 +35,10 @@ def load_config() -> Dict[str, object]:
             data = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
             merged = DEFAULT_CONFIG.copy()
             merged.update(data)
+            # Migrate old single-path key to list
+            old_path = str(merged.pop("reference_image_path", "") or "").strip()
+            if old_path and not merged.get("reference_image_paths"):
+                merged["reference_image_paths"] = [old_path]
             return merged
         except Exception as exc:
             logger.warning("Failed to load config, using defaults: %s", exc)

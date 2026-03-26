@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Tuple
 import threading
 import time
 import webbrowser
@@ -32,7 +32,7 @@ from .theme import (
     SUCCESS,
     DETECTED,
 )
-from .validators import validate_discord_core, validate_reference_image
+from .validators import validate_discord_core, validate_reference_images
 from .monitor_utils import get_monitors
 from .discord_client import send_test_message
 
@@ -54,6 +54,9 @@ class QPopApp:
                 label += " \u2013 Primary"
             self._monitor_labels.append(label)
 
+        # Reference image rows: list of (frame, StringVar, browse_btn, remove_btn)
+        self._ref_rows: List[Tuple] = []
+
         self.update_manager = UpdateManager(
             current_version=APP_VERSION, app_dir=APP_DIR
         )
@@ -64,8 +67,8 @@ class QPopApp:
         self.root = ctk.CTk()
         # Window title
         self.root.title("QPopCV Watcher App")
-        self.root.geometry("360x220")
-        self.root.minsize(360, 220)
+        self.root.geometry("360x280")
+        self.root.minsize(360, 280)
         self.root.resizable(True, True)
         self.root.configure(fg_color=BG_COLOR)
 
@@ -132,41 +135,53 @@ class QPopApp:
             text_color=TEXT_PRIMARY,
         ).grid(row=1, column=1, columnspan=2, padx=(4, 6), pady=3, sticky="we")
 
-        # Row 2: Reference Image
+        # Row 2: Reference Images (dynamic sub-frame)
+        ref_section = ctk.CTkFrame(card, fg_color="transparent")
+        ref_section.grid(row=2, column=0, columnspan=3, padx=0, pady=0, sticky="we")
+        ref_section.grid_columnconfigure(0, weight=0)
+        ref_section.grid_columnconfigure(1, weight=1)
+        ref_section.grid_columnconfigure(2, weight=0)
+        ref_section.grid_columnconfigure(3, weight=0)
+        self._ref_section = ref_section
+
         ctk.CTkLabel(
-            card,
-            text="Reference Image",
+            ref_section,
+            text="Ref Images",
             text_color=TEXT_PRIMARY,
             font=("Segoe UI", 10),
-        ).grid(row=2, column=0, padx=6, pady=3, sticky="w")
+        ).grid(row=0, column=0, padx=6, pady=3, sticky="nw")
 
-        self.ref_var = ctk.StringVar(
-            value=str(self.config.get("reference_image_path", ""))
-        )
-        self.ref_entry = ctk.CTkEntry(
-            card,
-            textvariable=self.ref_var,
-            corner_radius=8,
+        # Container for image rows (rows 0..N inside _ref_rows_frame)
+        self._ref_rows_frame = ctk.CTkFrame(ref_section, fg_color="transparent")
+        self._ref_rows_frame.grid(row=0, column=1, columnspan=3, padx=0, pady=0, sticky="we")
+        self._ref_rows_frame.grid_columnconfigure(0, weight=1)
+        self._ref_rows_frame.grid_columnconfigure(1, weight=0)
+        self._ref_rows_frame.grid_columnconfigure(2, weight=0)
+
+        # Add button row (always last inside ref_section)
+        self._add_ref_btn = ctk.CTkButton(
+            ref_section,
+            text="+ Add Image",
+            width=90,
+            height=20,
+            corner_radius=10,
             fg_color="white",
-            border_color=CARD_BORDER,
-            border_width=1,
+            hover_color="#e5e7eb",
             text_color=TEXT_PRIMARY,
+            border_width=1,
+            border_color=CARD_BORDER,
+            font=("Segoe UI", 9),
+            command=self._add_ref_row,
         )
-        self.ref_entry.grid(row=2, column=1, padx=(4, 2), pady=3, sticky="we")
+        # Will be placed dynamically by _refresh_add_btn_position()
 
-        self.ref_button = ctk.CTkButton(
-            card,
-            text="Add",
-            width=40,
-            height=24,
-            corner_radius=12,
-            fg_color=ACCENT,
-            hover_color=ACCENT_HOVER,
-            text_color="white",
-            font=("Segoe UI", 11),
-            command=self.on_browse_reference,
-        )
-        self.ref_button.grid(row=2, column=2, padx=(2, 6), pady=3, sticky="e")
+        # Populate from config
+        saved_paths: list = self.config.get("reference_image_paths", [])  # type: ignore[assignment]
+        if not saved_paths:
+            saved_paths = [""]
+        for p in saved_paths:
+            self._add_ref_row(str(p))
+        self._refresh_add_btn_position()
 
         # Row 3: Game Monitor
         ctk.CTkLabel(
@@ -310,12 +325,106 @@ class QPopApp:
         self.status_label.after(1600, restore)
 
 
+    # --------- Reference image row management ---------
+
+    MAX_REF_IMAGES = 5
+
+    def _add_ref_row(self, path: str = "") -> None:
+        if len(self._ref_rows) >= self.MAX_REF_IMAGES:
+            return
+        idx = len(self._ref_rows)
+        var = ctk.StringVar(value=path)
+
+        row_frame = ctk.CTkFrame(self._ref_rows_frame, fg_color="transparent")
+        row_frame.grid(row=idx, column=0, columnspan=3, padx=0, pady=1, sticky="we")
+        row_frame.grid_columnconfigure(0, weight=1)
+        row_frame.grid_columnconfigure(1, weight=0)
+        row_frame.grid_columnconfigure(2, weight=0)
+
+        entry = ctk.CTkEntry(
+            row_frame,
+            textvariable=var,
+            corner_radius=8,
+            fg_color="white",
+            border_color=CARD_BORDER,
+            border_width=1,
+            text_color=TEXT_PRIMARY,
+        )
+        entry.grid(row=0, column=0, padx=(4, 2), pady=0, sticky="we")
+
+        browse_btn = ctk.CTkButton(
+            row_frame,
+            text="...",
+            width=28,
+            height=24,
+            corner_radius=8,
+            fg_color=ACCENT,
+            hover_color=ACCENT_HOVER,
+            text_color="white",
+            font=("Segoe UI", 11),
+            command=lambda v=var: self._browse_reference(v),
+        )
+        browse_btn.grid(row=0, column=1, padx=(0, 2), pady=0)
+
+        remove_btn = ctk.CTkButton(
+            row_frame,
+            text="×",
+            width=24,
+            height=24,
+            corner_radius=8,
+            fg_color="#e5e7eb",
+            hover_color=DANGER,
+            text_color=TEXT_PRIMARY,
+            font=("Segoe UI", 12),
+            command=lambda i=idx: self._remove_ref_row(i),
+        )
+        remove_btn.grid(row=0, column=2, padx=(0, 6), pady=0)
+
+        self._ref_rows.append((row_frame, var, browse_btn, remove_btn))
+        self._refresh_remove_btns()
+        self._refresh_add_btn_position()
+
+    def _remove_ref_row(self, idx: int) -> None:
+        if len(self._ref_rows) <= 1:
+            return  # always keep at least 1
+        row_frame, _, _, _ = self._ref_rows.pop(idx)
+        row_frame.destroy()
+
+        # Re-grid remaining rows at correct indices
+        for i, (frame, _, _, _) in enumerate(self._ref_rows):
+            frame.grid(row=i, column=0, columnspan=3, padx=0, pady=1, sticky="we")
+
+        # Rebind remove buttons with updated indices
+        for i, (_, _, _, remove_btn) in enumerate(self._ref_rows):
+            remove_btn.configure(command=lambda i=i: self._remove_ref_row(i))
+
+        self._refresh_remove_btns()
+        self._refresh_add_btn_position()
+
+    def _refresh_remove_btns(self) -> None:
+        """Disable remove button when only 1 row remains."""
+        only_one = len(self._ref_rows) == 1
+        for _, _, _, remove_btn in self._ref_rows:
+            remove_btn.configure(state="disabled" if only_one else "normal")
+
+    def _refresh_add_btn_position(self) -> None:
+        if len(self._ref_rows) < self.MAX_REF_IMAGES:
+            self._add_ref_btn.grid(
+                row=1, column=1, columnspan=2,
+                padx=(4, 6), pady=(1, 3), sticky="w",
+            )
+        else:
+            self._add_ref_btn.grid_remove()
+
     # --------- Config / validation -------
+
+    def _get_ref_paths(self) -> List[str]:
+        return [var.get().strip() for _, var, _, _ in self._ref_rows]
 
     def _update_config_from_ui(self) -> None:
         self.config["webhook_url"] = self.webhook_var.get().strip()
         self.config["user_id"] = self.user_var.get().strip()
-        self.config["reference_image_path"] = self.ref_var.get().strip()
+        self.config["reference_image_paths"] = [p for p in self._get_ref_paths() if p]
         selected = self.monitor_var.get()
         idx = self._monitor_labels.index(selected) if selected in self._monitor_labels else 0
         self.config["monitor_index"] = idx
@@ -323,7 +432,7 @@ class QPopApp:
 
     # --------- Button handlers ---------
 
-    def on_browse_reference(self) -> None:
+    def _browse_reference(self, var: ctk.StringVar) -> None:
         filename = filedialog.askopenfilename(
             title="Select reference image",
             filetypes=[
@@ -332,7 +441,7 @@ class QPopApp:
             ],
         )
         if filename:
-            self.ref_var.set(filename)
+            var.set(filename)
 
     def on_save(self) -> None:
         self._update_config_from_ui()
@@ -341,7 +450,7 @@ class QPopApp:
             self.webhook_var.get(), self.user_var.get()
         ):
             return
-        if not validate_reference_image(self.ref_var.get()):
+        if not validate_reference_images(self._get_ref_paths()):
             return
 
         save_config(self.config)
@@ -389,7 +498,7 @@ class QPopApp:
             self.webhook_var.get(), self.user_var.get()
         ):
             return
-        if not validate_reference_image(self.ref_var.get()):
+        if not validate_reference_images(self._get_ref_paths()):
             return
 
         save_config(self.config)

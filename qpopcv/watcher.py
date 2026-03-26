@@ -30,20 +30,30 @@ class WatcherSettings:
     user_id: str
     check_interval: float = 0.5
     confidence: float = 0.6
-    reference_image_path: Optional[Path] = None
+    reference_image_paths: List[Path] = None  # type: ignore[assignment]
     monitor_index: int = 0
+
+    def __post_init__(self):
+        if self.reference_image_paths is None:
+            self.reference_image_paths = []
 
     @classmethod
     def from_config(cls, config: Dict[str, object]) -> "WatcherSettings":
-        ref_path_str = str(config.get("reference_image_path", "")).strip()
-        ref_path = Path(ref_path_str).expanduser() if ref_path_str else None
+        raw_paths = config.get("reference_image_paths", [])
+        if not isinstance(raw_paths, list):
+            raw_paths = []
+        ref_paths = [
+            Path(str(p).strip()).expanduser()
+            for p in raw_paths
+            if str(p).strip()
+        ]
 
         return cls(
             webhook_url=str(config.get("webhook_url", "")).strip(),
             user_id=str(config.get("user_id", "")).strip(),
             check_interval=float(config.get("check_interval", 0.5)),
             confidence=float(config.get("confidence", 0.6)),
-            reference_image_path=ref_path,
+            reference_image_paths=ref_paths,
             monitor_index=int(config.get("monitor_index", 0)),
         )
 
@@ -71,7 +81,7 @@ class QPopWatcher:
         self._user_id = settings.user_id.strip()
         self._check_interval = float(settings.check_interval)
         self._confidence = float(settings.confidence)
-        self._reference_path = settings.reference_image_path
+        self._reference_paths = settings.reference_image_paths
 
         self._mention = f"<@{self._user_id}>"
         self._on_detect = on_detect
@@ -107,8 +117,9 @@ class QPopWatcher:
             self._confidence,
         )
         logger.info(
-            "Reference image: %s",
-            self._reference_path if self._reference_path else "built-in defaults",
+            "Reference images (%d): %s",
+            len(self._reference_paths),
+            self._reference_paths if self._reference_paths else "none configured",
         )
         if not self._reference_images:
             logger.warning(
@@ -219,15 +230,17 @@ class QPopWatcher:
     def _prepare_reference_images(self) -> List[Tuple[str, Image.Image]]:
         prepared: List[Tuple[str, Image.Image]] = []
 
-        # Only use user-provided reference image
-        if self._reference_path and self._reference_path.exists():
+        for i, path in enumerate(self._reference_paths):
+            if not path.exists():
+                logger.warning("Reference image %d not found, skipping: %s", i, path)
+                continue
             try:
-                with Image.open(self._reference_path) as img:
+                with Image.open(path) as img:
                     base = img.convert("RGB")
                     base.load()
             except Exception as exc:
-                logger.error("Failed to load user reference image: %s", exc)
-                return prepared
+                logger.error("Failed to load reference image %d (%s): %s", i, path, exc)
+                continue
 
             # Small multi-scale around 100% for robustness
             for factor in (0.9, 1.0, 1.1):
@@ -237,15 +250,13 @@ class QPopWatcher:
                     new_w = max(1, int(round(base.width * factor)))
                     new_h = max(1, int(round(base.height * factor)))
                     variant = base.resize((new_w, new_h), Image.BICUBIC)
-                prepared.append((f"user_ref_{factor:.1f}", variant))
+                prepared.append((f"user_ref_{i}_{factor:.1f}", variant))
 
             logger.info(
-                "Loaded user reference image with %d scale variants from: %s",
-                len(prepared),
-                self._reference_path,
+                "Loaded reference image %d with 3 scale variants from: %s", i, path
             )
-            return prepared
 
-        # No fallback at all while testing
-        logger.warning("No valid user reference image; detection will be disabled (no fallbacks).")
+        if not prepared:
+            logger.warning("No valid reference images loaded; detection will be disabled.")
+
         return prepared
