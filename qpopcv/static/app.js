@@ -48,6 +48,34 @@ const versionText   = $('version-text');
 const updateText    = $('update-text');
 const toastContainer = $('toasts');
 
+// ── Window controls ───────────────────────────────────────────────────────────
+
+document.getElementById('titlebar-drag').addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  // Fire-and-forget: localhost round-trip is ~1-5ms; button will still be held
+  fetch('/api/window_control', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'drag_start' }),
+  }).catch(() => {});
+});
+
+document.getElementById('win-btn-min').addEventListener('click', () => {
+  fetch('/api/window_control', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'minimize' }),
+  }).catch(() => {});
+});
+
+document.getElementById('win-btn-close').addEventListener('click', () => {
+  fetch('/api/window_control', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'close' }),
+  }).catch(() => {});
+});
+
 // ── Server-Sent Events ────────────────────────────────────────────────────────
 
 function connectEvents() {
@@ -121,6 +149,20 @@ function applyInitialState(data) {
   const paths = config.reference_image_paths || [];
   (paths.length ? paths : ['']).forEach(p => addRefRow(p));
   refreshAddBtn();
+
+  // Fit window to content after everything is laid out
+  requestAnimationFrame(() => measureAndResize());
+}
+
+// ── Height adaptation ──────────────────────────────────────────────────────────
+
+function measureAndResize() {
+  const h = document.documentElement.scrollHeight;
+  fetch('/api/resize', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ height: h }),
+  }).catch(() => {});
 }
 
 // ── Tab switching ──────────────────────────────────────────────────────────────
@@ -132,6 +174,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     $(`tab-${name}`).classList.add('active');
+    measureAndResize();
   });
 });
 
@@ -289,6 +332,7 @@ $('btn-discord').addEventListener('click', () => {
 addImageBtn.addEventListener('click', () => {
   addRefRow('');
   refreshAddBtn();
+  measureAndResize();
 });
 
 function addRefRow(path) {
@@ -328,6 +372,7 @@ function addRefRow(path) {
     row.remove();
     refreshRemoveBtns();
     refreshAddBtn();
+    measureAndResize();
   });
 
   row.appendChild(input);

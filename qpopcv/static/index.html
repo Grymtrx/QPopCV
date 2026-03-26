@@ -15,17 +15,23 @@
 
   <div class="app-card">
 
-    <!-- ── Header ─────────────────────────────────────────────────── -->
-    <header class="header">
-      <div class="logo">
-        <span class="logo-gem">◆</span>
-        <span class="logo-text">QPopCV</span>
+    <!-- ── Custom title bar ───────────────────────────────────────── -->
+    <div class="titlebar" id="titlebar">
+      <div class="titlebar-drag" id="titlebar-drag">
+        <div class="logo">
+          <span class="logo-gem">◆</span>
+          <span class="logo-text">QPopCV</span>
+        </div>
+        <div class="status-pill" id="status-pill" data-state="idle">
+          <span class="status-orb" id="status-orb"></span>
+          <span class="status-text" id="status-text">Stopped</span>
+        </div>
       </div>
-      <div class="status-pill" id="status-pill" data-state="idle">
-        <span class="status-orb" id="status-orb"></span>
-        <span class="status-text" id="status-text">Stopped</span>
+      <div class="titlebar-controls">
+        <button class="win-btn win-btn-min" id="win-btn-min" title="Minimize">&#x2212;</button>
+        <button class="win-btn win-btn-close" id="win-btn-close" title="Close">&#x2715;</button>
       </div>
-    </header>
+    </div>
 
     <!-- ── Tab bar ────────────────────────────────────────────────── -->
     <nav class="tab-bar">
@@ -58,19 +64,6 @@
         <label class="field-label" for="monitor-select">Monitor</label>
         <select class="field-select" id="monitor-select"></select>
       </div>
-      <div class="divider"></div>
-      <div class="section-label">Detection Zone</div>
-      <div class="zone-grid">
-        <label class="zone-label">X</label>
-        <input class="field-input zone-input" disabled placeholder="auto">
-        <label class="zone-label">Y</label>
-        <input class="field-input zone-input" disabled placeholder="auto">
-        <label class="zone-label">W</label>
-        <input class="field-input zone-input" disabled placeholder="auto">
-        <label class="zone-label">H</label>
-        <input class="field-input zone-input" disabled placeholder="auto">
-      </div>
-      <p class="hint-text">Custom detection zone — coming in a future update</p>
     </div>
 
     <!-- ── Images tab ─────────────────────────────────────────────── -->

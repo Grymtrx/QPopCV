@@ -40,7 +40,7 @@
 }
 
 html, body {
-  height: 100%;
+  height: auto;
   background: var(--bg);
   color: var(--text);
   font-family: 'Inter', system-ui, sans-serif;
@@ -70,9 +70,10 @@ html, body {
 /* ── App card ────────────────────────────────────────────────── */
 
 .app-card {
+  position: relative;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: auto;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -82,15 +83,97 @@ html, body {
     0 8px 40px rgba(0, 0, 0, 0.6);
 }
 
-/* ── Header ─────────────────────────────────────────────────── */
+/* Gold seam along the top edge */
+.app-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--gold-dim) 20%,
+    var(--gold-bright) 50%,
+    var(--gold-dim) 80%,
+    transparent 100%
+  );
+  z-index: 2;
+  pointer-events: none;
+}
 
-.header {
+/* ── Custom title bar ────────────────────────────────────────── */
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 6px 0 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: linear-gradient(180deg, rgba(200,146,42,0.07) 0%, transparent 100%);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.titlebar-drag {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px 10px;
-  border-bottom: 1px solid var(--border-subtle);
-  background: linear-gradient(180deg, rgba(200,146,42,0.04) 0%, transparent 100%);
+  flex: 1;
+  min-width: 0;
+  gap: 8px;
+  padding-right: 8px;
+  cursor: default;
+}
+
+.titlebar-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.win-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+  transition: all var(--transition);
+  outline: none;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.win-btn-min:hover {
+  border-color: var(--gold-dim);
+  color: var(--gold);
+  background: rgba(200, 146, 42, 0.08);
+  box-shadow: 0 0 8px rgba(200, 146, 42, 0.12);
+}
+
+.win-btn-min:active {
+  background: rgba(200, 146, 42, 0.14);
+  transform: translateY(1px);
+}
+
+.win-btn-close:hover {
+  border-color: rgba(239, 68, 68, 0.35);
+  color: var(--red);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.win-btn-close:active {
+  background: rgba(239, 68, 68, 0.14);
+  transform: translateY(1px);
 }
 
 .logo {
@@ -268,8 +351,8 @@ html, body {
   display: none;
   flex-direction: column;
   gap: 10px;
-  padding: 14px 14px 6px;
-  flex: 1;
+  padding: 14px 14px 14px;
+  flex: 0 0 auto;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
@@ -548,9 +631,11 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px 14px 14px;
-  border-top: 1px solid var(--border-subtle);
-  background: linear-gradient(0deg, rgba(200,146,42,0.03) 0%, transparent 100%);
+  padding: 12px 14px 14px;
+  border-top: 1px solid rgba(200, 146, 42, 0.18);
+  background: var(--surface);
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.35);
+  flex: 0 0 auto;
 }
 
 /* Watch button */

@@ -131,6 +131,19 @@ class _Handler(BaseHTTPRequestHandler):
                 result = {"ok": True}
             elif path == "/api/install_update":
                 result = api.install_update()
+            elif path == "/api/resize":
+                h = max(240, min(int(body.get("height", 400)), 800))
+                app.resize_window(h)
+                result = {"ok": True}
+            elif path == "/api/window_control":
+                action = body.get("action", "")
+                if action == "minimize":
+                    app._bridge.request_minimize.emit()
+                elif action == "close":
+                    app._bridge.request_quit.emit()
+                elif action == "drag_start":
+                    app._bridge.request_drag.emit()
+                result = {"ok": True}
             else:
                 result = {"ok": False, "error": f"Unknown route: {path}"}
         except Exception as exc:
@@ -178,8 +191,11 @@ class _Handler(BaseHTTPRequestHandler):
 
 class _Bridge(QObject):
     """QObject whose signals can cross the thread boundary to the Qt main loop."""
-    request_browse = pyqtSignal()
-    request_quit   = pyqtSignal()
+    request_browse   = pyqtSignal()
+    request_quit     = pyqtSignal()
+    request_resize   = pyqtSignal(int)   # content height in px
+    request_minimize = pyqtSignal()
+    request_drag     = pyqtSignal()
 
 
 # ── Main application class ─────────────────────────────────────────────────────
@@ -251,6 +267,15 @@ class QPopApp:
 
     # ── Quit bridge ────────────────────────────────────────────────────────────
 
+    def resize_window(self, height: int) -> None:
+        """Called from HTTP server thread. Queues resize on Qt main thread."""
+        self._bridge.request_resize.emit(height)
+
+    def _on_resize_requested(self, height: int) -> None:
+        """Runs on Qt main thread."""
+        if self._window:
+            self._window.resize(self._window.width(), height)
+
     def _request_quit(self) -> None:
         """Called from background thread. Queues close on Qt main thread."""
         self._bridge.request_quit.emit()
@@ -260,6 +285,18 @@ class QPopApp:
         if self._window:
             self._window.close()
 
+    def _on_minimize_requested(self) -> None:
+        """Runs on Qt main thread."""
+        if self._window:
+            self._window.showMinimized()
+
+    def _on_drag_requested(self) -> None:
+        """Runs on Qt main thread. Initiates OS-native window move."""
+        if self._window:
+            handle = self._window.windowHandle()
+            if handle:
+                handle.startSystemMove()
+
     # ── Run ────────────────────────────────────────────────────────────────────
 
     def run(self) -> None:
@@ -267,8 +304,12 @@ class QPopApp:
 
         self._window = QMainWindow()
         self._window.setWindowTitle("QPopCV")
-        self._window.resize(440, 540)
-        self._window.setMinimumSize(400, 420)
+        self._window.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint | Qt.WindowType.Window
+        )
+        self._window.setStyleSheet("QMainWindow { background: #09090f; }")
+        self._window.resize(440, 320)
+        self._window.setMinimumSize(400, 240)
 
         # Wire bridge signals to main-thread slots
         self._bridge.request_browse.connect(
@@ -276,6 +317,15 @@ class QPopApp:
         )
         self._bridge.request_quit.connect(
             self._on_quit_requested, Qt.ConnectionType.QueuedConnection
+        )
+        self._bridge.request_resize.connect(
+            self._on_resize_requested, Qt.ConnectionType.QueuedConnection
+        )
+        self._bridge.request_minimize.connect(
+            self._on_minimize_requested, Qt.ConnectionType.QueuedConnection
+        )
+        self._bridge.request_drag.connect(
+            self._on_drag_requested, Qt.ConnectionType.QueuedConnection
         )
 
         # Web view
