@@ -407,26 +407,28 @@ def _run_external_updater(self, source_root: Path, tmp_dir: Path) -> None
 
 ## `qpopcv/theme.py`
 
-**Lines:** ~26
+> **Deprecated** — no longer imported. Left as a file artifact from the CustomTkinter era. All theming is now handled via CSS variables in `qpopcv/static/style.css`.
 
-Color constants, Tailwind CSS palette inspired.
+## `qpopcv/static/style.css` — Theme
 
-| Constant | Hex | Used For |
-|----------|-----|----------|
-| `BG_COLOR` | `#e5e7eb` | Window background |
-| `CARD_BG` | `#ffffff` | Card frame background (pure white) |
-| `CARD_BORDER` | `#d1d5db` | Card border and entry borders |
-| `ACCENT` | `#0ea5e9` | Primary buttons, update text |
-| `ACCENT_HOVER` | `#0284c7` | Button hover state |
-| `TEXT_PRIMARY` | `#111827` | Labels, entry text |
-| `TEXT_MUTED` | `#6b7280` | Secondary text, version label |
-| `TEXT_SECTION` | `#0284c7` | Section headers ("Discord", "Detection") |
-| `DANGER` | `#dc2626` | Error states |
-| `SUCCESS` | `#16a34a` | Watching status |
-| `DETECTED` | `#f97316` | Flash on queue pop detection |
-| `STATUS_IDLE` | `#6b7280` | Stopped pill text (neutral gray) |
-| `DISCORD_BLURPLE` | `#5865F2` | Join Discord button text |
-| `PILL_*_BG/BORDER` | various | Status pill background/border per state |
+**Current theme:** Pearl White (light glassmorphic, v1.0.36)
+
+All colors are CSS custom properties on `:root`. To retheme, only the `:root` block and a handful of component-specific `rgba()` values need changing.
+
+| CSS Variable | Value | Purpose |
+|---|---|---|
+| `--glass-bg` | `#f4f6f9` | App background |
+| `--glass-surface` | `rgba(255,255,255,0.70)` | Titlebar, footer |
+| `--glass-raised` | `rgba(255,255,255,0.50)` | Input backgrounds |
+| `--border` | `rgba(0,0,0,0.09)` | Standard borders |
+| `--text` | `#111827` | Primary text |
+| `--text-secondary` | `#374151` | Secondary text |
+| `--text-muted` | `#6b7280` | Labels, hints |
+| `--text-dim` | `#9ca3af` | Placeholders |
+| `--green` | `#16a34a` | Watch active / success |
+| `--orange` | `#d97706` | Detected state |
+| `--red` | `#dc2626` | Errors |
+| `--discord` | `#5865f2` | Blurple accent (watch btn, tab underline, logo dot) |
 
 ---
 

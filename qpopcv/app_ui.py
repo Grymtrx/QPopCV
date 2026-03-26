@@ -332,7 +332,7 @@ class QPopApp:
 
         # Web view
         view = QWebEngineView()
-        view.page().setBackgroundColor(QColor(49, 51, 56))
+        view.page().setBackgroundColor(QColor(244, 246, 249))
         s = view.settings()
         s.setAttribute(QWebEngineSettings.WebAttribute.JavascriptEnabled, True)
         s.setAttribute(QWebEngineSettings.WebAttribute.LocalStorageEnabled, True)

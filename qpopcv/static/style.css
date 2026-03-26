@@ -1,25 +1,25 @@
 /* ═══════════════════════════════════════════════════════════════
-   QPopCV — Discord Theme
-   Palette: Discord dark mode colors
+   QPopCV — Pearl White
+   Palette: light glassmorphic, blurple accent
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  --glass-bg:        #313338;
-  --glass-surface:   #2b2d31;
-  --glass-raised:    #383a40;
-  --border:          #3f4147;
-  --border-bright:   #5c5f66;
-  --border-subtle:   #2e3035;
-  --text:            #f2f3f5;
-  --text-secondary:  #b5bac1;
-  --text-muted:      #80848e;
-  --text-dim:        #4e5058;
-  --green:           #23a55a;
-  --green-glow:      rgba(35, 165, 90, 0.22);
-  --orange:          #f0b232;
-  --orange-glow:     rgba(240, 178, 50, 0.35);
-  --red:             #f23f42;
-  --blue:            #00a8fc;
+  --glass-bg:        #f4f6f9;
+  --glass-surface:   rgba(255, 255, 255, 0.70);
+  --glass-raised:    rgba(255, 255, 255, 0.50);
+  --border:          rgba(0, 0, 0, 0.09);
+  --border-bright:   rgba(0, 0, 0, 0.16);
+  --border-subtle:   rgba(0, 0, 0, 0.05);
+  --text:            #111827;
+  --text-secondary:  #374151;
+  --text-muted:      #6b7280;
+  --text-dim:        #9ca3af;
+  --green:           #16a34a;
+  --green-glow:      rgba(22, 163, 74, 0.18);
+  --orange:          #d97706;
+  --orange-glow:     rgba(217, 119, 6, 0.25);
+  --red:             #dc2626;
+  --blue:            #2563eb;
   --discord:         #5865f2;
   --discord-hover:   #4752c4;
   --radius-sm:       6px;
@@ -48,7 +48,7 @@ html, body {
   overflow: hidden;
 }
 
-/* ── App card — the main glass panel ────────────────────────── */
+/* ── App card ────────────────────────────────────────────────── */
 
 .app-card {
   position: relative;
@@ -56,17 +56,17 @@ html, body {
   flex-direction: column;
   height: auto;
   background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid var(--border);
   border-radius: 0;
   overflow: hidden;
   box-shadow:
-    0 0 0 0.5px rgba(255, 255, 255, 0.04),
-    0 24px 80px rgba(0, 0, 0, 0.80),
-    0 8px 24px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    0 8px 32px rgba(0, 0, 0, 0.10),
+    0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-/* Glass refraction seam — top edge highlight */
+/* Top edge seam */
 .app-card::before {
   content: '';
   position: absolute;
@@ -77,9 +77,9 @@ html, body {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.16) 25%,
-    rgba(255, 255, 255, 0.28) 50%,
-    rgba(255, 255, 255, 0.16) 75%,
+    rgba(0, 0, 0, 0.04) 25%,
+    rgba(0, 0, 0, 0.07) 50%,
+    rgba(0, 0, 0, 0.04) 75%,
     transparent 100%
   );
   z-index: 2;
@@ -94,7 +94,7 @@ html, body {
   height: 40px;
   padding: 0 6px 0 14px;
   border-bottom: 1px solid var(--border-subtle);
-  background: rgba(255, 255, 255, 0.018);
+  background: var(--glass-surface);
   flex-shrink: 0;
   user-select: none;
 }
@@ -139,22 +139,22 @@ html, body {
 .win-btn-min:hover {
   border-color: var(--border);
   color: var(--text-muted);
-  background: var(--glass-surface);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .win-btn-min:active {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(0, 0, 0, 0.08);
   transform: translateY(1px);
 }
 
 .win-btn-close:hover {
-  border-color: rgba(248, 113, 113, 0.35);
+  border-color: rgba(220, 38, 38, 0.30);
   color: var(--red);
-  background: rgba(248, 113, 113, 0.08);
+  background: rgba(220, 38, 38, 0.07);
 }
 
 .win-btn-close:active {
-  background: rgba(248, 113, 113, 0.14);
+  background: rgba(220, 38, 38, 0.12);
   transform: translateY(1px);
 }
 
@@ -170,8 +170,8 @@ html, body {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.55);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.25);
+  background: var(--discord);
+  box-shadow: 0 0 8px rgba(88, 101, 242, 0.40);
   flex-shrink: 0;
 }
 
@@ -193,18 +193,18 @@ html, body {
   padding: 3px 10px;
   border-radius: 20px;
   border: 1px solid var(--border);
-  background: var(--glass-surface);
+  background: var(--glass-raised);
   transition: border-color var(--transition), background var(--transition);
 }
 
 .status-pill[data-state="watching"] {
-  border-color: rgba(74, 222, 128, 0.30);
-  background: rgba(74, 222, 128, 0.05);
+  border-color: rgba(22, 163, 74, 0.25);
+  background: rgba(22, 163, 74, 0.08);
 }
 
 .status-pill[data-state="detected"] {
-  border-color: rgba(251, 146, 60, 0.55);
-  background: rgba(251, 146, 60, 0.08);
+  border-color: rgba(217, 119, 6, 0.40);
+  background: rgba(217, 119, 6, 0.10);
 }
 
 .status-orb {
@@ -252,28 +252,28 @@ html, body {
     transform: scale(1);
   }
   50% {
-    box-shadow: 0 0 0 5px rgba(74, 222, 128, 0);
+    box-shadow: 0 0 0 5px rgba(22, 163, 74, 0);
     transform: scale(1.25);
   }
 }
 
 @keyframes orb-detected {
   0%   { transform: scale(1);   box-shadow: 0 0 0 0 var(--orange-glow); }
-  30%  { transform: scale(1.9); box-shadow: 0 0 0 10px rgba(251,146,60,0.2); }
-  60%  { transform: scale(1.4); box-shadow: 0 0 0 6px rgba(251,146,60,0.08); }
-  100% { transform: scale(1);   box-shadow: 0 0 0 0 rgba(251,146,60,0); }
+  30%  { transform: scale(1.9); box-shadow: 0 0 0 10px rgba(217,119,6,0.15); }
+  60%  { transform: scale(1.4); box-shadow: 0 0 0 6px rgba(217,119,6,0.06); }
+  100% { transform: scale(1);   box-shadow: 0 0 0 0 rgba(217,119,6,0); }
 }
 
 @keyframes watch-btn-glow {
   0%, 100% {
     box-shadow:
-      0 0 16px rgba(255,255,255,0.04),
-      inset 0 1px 0 rgba(255,255,255,0.10);
+      0 4px 14px rgba(88, 101, 242, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.20);
   }
   50% {
     box-shadow:
-      0 0 32px rgba(255,255,255,0.08),
-      inset 0 1px 0 rgba(255,255,255,0.16);
+      0 4px 22px rgba(88, 101, 242, 0.38),
+      inset 0 1px 0 rgba(255, 255, 255, 0.30);
   }
 }
 
@@ -320,7 +320,7 @@ html, body {
   left: 12px;
   right: 12px;
   height: 1.5px;
-  background: rgba(255, 255, 255, 0.55);
+  background: var(--discord);
   border-radius: 2px 2px 0 0;
   transform: scaleX(0);
   transition: transform var(--transition);
@@ -328,7 +328,7 @@ html, body {
 
 .tab-btn:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .tab-btn.active {
@@ -389,7 +389,7 @@ html, body {
 .field-input {
   flex: 1;
   padding: 7px 10px;
-  background: var(--glass-surface);
+  background: var(--glass-raised);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text);
@@ -400,8 +400,8 @@ html, body {
 }
 
 .field-input:focus {
-  border-color: rgba(255, 255, 255, 0.22);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
+  border-color: rgba(88, 101, 242, 0.45);
+  box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.12);
 }
 
 .field-input:disabled {
@@ -416,7 +416,7 @@ html, body {
 .field-select {
   flex: 1;
   padding: 7px 10px;
-  background: var(--glass-surface);
+  background: var(--glass-raised);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text);
@@ -426,7 +426,7 @@ html, body {
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(255,255,255,0.3)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(0,0,0,0.4)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
   padding-right: 28px;
@@ -434,12 +434,12 @@ html, body {
 }
 
 .field-select:focus {
-  border-color: rgba(255, 255, 255, 0.22);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
+  border-color: rgba(88, 101, 242, 0.45);
+  box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.12);
 }
 
 .field-select option {
-  background: #0f0f1a;
+  background: #f4f6f9;
   color: var(--text);
 }
 
@@ -464,31 +464,31 @@ html, body {
 }
 
 .btn-secondary {
-  background: transparent;
+  background: var(--glass-raised);
   border-color: var(--border);
   color: var(--text-muted);
   flex: 1;
 }
 
 .btn-secondary:hover {
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: var(--border-bright);
   color: var(--text);
-  background: var(--glass-surface);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .btn-secondary:active {
-  background: var(--glass-raised);
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .btn-discord {
   background: transparent;
-  border-color: rgba(88, 101, 242, 0.40);
+  border-color: rgba(88, 101, 242, 0.35);
   color: var(--discord);
   flex: 1;
 }
 
 .btn-discord:hover {
-  background: rgba(88, 101, 242, 0.10);
+  background: rgba(88, 101, 242, 0.08);
   border-color: var(--discord);
 }
 
@@ -502,9 +502,9 @@ html, body {
 }
 
 .btn-add-image:hover {
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: var(--border-bright);
   color: var(--text);
-  background: var(--glass-surface);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .btn-add-image.hidden {
@@ -575,7 +575,7 @@ html, body {
 .ref-btn {
   flex-shrink: 0;
   padding: 5px 8px;
-  background: transparent;
+  background: var(--glass-raised);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-muted);
@@ -588,22 +588,23 @@ html, body {
 }
 
 .ref-btn:hover {
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: var(--border-bright);
   color: var(--text);
-  background: var(--glass-surface);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .ref-btn-remove {
   border-color: transparent;
+  background: transparent;
   color: var(--text-dim);
   font-size: 12px;
   padding: 5px 6px;
 }
 
 .ref-btn-remove:hover {
-  border-color: rgba(248, 113, 113, 0.30);
+  border-color: rgba(220, 38, 38, 0.25);
   color: var(--red);
-  background: rgba(248, 113, 113, 0.06);
+  background: rgba(220, 38, 38, 0.05);
 }
 
 .ref-btn-remove:disabled {
@@ -625,8 +626,8 @@ html, body {
   gap: 8px;
   padding: 12px 14px 14px;
   border-top: 1px solid var(--border-subtle);
-  background: rgba(255, 255, 255, 0.015);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: var(--glass-surface);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.80);
   flex: 0 0 auto;
 }
 
@@ -639,50 +640,52 @@ html, body {
   gap: 8px;
   width: 100%;
   height: 42px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: none;
   border-radius: var(--radius);
-  background: var(--glass-raised);
-  color: var(--text);
+  background: var(--discord);
+  color: #fff;
   font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.04em;
   cursor: pointer;
   outline: none;
-  transition: opacity var(--transition), transform var(--transition), border-color var(--transition), background var(--transition);
+  transition: opacity var(--transition), transform var(--transition), background var(--transition), box-shadow var(--transition);
   animation: watch-btn-glow 3s ease-in-out infinite;
   box-shadow:
-    0 2px 12px rgba(255, 255, 255, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    0 4px 14px rgba(88, 101, 242, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .watch-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.26);
+  background: var(--discord-hover);
   transform: translateY(-1px);
+  box-shadow:
+    0 6px 20px rgba(88, 101, 242, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 .watch-btn:active {
   transform: translateY(0);
-  background: rgba(255, 255, 255, 0.05);
+  background: #3c45b0;
 }
 
 .watch-btn.is-watching {
-  background: rgba(74, 222, 128, 0.07);
-  border-color: rgba(74, 222, 128, 0.35);
+  background: rgba(22, 163, 74, 0.10);
+  border: 1px solid rgba(22, 163, 74, 0.35);
   color: var(--green);
   box-shadow:
-    0 2px 16px rgba(74, 222, 128, 0.12),
-    inset 0 1px 0 rgba(74, 222, 128, 0.12);
+    0 2px 12px rgba(22, 163, 74, 0.15),
+    inset 0 1px 0 rgba(22, 163, 74, 0.10);
   animation: none;
 }
 
 .watch-btn.is-watching:hover {
-  background: rgba(74, 222, 128, 0.11);
-  border-color: rgba(74, 222, 128, 0.50);
+  background: rgba(22, 163, 74, 0.15);
+  border-color: rgba(22, 163, 74, 0.50);
   box-shadow:
-    0 4px 24px rgba(74, 222, 128, 0.18),
-    inset 0 1px 0 rgba(74, 222, 128, 0.15);
+    0 4px 18px rgba(22, 163, 74, 0.20),
+    inset 0 1px 0 rgba(22, 163, 74, 0.12);
 }
 
 .watch-btn-icon {
@@ -699,8 +702,8 @@ html, body {
 .save-btn {
   width: 100%;
   height: 30px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.09);
   border-radius: 8px;
   color: var(--text-secondary);
   font-family: 'Inter', sans-serif;
@@ -712,8 +715,8 @@ html, body {
 }
 
 .save-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.07);
+  border-color: rgba(0, 0, 0, 0.16);
   color: var(--text);
 }
 
@@ -746,15 +749,15 @@ html, body {
 }
 
 .update-text.is-clickable {
-  color: rgba(255, 255, 255, 0.70);
+  color: var(--discord);
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
-  text-decoration-color: rgba(255, 255, 255, 0.25);
+  text-decoration-color: rgba(88, 101, 242, 0.35);
 }
 
 .update-text.is-clickable:hover {
-  color: var(--text);
+  color: var(--discord-hover);
 }
 
 /* ── Toast notifications ─────────────────────────────────────── */
@@ -777,10 +780,10 @@ html, body {
   padding: 10px 14px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  background: rgba(12, 12, 20, 0.92);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.60);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
   max-width: 260px;
   pointer-events: auto;
   animation: toast-in 0.25s ease forwards;
@@ -804,29 +807,25 @@ html, body {
 }
 
 .toast-success {
-  border-color: rgba(74, 222, 128, 0.25);
-  background: rgba(12, 12, 20, 0.92);
+  border-color: rgba(22, 163, 74, 0.25);
 }
 
 .toast-success .toast-icon { color: var(--green); }
 
 .toast-error {
-  border-color: rgba(248, 113, 113, 0.25);
-  background: rgba(12, 12, 20, 0.92);
+  border-color: rgba(220, 38, 38, 0.25);
 }
 
 .toast-error .toast-icon { color: var(--red); }
 
 .toast-info {
-  border-color: rgba(147, 197, 253, 0.25);
-  background: rgba(12, 12, 20, 0.92);
+  border-color: rgba(37, 99, 235, 0.25);
 }
 
 .toast-info .toast-icon { color: var(--blue); }
 
 .toast-warning {
-  border-color: rgba(251, 146, 60, 0.25);
-  background: rgba(12, 12, 20, 0.92);
+  border-color: rgba(217, 119, 6, 0.25);
 }
 
 .toast-warning .toast-icon { color: var(--orange); }
@@ -835,8 +834,8 @@ html, body {
 
 @keyframes detected-flash {
   0%   { opacity: 0; }
-  15%  { opacity: 0.14; }
-  40%  { opacity: 0.06; }
+  15%  { opacity: 0.10; }
+  40%  { opacity: 0.04; }
   100% { opacity: 0; }
 }
 
