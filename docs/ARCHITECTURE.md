@@ -8,7 +8,7 @@
 
 A lightweight Windows desktop app that watches the screen for a World of Warcraft Solo Shuffle queue popup and fires a Discord webhook notification (with a user mention) the moment it appears. Users can step away from their PC while queuing, and be pinged on phone or desktop Discord. All while stayin within Blizzards TOS.
 
-**Current version:** `1.0.4`
+**Current version:** `1.0.9`
 **Target OS:** Windows (uses `pyautogui`, `os.startfile`, batch scripts)
 
 ---
@@ -143,7 +143,7 @@ QPopApp.config dict  ←→  UI StringVars (webhook_var, user_var, ref_var)
 | Key                    | Type  | Default                        | Description                                  |
 | ---------------------- | ----- | ------------------------------ | -------------------------------------------- |
 | `webhook_url`          | str   | (hardcoded — see KNOWN_ISSUES) | Discord webhook endpoint                     |
-| `user_id`              | str   | `""`                           | 18-digit Discord snowflake ID                |
+| `user_id`              | str   | `""`                           | 17–19-digit Discord snowflake ID             |
 | `check_interval`       | float | `0.15`                         | Seconds between screen captures              |
 | `confidence`           | float | `0.6`                          | Template match confidence threshold (0–1)    |
 | `reference_image_path` | str   | `""`                           | Path to user's custom queue popup screenshot |
@@ -157,7 +157,7 @@ Startup (250ms delay)
     │
     └─► check_for_update()
             GET https://api.github.com/repos/Grymtrx/QPopCV/releases/latest
-            Compare tag_name vs APP_VERSION ("1.0.4")
+            Compare tag_name vs APP_VERSION ("1.0.9")
             → UpdateInfo { available, latest_version, download_url }
 
 User clicks "Update available: x.x.x"
@@ -183,11 +183,11 @@ User clicks "Update available: x.x.x"
 | Constant             | Location        | Value                    | Description                       |
 | -------------------- | --------------- | ------------------------ | --------------------------------- |
 | `THROTTLE_SECONDS`   | `watcher.py:14` | `15`                     | Min seconds between Discord pings |
-| `APP_VERSION`        | `config.py:11`  | `"1.0.4"`                | Current version string            |
-| `CONFIG_PATH`        | `config.py:12`  | `<app_dir>/config.json`  | Config file location              |
-| `DISCORD_SERVER_URL` | `config.py:13`  | Discord invite           | Community Discord link            |
-| `GITHUB_API`         | `updater.py:20` | GitHub releases endpoint | Update check URL template         |
-| `MEDIA_DIR`          | `watcher.py:23` | `<package>/media/`       | Built-in reference images         |
+| `APP_VERSION`        | `config.py:18`  | `"1.0.9"`                | Current version string            |
+| `CONFIG_PATH`        | `config.py:19`  | `<app_dir>/config.json`  | Config file location              |
+| `DISCORD_SERVER_URL` | `config.py:20`  | Discord invite           | Community Discord link            |
+| `GITHUB_API`         | `updater.py:19` | GitHub releases endpoint | Update check URL template         |
+| `MEDIA_DIR`          | `config.py:14`  | `<_MEDIA_ROOT>/media/`   | Built-in reference images         |
 
 ---
 
@@ -199,4 +199,3 @@ User clicks "Update available: x.x.x"
 | `pyautogui`     | Screenshot + template matching                  | `locate()`, `screenshot()`, `size()`         |
 | `Pillow`        | Image loading and scaling                       | `Image.open`, `Image.resize`                 |
 | `requests`      | Discord webhooks + GitHub API + update download | All HTTP calls                               |
-| `opencv-python` | *(listed in requirements.txt)*                  | **Not imported or used — should be removed** |

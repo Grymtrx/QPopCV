@@ -58,16 +58,18 @@ Logging format: `%(asctime)s [%(levelname)s] %(name)s: %(message)s`
 
 ## `qpopcv/config.py`
 
-**Lines:** 37
+**Lines:** 44
 
-Central config constants and JSON load/save.
+Central config constants and JSON load/save. Single source of truth for path resolution (frozen vs source).
 
 ### Constants
 
 | Name | Value | Description |
 |------|-------|-------------|
 | `APP_DIR` | `Path(sys.executable).parent` or `Path(__file__).parent` | Root dir (frozen vs source) |
-| `APP_VERSION` | `"1.0.4"` | Bumped for releases |
+| `_MEDIA_ROOT` | `sys._MEIPASS` (frozen) or `APP_DIR` (source) | Base for media assets; uses PyInstaller's temp dir when frozen onefile |
+| `MEDIA_DIR` | `_MEDIA_ROOT / "media"` | Built-in reference image directory |
+| `APP_VERSION` | `"1.0.9"` | Bumped for releases |
 | `CONFIG_PATH` | `APP_DIR / "config.json"` | Config file path |
 | `DISCORD_SERVER_URL` | `"https://discord.gg/KpupS6N3Zj"` | Community invite (permanent link) |
 | `DEFAULT_CONFIG` | dict | Fallback values when config.json missing or corrupt |
@@ -77,7 +79,7 @@ Central config constants and JSON load/save.
 ```python
 def load_config() -> Dict[str, object]
 ```
-Reads `config.json`, merges over `DEFAULT_CONFIG`. Returns `DEFAULT_CONFIG.copy()` on any read/parse error (silent fail — see KNOWN_ISSUES).
+Reads `config.json`, merges over `DEFAULT_CONFIG`. On any read/parse error logs `logger.warning("Failed to load config, using defaults: %s", exc)` and returns `DEFAULT_CONFIG.copy()`.
 
 ```python
 def save_config(config: Dict[str, object]) -> None
@@ -182,7 +184,7 @@ Stops watcher, destroys root window.
 
 ## `qpopcv/watcher.py`
 
-**Lines:** 255
+**Lines:** 249
 
 The screen detection engine. Runs entirely in a background daemon thread.
 
@@ -192,7 +194,7 @@ Minimum seconds between successive Discord pings for the same user.
 
 ### `MEDIA_DIR`
 
-Resolved at import time. Points to `qpopcv/media/` (works in both frozen `.exe` and source contexts).
+Imported from `config.py`. Points to `qpopcv/media/` (frozen `.exe` and source contexts handled there).
 
 ### Dataclass `WatcherSettings`
 
@@ -295,8 +297,9 @@ Input validation functions. Each shows a `messagebox` on failure and returns `bo
 def validate_discord_core(webhook_url: str, user_id: str) -> bool
 ```
 - Rejects empty webhook URL
+- Rejects URL that does not start with `https://discord.com/api/webhooks/`
 - Rejects empty user ID
-- Rejects user ID that is not exactly 18 digits
+- Rejects user ID that is not 17–19 digits (covers old accounts and 19-digit snowflakes)
 
 ```python
 def validate_reference_image(path_str: str) -> bool
@@ -305,7 +308,6 @@ def validate_reference_image(path_str: str) -> bool
 - Rejects non-existent path
 - Rejects directories
 
-**Note:** Does not validate webhook URL format/domain — any non-empty string passes.
 
 ---
 
