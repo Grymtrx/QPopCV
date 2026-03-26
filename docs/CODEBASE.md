@@ -17,13 +17,14 @@ QPopCV/
 │   └── KNOWN_ISSUES.md              Bugs, security issues, tech debt
 ├── qpopcv/                          Main package
 │   ├── __init__.py                  Re-exports QPopApp
-│   ├── app_ui.py                    GUI (656 lines)
-│   ├── config.py                    Config management (45 lines)
-│   ├── config.json                  Runtime config (user-editable)
+│   ├── app_ui.py                    GUI (~700 lines)
+│   ├── config.py                    Config management (~65 lines)
+│   ├── config.json                  Shared/repo config (webhook default)
+│   ├── config.local.json            User's personal config (gitignored, auto-created)
 │   ├── discord_client.py            Discord HTTP wrapper (23 lines)
-│   ├── watcher.py                   Detection engine (255 lines)
-│   ├── validators.py                Input validation (50 lines)
-│   ├── theme.py                     Color constants (12 lines)
+│   ├── watcher.py                   Detection engine (~275 lines)
+│   ├── validators.py                Input validation (~72 lines)
+│   ├── theme.py                     Color constants (~26 lines)
 │   ├── updater.py                   Auto-updater (309 lines)
 │   └── media/
 │       ├── qpop_ss_blizzardUI_reference.png   Built-in reference (Blizzard UI)
@@ -34,7 +35,12 @@ QPopCV/
 │       └── icon/                              App icons
 ├── tests/
 │   ├── QpopCV_prototype.py          Original single-file prototype (not automated tests)
-│   └── test_capture_region.py       Manual region capture utility
+│   ├── test_capture_region.py       Manual region capture utility
+│   ├── test_config.py               Config load/save tests
+│   ├── test_updater.py              Updater logic tests
+│   ├── test_validators.py           Input validation tests
+│   ├── test_watcher.py              Watcher engine tests
+│   └── conftest.py                  Pytest fixtures
 └── tools/
     ├── show_watch_region.py         Visualizes the watch region on screen
     └── privacy_mask.py              Transparent overlay for safe screenshotting
@@ -71,10 +77,12 @@ Central config constants and JSON load/save. Single source of truth for path res
 | `APP_DIR` | `Path(sys.executable).parent` or `Path(__file__).parent` | Root dir (frozen vs source) |
 | `_MEDIA_ROOT` | `sys._MEIPASS` (frozen) or `APP_DIR` (source) | Base for media assets; uses PyInstaller's temp dir when frozen onefile |
 | `MEDIA_DIR` | `_MEDIA_ROOT / "media"` | Built-in reference image directory |
-| `APP_VERSION` | `"1.0.13"` | Bumped for releases |
-| `CONFIG_PATH` | `APP_DIR / "config.json"` | Config file path |
+| `FONTS_DIR` | `_MEDIA_ROOT / "fonts"` | Bundled font directory |
+| `APP_VERSION` | `"1.0.22"` | Bumped on every code change |
+| `BASE_CONFIG_PATH` | `APP_DIR / "config.json"` | Shared/repo config (webhook default); never written by app |
+| `USER_CONFIG_PATH` | `APP_DIR / "config.local.json"` | User's personal settings; written by `save_config`; gitignored |
 | `DISCORD_SERVER_URL` | `"https://discord.gg/KpupS6N3Zj"` | Community invite (permanent link) |
-| `DEFAULT_CONFIG` | dict | Fallback values when config.json missing or corrupt |
+| `DEFAULT_CONFIG` | dict | Fallback values used as base layer before config files are merged |
 
 ### Functions
 
@@ -86,15 +94,15 @@ Reads `config.json`, merges over `DEFAULT_CONFIG`. Migrates the old `reference_i
 ```python
 def save_config(config: Dict[str, object]) -> None
 ```
-Serialises the dict as indented JSON and writes to `CONFIG_PATH`. No error handling.
+Serialises the dict as indented JSON and writes to `USER_CONFIG_PATH` (`config.local.json`). Never touches `config.json`. No error handling.
 
 ---
 
 ## `qpopcv/app_ui.py`
 
-**Lines:** 656
+**Lines:** ~700
 
-All GUI code. Built with `customtkinter` (CTk). Uses a single `card` frame inside a `CTk` root window (360×280 min size).
+All GUI code. Built with `customtkinter` (CTk). Uses a single `card` frame inside a `CTk` root window (480px wide min).
 
 ### Class `QPopApp`
 
@@ -117,8 +125,7 @@ class QPopApp:
 | `webhook_var` | `ctk.StringVar` | Bound to webhook URL entry |
 | `user_var` | `ctk.StringVar` | Bound to user ID entry |
 | `_ref_rows` | `List[Tuple]` | `(row_frame, StringVar, browse_btn, remove_btn)` per reference image row |
-| `_ref_section` | `ctk.CTkFrame` | Container for the full reference images section |
-| `_ref_rows_frame` | `ctk.CTkFrame` | Inner container holding the dynamic entry rows |
+| `_ref_section` | `ctk.CTkFrame` | Container for the reference image rows |
 | `_add_ref_btn` | `ctk.CTkButton` | "Add additional ref image" button; hidden at 5-image limit |
 | `status_label` | `ctk.CTkLabel` | Shows ● Stopped / ● Watching / ● Detected! |
 | `version_and_update` | `ctk.CTkLabel` | Shows version + update status (clickable) |
@@ -127,12 +134,15 @@ class QPopApp:
 
 | Row | Content |
 |-----|---------|
-| 0 | Discord Webhook label + entry |
-| 1 | Discord User ID label + entry |
-| 2 | Reference Images sub-frame (dynamic: 1–5 rows of entry + browse + remove; "+ Add additional ref image" button) |
-| 3 | Game Monitor label + dropdown |
-| 4 | Button row: Discord | Test Connection | Save Config | Watch |
-| 5 | Status label (centered) + Version/update label |
+| 0 | "Discord" section header (left) + "Test" button (right) |
+| 1 | Webhook label + entry |
+| 2 | User ID label + entry |
+| 3 | Separator line |
+| 4 | "Detection" section header |
+| 5 | Game Monitor label + dropdown |
+| 6 | Ref Images label + dynamic section (1–5 entry/browse/remove rows + "+ Add Image") |
+| 7 | Action row: Save Config (left) │ ● Status pill (center) │ Watch (right) |
+| 8 | Footer: Join Discord │ mobile hint │ version/update label |
 
 #### Key Methods
 
@@ -224,14 +234,14 @@ class WatcherSettings:
     user_id: str
     check_interval: float = 0.5
     confidence: float = 0.6
-    reference_image_paths: List[Path] = field(default_factory=list)
+    reference_image_paths: List[Path] = None  # normalised to [] in __post_init__
     monitor_index: int = 0
 
     @classmethod
     def from_config(cls, config: Dict[str, object]) -> "WatcherSettings"
 ```
 
-`from_config` converts the loose `dict` from `load_config()` into a typed dataclass. Reads `reference_image_paths` as a list of strings, converts each to `Path`, filters blanks.
+`from_config` converts the loose `dict` from `load_config()` into a typed dataclass. Reads `reference_image_paths` as a list of strings, converts each to `Path`, filters blank entries.
 
 ### Class `QPopWatcher`
 
@@ -397,22 +407,26 @@ def _run_external_updater(self, source_root: Path, tmp_dir: Path) -> None
 
 ## `qpopcv/theme.py`
 
-**Lines:** 12
+**Lines:** ~26
 
 Color constants, Tailwind CSS palette inspired.
 
 | Constant | Hex | Used For |
 |----------|-----|----------|
 | `BG_COLOR` | `#e5e7eb` | Window background |
-| `CARD_BG` | `#f9fafb` | Card frame background |
-| `CARD_BORDER` | `#d1d5db` | Card border |
+| `CARD_BG` | `#ffffff` | Card frame background (pure white) |
+| `CARD_BORDER` | `#d1d5db` | Card border and entry borders |
 | `ACCENT` | `#0ea5e9` | Primary buttons, update text |
 | `ACCENT_HOVER` | `#0284c7` | Button hover state |
 | `TEXT_PRIMARY` | `#111827` | Labels, entry text |
 | `TEXT_MUTED` | `#6b7280` | Secondary text, version label |
-| `DANGER` | `#dc2626` | Stopped status, errors |
+| `TEXT_SECTION` | `#0284c7` | Section headers ("Discord", "Detection") |
+| `DANGER` | `#dc2626` | Error states |
 | `SUCCESS` | `#16a34a` | Watching status |
 | `DETECTED` | `#f97316` | Flash on queue pop detection |
+| `STATUS_IDLE` | `#6b7280` | Stopped pill text (neutral gray) |
+| `DISCORD_BLURPLE` | `#5865F2` | Join Discord button text |
+| `PILL_*_BG/BORDER` | various | Status pill background/border per state |
 
 ---
 

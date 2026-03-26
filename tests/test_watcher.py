@@ -28,7 +28,7 @@ def make_settings(**overrides) -> WatcherSettings:
         user_id=VALID_USER_ID,
         check_interval=0.05,
         confidence=0.6,
-        reference_image_path=None,
+        reference_image_paths=[],
     )
     base.update(overrides)
     return WatcherSettings(**base)
@@ -57,38 +57,38 @@ class TestWatcherSettingsFromConfig:
             "user_id": VALID_USER_ID,
             "check_interval": 0.25,
             "confidence": 0.75,
-            "reference_image_path": "",
+            "reference_image_paths": [],
         }
         s = WatcherSettings.from_config(config)
         assert s.webhook_url == VALID_WEBHOOK
         assert s.user_id == VALID_USER_ID
         assert s.check_interval == 0.25
         assert s.confidence == 0.75
-        assert s.reference_image_path is None
+        assert s.reference_image_paths == []
 
-    def test_empty_reference_image_path_becomes_none(self):
+    def test_empty_reference_image_paths_becomes_empty_list(self):
         config = {"webhook_url": VALID_WEBHOOK, "user_id": VALID_USER_ID,
-                  "reference_image_path": ""}
+                  "reference_image_paths": []}
         s = WatcherSettings.from_config(config)
-        assert s.reference_image_path is None
+        assert s.reference_image_paths == []
 
-    def test_whitespace_reference_image_path_becomes_none(self):
+    def test_blank_string_entries_are_filtered_out(self):
         config = {"webhook_url": VALID_WEBHOOK, "user_id": VALID_USER_ID,
-                  "reference_image_path": "   "}
+                  "reference_image_paths": ["", "   "]}
         s = WatcherSettings.from_config(config)
-        assert s.reference_image_path is None
+        assert s.reference_image_paths == []
 
-    def test_valid_reference_image_path_is_set(self, tmp_path):
+    def test_valid_reference_image_paths_are_set(self, tmp_path):
         img = tmp_path / "ref.png"
         img.write_bytes(b"fake")
         config = {"webhook_url": VALID_WEBHOOK, "user_id": VALID_USER_ID,
-                  "reference_image_path": str(img)}
+                  "reference_image_paths": [str(img)]}
         s = WatcherSettings.from_config(config)
-        assert s.reference_image_path == Path(str(img)).expanduser()
+        assert s.reference_image_paths == [Path(str(img)).expanduser()]
 
     def test_webhook_url_is_stripped(self):
         config = {"webhook_url": f"  {VALID_WEBHOOK}  ", "user_id": VALID_USER_ID,
-                  "reference_image_path": ""}
+                  "reference_image_paths": []}
         s = WatcherSettings.from_config(config)
         assert s.webhook_url == VALID_WEBHOOK
 
@@ -144,40 +144,40 @@ class TestPrepareReferenceImages:
             return QPopWatcher(settings)
 
     def test_no_reference_path_returns_empty(self):
-        s = make_settings(reference_image_path=None)
+        s = make_settings(reference_image_paths=[])
         w = self._make_watcher(s)
         assert w._reference_images == []
 
     def test_nonexistent_path_returns_empty(self, tmp_path):
         missing = tmp_path / "does_not_exist.png"
-        s = make_settings(reference_image_path=missing)
+        s = make_settings(reference_image_paths=[missing])
         w = self._make_watcher(s)
         assert w._reference_images == []
 
     def test_valid_image_produces_three_scale_variants(self, tmp_path):
         img_path = make_tiny_png(tmp_path)
-        s = make_settings(reference_image_path=img_path)
+        s = make_settings(reference_image_paths=[img_path])
         w = self._make_watcher(s)
         assert len(w._reference_images) == 3
 
     def test_scale_variant_names(self, tmp_path):
         img_path = make_tiny_png(tmp_path)
-        s = make_settings(reference_image_path=img_path)
+        s = make_settings(reference_image_paths=[img_path])
         w = self._make_watcher(s)
         names = [name for name, _ in w._reference_images]
-        assert "user_ref_0.9" in names
-        assert "user_ref_1.0" in names
-        assert "user_ref_1.1" in names
+        assert "user_ref_0_0.9" in names
+        assert "user_ref_0_1.0" in names
+        assert "user_ref_0_1.1" in names
 
     def test_scale_variant_sizes(self, tmp_path):
         img_path = make_tiny_png(tmp_path)
-        s = make_settings(reference_image_path=img_path)
+        s = make_settings(reference_image_paths=[img_path])
         w = self._make_watcher(s)
         sizes = {name: img.size for name, img in w._reference_images}
         # 10x10 base
-        assert sizes["user_ref_1.0"] == (10, 10)
-        assert sizes["user_ref_0.9"] == (9, 9)   # round(10*0.9)
-        assert sizes["user_ref_1.1"] == (11, 11)  # round(10*1.1)
+        assert sizes["user_ref_0_1.0"] == (10, 10)
+        assert sizes["user_ref_0_0.9"] == (9, 9)   # round(10*0.9)
+        assert sizes["user_ref_0_1.1"] == (11, 11)  # round(10*1.1)
 
 
 # ===========================================================================

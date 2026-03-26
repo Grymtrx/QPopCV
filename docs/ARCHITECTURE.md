@@ -8,7 +8,7 @@
 
 A lightweight Windows desktop app that watches the screen for a World of Warcraft Solo Shuffle queue popup and fires a Discord webhook notification (with a user mention) the moment it appears. Users can step away from their PC while queuing, and be pinged on phone or desktop Discord. All while stayin within Blizzards TOS.
 
-**Current version:** `1.0.10`
+**Current version:** `1.0.22`
 **Target OS:** Windows (uses `pyautogui`, `os.startfile`, batch scripts)
 
 ---
@@ -45,7 +45,7 @@ A lightweight Windows desktop app that watches the screen for a World of Warcraf
 │  │ config  │  │validators│  │  theme colors │   │
 │  └─────────┘  └──────────┘  └───────────────┘   │
 │                                                 │
-│ Buttons: Save │ Test │ Watch │ Discord │ Update │
+│ Buttons: Test (Discord header) │ Save │ Watch │ Discord │ Update │
 └─────┬───────────────────────┬───────────────────┘
       │                       │
       ▼ (background thread)   ▼ (background thread)
@@ -118,8 +118,8 @@ Every check_interval seconds (default 0.15s):
 ```
 
 **Reference image loading:**
-- If `reference_image_path` is set in config → load that image at 3 scales (0.9×, 1.0×, 1.1×)
-- If not set → detection is disabled (no built-in fallbacks as of current version)
+- If `reference_image_paths` contains valid paths → each image is loaded at 3 scales (0.9×, 1.0×, 1.1×) — up to 15 variants total for 5 images
+- If empty → falls back to 3 built-in reference images (Blizzard UI, BBQ UI, BBQ UI dark)
 
 ---
 
@@ -146,7 +146,7 @@ QPopApp.config dict  ←→  UI StringVars (webhook_var, user_var, ref_var)
 | `user_id`              | str   | `""`                           | 17–19-digit Discord snowflake ID             |
 | `check_interval`       | float | `0.15`                         | Seconds between screen captures              |
 | `confidence`           | float | `0.6`                          | Template match confidence threshold (0–1)    |
-| `reference_image_path` | str   | `""`                           | Path to user's custom queue popup screenshot |
+| `reference_image_paths` | list  | `[]`                           | List of paths to user's custom queue popup screenshots (1–5) |
 
 ---
 
@@ -157,7 +157,7 @@ Startup (250ms delay)
     │
     └─► check_for_update()
             GET https://api.github.com/repos/Grymtrx/QPopCV/releases/latest
-            Compare tag_name vs APP_VERSION ("1.0.10")
+            Compare tag_name vs APP_VERSION ("1.0.22")
             → UpdateInfo { available, latest_version, download_url }
 
 User clicks "Update available: x.x.x"
@@ -184,9 +184,10 @@ User clicks "Update available: x.x.x"
 | -------------------- | --------------- | ------------------------ | --------------------------------- |
 | `THROTTLE_SECONDS`     | `watcher.py:14` | `15`                     | Min seconds between watcher Discord pings |
 | `TEST_THROTTLE_SECONDS`| `app_ui.py:21`  | `1`                      | Min seconds between test button pings     |
-| `APP_VERSION`          | `config.py:18`  | `"1.0.10"`               | Current version string                    |
-| `CONFIG_PATH`        | `config.py:19`  | `<app_dir>/config.json`  | Config file location              |
-| `DISCORD_SERVER_URL` | `config.py:20`  | Discord invite           | Community Discord link            |
+| `APP_VERSION`          | `config.py:19`  | `"1.0.22"`               | Current version string                    |
+| `BASE_CONFIG_PATH`   | `config.py:22`  | `<app_dir>/config.json`  | Shared/repo config (webhook default)      |
+| `USER_CONFIG_PATH`   | `config.py:23`  | `<app_dir>/config.local.json` | User's personal config (gitignored)  |
+| `DISCORD_SERVER_URL` | `config.py:24`  | Discord invite           | Community Discord link            |
 | `GITHUB_API`         | `updater.py:19` | GitHub releases endpoint | Update check URL template         |
 | `MEDIA_DIR`          | `config.py:14`  | `<_MEDIA_ROOT>/media/`   | Built-in reference images         |
 

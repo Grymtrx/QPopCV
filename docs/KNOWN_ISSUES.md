@@ -99,6 +99,13 @@
 #### ~~GAP-03 — Multi-Monitor Support~~ ✅ Fixed in 1.0.12
 - Added a "Game Monitor" dropdown to the UI. `monitor_utils.get_monitors()` enumerates monitors via stdlib `ctypes` (no new dependencies); primary monitor is first. Config stores `monitor_index` (int). `QPopWatcher` uses `compute_top_center_region(monitor)` to derive the watch region for the selected display.
 
+#### ~~UI/UX Redesign~~ ✅ Done in 1.0.22
+- Window widened 420→480px; card is pure white; section headers in sky-blue (`TEXT_SECTION`).
+- "Test" button moved from action bar into Discord section header (contextually co-located).
+- Status pill moved from bottom row into action bar (centered between Save and Watch).
+- Browse button changed from `⊞` to `...`; footer mobile hint de-capped and made readable at 9px.
+- Stale tests in `test_config.py` and `test_watcher.py` fixed to match current API (`USER_CONFIG_PATH`, `reference_image_paths`).
+
 #### ~~GAP-04 — No Rate Limiting on Test Discord Button~~ ✅ Fixed in 1.0.10
 - `TEST_THROTTLE_SECONDS = 1` introduced in `app_ui.py`; `_check_test_throttle` now uses it instead of the watcher's 15s `THROTTLE_SECONDS`.
 
@@ -133,4 +140,5 @@ Priority order for a future Claude session:
 13. ~~**GAP-02** — Add rotating file log handler~~ ✅ Fixed in 1.0.10
 14. ~~**GAP-04** — Test button reused watcher throttle~~ ✅ Fixed in 1.0.10
 13. ~~**GAP-03** — Multi-monitor region support~~ ✅ Fixed in 1.0.12
-14. **GAP-05/06** — Expose confidence + interval in UI
+14. ~~**UI/UX Redesign**~~ ✅ Done in 1.0.22
+15. **GAP-05/06** — Expose confidence + interval in UI
