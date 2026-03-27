@@ -47,6 +47,7 @@ const watchBtnText  = watchBtn.querySelector('.watch-btn-text');
 const versionText   = $('version-text');
 const updateText    = $('update-text');
 const toastContainer = $('toasts');
+const afkNotifyCheckbox = $('afk-notify');
 
 // ── Window controls ───────────────────────────────────────────────────────────
 
@@ -141,6 +142,7 @@ function applyInitialState(data) {
     monitorSelect.appendChild(opt);
   });
   monitorSelect.value = config.monitor_index;
+  afkNotifyCheckbox.checked = !!config.afk_notify;
 
   webhookInput.value = config.webhook_url || '';
   userIdInput.value  = config.user_id || '';
@@ -435,6 +437,7 @@ function collectFormData() {
     user_id: userIdInput.value.trim(),
     reference_image_paths: paths,
     monitor_index: parseInt(monitorSelect.value, 10) || 0,
+    afk_notify: afkNotifyCheckbox.checked,
   };
 }
 
