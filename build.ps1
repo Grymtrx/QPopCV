@@ -19,7 +19,7 @@ Write-Host "[build] Version: $version"
 
 # ── 2. Run PyInstaller ──────────────────────────────────────────────────────
 Write-Host "[build] Running PyInstaller..."
-pyinstaller QPopCV.spec --clean --noconfirm
+python -m PyInstaller QPopCV.spec --clean --noconfirm
 if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed with exit code $LASTEXITCODE" }
 
 # ── 3. Verify the exe exists ────────────────────────────────────────────────
