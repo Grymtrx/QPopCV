@@ -848,3 +848,39 @@ html, body {
   opacity: 0;
   animation: detected-flash 1.6s ease forwards;
 }
+
+/* ── Checkbox row ────────────────────────────────────────────── */
+
+.check-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.check-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.check-input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--discord);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.check-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.check-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+  opacity: 0.7;
+  padding-left: 22px;
+}

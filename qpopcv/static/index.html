@@ -36,6 +36,7 @@
       <button class="tab-btn active" data-tab="discord">Discord</button>
       <button class="tab-btn" data-tab="capture">Capture</button>
       <button class="tab-btn" data-tab="images">Images</button>
+      <button class="tab-btn" data-tab="afk">AFK</button>
     </nav>
 
     <!-- ── Discord tab ────────────────────────────────────────────── -->
@@ -68,6 +69,17 @@
     <div class="tab-panel" id="tab-images">
       <div class="ref-list" id="ref-list"></div>
       <button class="btn btn-add-image" id="btn-add-image">+ Add Image</button>
+    </div>
+
+    <!-- ── AFK tab ─────────────────────────────────────────────────── -->
+    <div class="tab-panel" id="tab-afk">
+      <div class="check-row">
+        <label class="check-label" for="afk-notify">
+          <input type="checkbox" id="afk-notify" class="check-input">
+          <span class="check-text">Enable AFK notification</span>
+        </label>
+        <p class="check-hint">Sends a Discord ping after 28 minutes to prevent Blizzard auto-logout</p>
+      </div>
     </div>
 
     <!-- ── Footer ─────────────────────────────────────────────────── -->
