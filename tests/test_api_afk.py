@@ -74,7 +74,7 @@ class TestAfkTimer:
         })
 
     @patch("qpopcv.api.QPopWatcher")
-    @patch("threading.Timer")
+    @patch("qpopcv.api.threading.Timer")
     def test_timer_created_when_afk_notify_true(self, MockTimer, MockWatcher):
         api = make_api()
         mock_instance = MagicMock()
@@ -82,16 +82,17 @@ class TestAfkTimer:
         self._start(api, True, MockWatcher)
         MockTimer.assert_called_once_with(28 * 60, api._send_afk_notification)
         mock_instance.start.assert_called_once()
+        assert mock_instance.daemon is True
 
     @patch("qpopcv.api.QPopWatcher")
-    @patch("threading.Timer")
+    @patch("qpopcv.api.threading.Timer")
     def test_timer_not_created_when_afk_notify_false(self, MockTimer, MockWatcher):
         api = make_api()
         self._start(api, False, MockWatcher)
         MockTimer.assert_not_called()
 
     @patch("qpopcv.api.QPopWatcher")
-    @patch("threading.Timer")
+    @patch("qpopcv.api.threading.Timer")
     def test_stop_watch_cancels_timer(self, MockTimer, MockWatcher):
         api = make_api()
         mock_instance = MagicMock()
