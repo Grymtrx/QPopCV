@@ -64,6 +64,8 @@ QPopCV-vX.Y.Z.zip
 
 ## Publish to GitHub
 
+> **Replace `v1.0.38` with your actual new version number in all commands below.**
+
 ### Using GitHub CLI (recommended)
 
 ```powershell
@@ -93,7 +95,11 @@ The asset filename **must** end in `.zip` — `updater.py:_select_download_url()
 
 After publishing:
 
-1. Run an older version of QPopCV (e.g. build one locally with a lower version number)
+1. Build a temporary older version to test against:
+   - Change `APP_VERSION` in `qpopcv/config.py` to a lower number (e.g. `"1.0.1"`)
+   - Run `.\build.ps1`
+   - Revert `APP_VERSION` back to the real version
+   - Launch `dist\QPopCV\QPopCV.exe`
 2. The app should show "Update available: v1.0.38"
 3. Click Install → verify the update.bat process runs, app restarts, new version shown
 
@@ -116,7 +122,7 @@ When a user clicks "Install Update" in the app:
 
 **Taskbar pin stability:** The `.exe` is replaced in-place (same path, same filename). Windows taskbar pins are path-based, so the pin continues to launch the new exe without any user action. The updated exe has the new icon embedded, which Windows will pick up after the restart.
 
-**Config persistence:** `config.local.json` is never included in the release ZIP (it is gitignored). The `xcopy` only copies files that are present in the ZIP, so `config.local.json` in the user's install folder is never touched. The user's webhook URL, Discord user ID, monitor selection, and AFK preference all survive every update.
+**Config persistence:** `config.local.json` is never included in the release ZIP (it is gitignored). Since `config.local.json` is gitignored and never added to the release ZIP, the `xcopy` command cannot create or overwrite it. The user's settings file survives unchanged. The user's webhook URL, Discord user ID, monitor selection, and AFK preference all survive every update.
 
 ---
 
@@ -129,3 +135,4 @@ When a user clicks "Install Update" in the app:
 | Update check finds no asset | Asset filename doesn't end in `.zip` | Rename/re-upload with `.zip` extension |
 | `config.local.json` wiped on update | File was accidentally committed to repo and included in ZIP | Remove from git tracking: `git rm --cached qpopcv/config.local.json` |
 | App icon on taskbar stays old | Windows icon cache | Right-click taskbar icon → Unpin, re-pin after update |
+| `build.ps1` blocked by execution policy | PowerShell default security policy | Run once: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` |
