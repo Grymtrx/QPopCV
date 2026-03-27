@@ -131,3 +131,4 @@ Priority order for a future Claude session:
 15. ~~**AFK Tab**~~ ✅ Done in 1.0.38 — 28-min Discord ping with @mention; `threading.Timer` armed on Watch start, cancelled on Stop
 16. ~~**AP-05**~~ ✅ Fixed in 1.0.39 — Log update check failures
 17. ~~**SEC-04**~~ ✅ Fixed in 1.0.39 — SHA-256 checksum verification on downloaded ZIPs
+18. ~~**Discord process detection**~~ ✅ Done in 1.0.40 — Detects Discord.exe on Watch click; shows inline warning with Kill Discord / Continue Anyway options so notifications route to phone
