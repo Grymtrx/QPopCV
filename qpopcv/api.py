@@ -10,6 +10,7 @@ import logging
 import threading
 import time
 import webbrowser
+import requests
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
@@ -75,6 +76,7 @@ class Api:
         self._watcher: Optional[QPopWatcher] = None
         self._update_info: Optional[UpdateInfo] = None
         self._last_test_time: float = 0.0
+        self._afk_timer: Optional[threading.Timer] = None
         self.update_manager = UpdateManager(current_version=APP_VERSION, app_dir=APP_DIR)
 
     # ── Initial state ──────────────────────────────────────────────────────────
@@ -98,6 +100,7 @@ class Api:
                 "user_id": str(self.config.get("user_id", "")),
                 "reference_image_paths": [str(p) for p in self.config.get("reference_image_paths", [])],
                 "monitor_index": saved_idx,
+                "afk_notify": bool(self.config.get("afk_notify", False)),
             },
             "monitors": labels,
         }
@@ -109,6 +112,7 @@ class Api:
         user_id = str(data.get("user_id", "")).strip()
         paths = [str(p) for p in data.get("reference_image_paths", [])]
         monitor_index = int(data.get("monitor_index", 0))
+        afk_notify = bool(data.get("afk_notify", False))
 
         err = _validate_discord(webhook_url, user_id)
         if err:
@@ -127,6 +131,11 @@ class Api:
         self._watcher = QPopWatcher(settings, on_detect=self._on_detection)
         self._watcher.start()
 
+        if afk_notify:
+            self._afk_timer = threading.Timer(28 * 60, self._send_afk_notification)
+            self._afk_timer.daemon = True
+            self._afk_timer.start()
+
         warning = None
         if self._watcher.oversized_refs:
             names = ", ".join(p.name for p in self._watcher.oversized_refs)
@@ -142,6 +151,9 @@ class Api:
         if self._watcher:
             self._watcher.stop()
             self._watcher = None
+        if self._afk_timer:
+            self._afk_timer.cancel()
+            self._afk_timer = None
         return {"ok": True}
 
     def save_config_data(self, data: dict) -> dict:
@@ -151,6 +163,7 @@ class Api:
         paths = [str(p) for p in data.get("reference_image_paths", [])]
         self.config["reference_image_paths"] = [p for p in paths if p.strip()]
         self.config["monitor_index"] = int(data.get("monitor_index", 0))
+        self.config["afk_notify"] = bool(data.get("afk_notify", False))
         save_config(self.config)
         return {"ok": True}
 
@@ -219,6 +232,22 @@ class Api:
     def _on_detection(self) -> None:
         """Called from QPopWatcher daemon thread on queue-pop detection."""
         self._push("detected", None)
+
+    def _send_afk_notification(self) -> None:
+        """Called by threading.Timer after 28 minutes of watching."""
+        webhook_url = str(self.config.get("webhook_url", "")).strip()
+        user_id = str(self.config.get("user_id", "")).strip()
+        if not webhook_url or not user_id:
+            return
+        content = (
+            f"<@{user_id}> Watch time nearing 30 minutes. "
+            "Return to PC & move character to prevent blizzard auto-logout."
+        )
+        try:
+            requests.post(webhook_url, json={"content": content}, timeout=5)
+        except Exception as exc:
+            logger.error("AFK notification failed: %s", exc)
+        self._afk_timer = None
 
     def _cleanup(self) -> None:
         if self._watcher:
