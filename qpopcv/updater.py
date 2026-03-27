@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Sequence
+import hashlib
 import logging
 import os
 import subprocess
@@ -28,6 +29,7 @@ class UpdateInfo:
     download_url: Optional[str]
     release_url: Optional[str]
     release_name: str = ""
+    asset_digest: Optional[str] = None  # "sha256:XXXX" from GitHub API, or None
 
 
 class UpdateManager:
@@ -80,6 +82,14 @@ class UpdateManager:
             download_url = self._select_download_url(data)
             html_url = data.get("html_url")
 
+            # Extract SHA-256 digest for the chosen asset (if available)
+            asset_digest: Optional[str] = None
+            if download_url:
+                for asset in (data.get("assets") or []):
+                    if asset.get("browser_download_url") == download_url:
+                        asset_digest = asset.get("digest") or None
+                        break
+
             if not latest_version or not download_url:
                 # No usable release info
                 return UpdateInfo(
@@ -100,10 +110,11 @@ class UpdateManager:
                 download_url=download_url,
                 release_url=html_url,
                 release_name=data.get("name") or "",
+                asset_digest=asset_digest,
             )
 
         except Exception:
-            # On any error (network, JSON, etc.), report "no update"
+            logger.debug("Update check failed", exc_info=True)
             return UpdateInfo(
                 available=False,
                 current_version=current,
@@ -131,6 +142,10 @@ class UpdateManager:
 
         # 1) Download the release zip
         self._download_file(info.download_url, zip_path, timeout=timeout)
+
+        # 1a) Verify integrity if GitHub provided a digest
+        if info.asset_digest:
+            self._verify_checksum(zip_path, info.asset_digest)
 
         # 2) Extract it
         with zipfile.ZipFile(zip_path, "r") as zf:
@@ -205,6 +220,22 @@ class UpdateManager:
                 for chunk in r.iter_content(chunk_size=8192):
                     if chunk:
                         f.write(chunk)
+
+    @staticmethod
+    def _verify_checksum(zip_path: Path, digest: str) -> None:
+        """Verify SHA-256 of a downloaded file against a GitHub-provided digest string."""
+        if not digest.startswith("sha256:"):
+            raise ValueError(f"Unsupported digest format: {digest!r}")
+        expected = digest[len("sha256:"):]
+        sha256 = hashlib.sha256()
+        with open(zip_path, "rb") as fh:
+            for chunk in iter(lambda: fh.read(65536), b""):
+                sha256.update(chunk)
+        actual = sha256.hexdigest()
+        if actual != expected:
+            raise ValueError(
+                f"Checksum mismatch — expected {expected[:16]}…, got {actual[:16]}…"
+            )
 
     @staticmethod
     def _find_source_root(extract_dir: Path) -> Path:

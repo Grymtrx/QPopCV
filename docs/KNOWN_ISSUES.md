@@ -27,10 +27,8 @@
 #### ~~SEC-03 — Discord User ID Allows Any 18-Digit Number~~ ✅ Fixed in 1.0.8
 - Validator now accepts 17–19 digit IDs to cover old accounts and 19-digit snowflakes.
 
-#### SEC-04 — No Checksum/Signature Verification on Update ZIPs
-- **File:** `qpopcv/updater.py:135-136`
-- **Detail:** The downloaded release ZIP is extracted without verifying integrity. A compromised GitHub release asset could execute malicious code.
-- **Fix:** GitHub releases expose an SHA-256 in their API (`assets[].digest`). Verify before extracting.
+#### ~~SEC-04 — No Checksum/Signature Verification on Update ZIPs~~ ✅ Fixed in 1.0.39
+- `UpdateInfo` now carries `asset_digest` (populated from `assets[].digest` in the GitHub API). `install_update` calls `_verify_checksum()` before extracting if a digest is present.
 
 #### ~~SEC-05 — Batch Script Path Injection Risk (Low Exploitability)~~ ✅ Fixed in 1.0.8
 - Replaced `ENABLEDELAYEDEXPANSION` with `DISABLEDELAYEDEXPANSION` so `!` characters in paths are never expanded.
@@ -66,25 +64,17 @@
 #### ~~AP-02 — `MEDIA_DIR` Frozen/Source Logic Duplicated~~ ✅ Fixed in 1.0.9
 - `MEDIA_DIR` (with `_MEIPASS` frozen support) now lives in `config.py`; `watcher.py` imports it from there.
 
-#### AP-03 — `assert` Used as Control Flow in Production Code
-- **File:** `qpopcv/app_ui.py:466`
-- **Detail:** `assert self._update_info is not None` — asserts are stripped in optimised Python (`python -O`). This should be a proper `if` guard.
-- **Fix:** `if self._update_info is None: return`.
+#### ~~AP-03 — `assert` Used as Control Flow in Production Code~~ ✅ Fixed in 1.0.24
+- `api.py:install_update` uses `if not self._update_info or not self._update_info.available: return`. The assert was removed when `app_ui.py` was rewritten for the PyQt6 migration.
 
-#### AP-04 — `os._exit(0)` Called Without Cleanup
-- **File:** `qpopcv/app_ui.py:496`
-- **Detail:** `os._exit(0)` bypasses Python cleanup (no `finally` blocks, no `atexit` handlers, no `__del__`). While intentional for the update case, it could leave the watcher thread without a clean shutdown if threading cleanup matters.
-- **Fix:** This is acceptable for the update use case. Document with a comment explaining why `os._exit` is chosen over `sys.exit`.
+#### ~~AP-04 — `os._exit(0)` Called Without Cleanup~~ ✅ Fixed in 1.0.24
+- Removed during PyQt6 migration. Update install now calls `self._quit_fn()` which triggers a clean Qt window close via `QMainWindow.close()`.
 
-#### AP-05 — Bare `except Exception` in Update Check Loses Error Context
-- **File:** `qpopcv/updater.py:104`
-- **Detail:** `except Exception:` with no logging means update check failures are completely invisible. `app_ui.py` handles this gracefully in the UI, but the underlying error (network timeout, SSL, JSON parse) is never recorded anywhere.
-- **Fix:** Add `logger.debug("Update check failed", exc_info=True)` inside the except.
+#### ~~AP-05 — Bare `except Exception` in Update Check Loses Error Context~~ ✅ Fixed in 1.0.39
+- Added `logger.debug("Update check failed", exc_info=True)` to the except block in `updater.py:check_for_update`.
 
-#### AP-06 — `import os` Inside a Method
-- **File:** `qpopcv/app_ui.py:489`
-- **Detail:** `import os` appears inside `_restart_after_update`. This works but is unconventional and slower than a module-level import.
-- **Fix:** Move `import os` to the top of the file.
+#### ~~AP-06 — `import os` Inside a Method~~ ✅ Fixed in 1.0.24
+- `_restart_after_update` was removed during the PyQt6 migration. In the current codebase `os` is imported at module level in `updater.py` (the only file that calls `os.startfile`).
 
 ---
 
@@ -109,17 +99,9 @@
 #### ~~GAP-04 — No Rate Limiting on Test Discord Button~~ ✅ Fixed in 1.0.10
 - `TEST_THROTTLE_SECONDS = 1` introduced in `app_ui.py`; `_check_test_throttle` now uses it instead of the watcher's 15s `THROTTLE_SECONDS`.
 
-#### GAP-08 — AFK Timer `_afk_timer` Assignment Has CPython-Only Thread Safety
-- **File:** `qpopcv/api.py` — `_send_afk_notification` and `stop_watch`
-- **Detail:** `self._afk_timer = None` is written from both the timer thread (`_send_afk_notification`) and the HTTP server thread (`stop_watch`). Under CPython, the GIL makes single reference assignments atomic, making the double-`None` race benign. Under a free-threaded Python build (3.13+ `--disable-gil`) this would need an explicit lock.
-- **Fix (if ever needed):** Wrap `_afk_timer` access in a `threading.Lock`.
+#### ~~GAP-08 — AFK Timer `_afk_timer` Assignment Has CPython-Only Thread Safety~~ ✅ Documented
+- A comment was added to `api.py:_send_afk_notification` explaining the GIL guarantee. If free-threaded Python is ever used, wrap `_afk_timer` access in a `threading.Lock`.
 
-#### GAP-05 — `confidence` Not Exposed in UI
-- **Detail:** The `confidence` config key (default `0.6`) controls template match sensitivity but has no UI control. Users with unusual screen scaling or DPI may need to adjust it.
-- **Fix:** Add a slider or numeric entry for confidence in the settings area.
-
-#### GAP-06 — `check_interval` Not Exposed in UI
-- **Detail:** Same as above for `check_interval` (default `0.15s` = ~6.7 FPS capture). Power users may want to reduce CPU usage.
 
 #### ~~GAP-07 — `opencv-python` in Requirements but Not Used~~ ✅ Fixed in 1.0.7
 - Removed from `requirements.txt` and `pyproject.toml`.
@@ -147,4 +129,5 @@ Priority order for a future Claude session:
 13. ~~**GAP-03** — Multi-monitor region support~~ ✅ Fixed in 1.0.12
 14. ~~**UI/UX Redesign**~~ ✅ Done in 1.0.22
 15. ~~**AFK Tab**~~ ✅ Done in 1.0.38 — 28-min Discord ping with @mention; `threading.Timer` armed on Watch start, cancelled on Stop
-16. **GAP-05/06** — Expose confidence + interval in UI
+16. ~~**AP-05**~~ ✅ Fixed in 1.0.39 — Log update check failures
+17. ~~**SEC-04**~~ ✅ Fixed in 1.0.39 — SHA-256 checksum verification on downloaded ZIPs

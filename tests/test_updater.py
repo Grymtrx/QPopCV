@@ -4,6 +4,7 @@ Tests for qpopcv/updater.py
 All network calls are mocked — no real HTTP requests are made.
 All file-system operations use tmp_path.
 """
+import hashlib
 import json
 import zipfile
 import pytest
@@ -290,3 +291,81 @@ class TestCopyTree:
         mgr._copy_tree(src, dest)
         assert (dest / "qpopcv" / "new_module.py").exists()
         assert not (dest / "qpopcv" / "old_module.py").exists()
+
+
+# ===========================================================================
+# _verify_checksum
+# ===========================================================================
+
+class TestVerifyChecksum:
+
+    def _make_file(self, tmp_path: Path, content: bytes = b"fake zip") -> Path:
+        p = tmp_path / "update.zip"
+        p.write_bytes(content)
+        return p
+
+    def _sha256_hex(self, data: bytes) -> str:
+        return hashlib.sha256(data).hexdigest()
+
+    def test_correct_digest_passes(self, tmp_path):
+        content = b"fake zip content"
+        p = self._make_file(tmp_path, content)
+        digest = f"sha256:{self._sha256_hex(content)}"
+        UpdateManager._verify_checksum(p, digest)  # must not raise
+
+    def test_wrong_digest_raises(self, tmp_path):
+        content = b"fake zip content"
+        p = self._make_file(tmp_path, content)
+        bad_digest = "sha256:" + "a" * 64
+        with pytest.raises(ValueError, match="Checksum mismatch"):
+            UpdateManager._verify_checksum(p, bad_digest)
+
+    def test_unsupported_format_raises(self, tmp_path):
+        content = b"fake zip content"
+        p = self._make_file(tmp_path, content)
+        with pytest.raises(ValueError, match="Unsupported digest format"):
+            UpdateManager._verify_checksum(p, "md5:abc123")
+
+
+# ===========================================================================
+# check_for_update — asset_digest propagation
+# ===========================================================================
+
+class TestCheckForUpdateDigest:
+
+    def _mock_get(self, payload: dict):
+        resp = MagicMock()
+        resp.json.return_value = payload
+        resp.raise_for_status = MagicMock()
+        return resp
+
+    def test_digest_propagated_from_asset(self):
+        mgr = make_manager(current_version="1.0.0")
+        payload = {
+            "tag_name": "v2.0.0",
+            "html_url": "https://github.com/example",
+            "name": "v2.0.0",
+            "assets": [
+                {
+                    "browser_download_url": "https://example.com/release.zip",
+                    "digest": "sha256:abc123def456",
+                }
+            ],
+            "zipball_url": None,
+        }
+        with patch("qpopcv.updater.requests.get", return_value=self._mock_get(payload)):
+            info = mgr.check_for_update()
+        assert info.asset_digest == "sha256:abc123def456"
+
+    def test_digest_is_none_when_absent(self):
+        mgr = make_manager(current_version="1.0.0")
+        payload = {
+            "tag_name": "v2.0.0",
+            "html_url": "https://github.com/example",
+            "name": "v2.0.0",
+            "assets": [{"browser_download_url": "https://example.com/release.zip"}],
+            "zipball_url": None,
+        }
+        with patch("qpopcv.updater.requests.get", return_value=self._mock_get(payload)):
+            info = mgr.check_for_update()
+        assert info.asset_digest is None
