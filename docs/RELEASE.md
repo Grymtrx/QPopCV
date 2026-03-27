@@ -10,7 +10,7 @@ Releases are published to GitHub as a ZIP asset containing the standalone Window
 
 Before every release:
 
-- [ ] Bump `APP_VERSION` in `qpopcv/config.py` (e.g. `"1.0.38"` → `"1.0.39"`)
+- [ ] Bump `APP_VERSION` in `qpopcv/config.py` (e.g. `"1.0.43"` → `"1.1.0"`)
 - [ ] Update `CLAUDE.md` — change "Current version" line to match
 - [ ] Update `CLAUDE.md` — append the new version summary to "Active work order"
 - [ ] Run tests: `python -m pytest` — all must pass
@@ -64,27 +64,27 @@ QPopCV-vX.Y.Z.zip
 
 ## Publish to GitHub
 
-> **Replace `v1.0.38` with your actual new version number in all commands below.**
+> **Replace `v1.1.0` with your actual new version number in all commands below.**
 
 ### Using GitHub CLI (recommended)
 
 ```powershell
 # Tag and push
-git tag v1.0.38
-git push origin v1.0.38
+git tag v1.1.0
+git push origin v1.1.0
 
 # Create release and upload the ZIP in one command
-gh release create v1.0.38 "dist\QPopCV-v1.0.38.zip" `
-  --title "v1.0.38" `
+gh release create v1.1.0 "dist\QPopCV-v1.1.0.zip" `
+  --title "v1.1.0" `
   --notes "Brief description of changes in this release."
 ```
 
 ### Manual via GitHub web
 
 1. Go to https://github.com/Grymtrx/QPopCV/releases/new
-2. Tag: `v1.0.38` (create new tag pointing at current commit)
-3. Title: `v1.0.38`
-4. Upload `dist\QPopCV-v1.0.38.zip` as a release asset
+2. Tag: `v1.1.0` (create new tag pointing at current commit)
+3. Title: `v1.1.0`
+4. Upload `dist\QPopCV-v1.1.0.zip` as a release asset
 5. Publish
 
 The asset filename **must** end in `.zip` — `updater.py:_select_download_url()` filters for `.zip` assets specifically.
@@ -96,11 +96,11 @@ The asset filename **must** end in `.zip` — `updater.py:_select_download_url()
 After publishing:
 
 1. Build a temporary older version to test against:
-   - Change `APP_VERSION` in `qpopcv/config.py` to a lower number (e.g. `"1.0.1"`)
+   - Change `APP_VERSION` in `qpopcv/config.py` to a lower number (e.g. `"1.0.43"`)
    - Run `.\build.ps1`
    - Revert `APP_VERSION` back to the real version
    - Launch `dist\QPopCV\QPopCV.exe`
-2. The app should show "Update available: v1.0.38"
+2. The app should show "Update available: v1.1.0"
 3. Click Install → verify the update.bat process runs, app restarts, new version shown
 
 ---
