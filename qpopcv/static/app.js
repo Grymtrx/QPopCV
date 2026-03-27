@@ -272,6 +272,7 @@ discordKillBtn.addEventListener('click', async () => {
       return;
     }
     discordWarn.classList.add('hidden');
+    measureAndResize();
   } catch (e) {
     showToast('error', 'Failed to kill Discord.');
     console.error(e);
@@ -282,6 +283,7 @@ discordKillBtn.addEventListener('click', async () => {
 
 discordContinueBtn.addEventListener('click', async () => {
   discordWarn.classList.add('hidden');
+  measureAndResize();
   await doStartWatch(true);
 });
 
@@ -292,6 +294,7 @@ async function doStartWatch(skipDiscordCheck = false) {
     const result = await apiPost('/api/start_watch', data);
     if (result.discord_running) {
       discordWarn.classList.remove('hidden');
+      measureAndResize();
       return;
     }
     if (!result.ok) {
@@ -299,6 +302,7 @@ async function doStartWatch(skipDiscordCheck = false) {
       return;
     }
     discordWarn.classList.add('hidden');
+    measureAndResize();
     if (result.warning) {
       showToast('warning', result.warning, 7000);
     }
