@@ -30,6 +30,7 @@ DEFAULT_CONFIG: Dict[str, object] = {
     "confidence": 0.6,
     "reference_image_paths": [],
     "monitor_index": 0,
+    "afk_notify": False,
 }
 
 
