@@ -830,6 +830,63 @@ html, body {
 
 .toast-warning .toast-icon { color: var(--orange); }
 
+/* ── Discord warning banner ──────────────────────────────────── */
+
+.discord-warn {
+  margin: 0 0 8px 0;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(217, 119, 6, 0.35);
+  background: rgba(255, 237, 213, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.discord-warn-msg {
+  display: block;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.discord-warn-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.discord-warn-kill {
+  flex: 1;
+  padding: 5px 8px;
+  font-size: 11px;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  background: rgba(254, 226, 226, 0.9);
+  color: #dc2626;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.discord-warn-kill:hover {
+  background: rgba(254, 202, 202, 0.95);
+}
+
+.discord-warn-continue {
+  flex: 1;
+  padding: 5px 8px;
+  font-size: 11px;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.discord-warn-continue:hover {
+  background: rgba(255, 255, 255, 0.95);
+}
+
 /* ── Detected flash overlay ──────────────────────────────────── */
 
 @keyframes detected-flash {
