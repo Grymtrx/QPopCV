@@ -48,6 +48,9 @@ const versionText   = $('version-text');
 const updateText    = $('update-text');
 const toastContainer = $('toasts');
 const afkNotifyCheckbox = $('afk-notify');
+const discordWarn        = $('discord-warn');
+const discordKillBtn     = $('discord-kill-btn');
+const discordContinueBtn = $('discord-continue-btn');
 
 // ── Window controls ───────────────────────────────────────────────────────────
 
@@ -260,14 +263,43 @@ watchBtn.addEventListener('click', async () => {
   }
 });
 
-async function doStartWatch() {
+discordKillBtn.addEventListener('click', async () => {
+  discordKillBtn.disabled = true;
+  try {
+    const result = await apiPost('/api/kill_discord');
+    if (!result.ok) {
+      showToast('error', result.error || 'Failed to kill Discord.');
+      return;
+    }
+    discordWarn.classList.add('hidden');
+    await doStartWatch(true);
+  } catch (e) {
+    showToast('error', 'Failed to kill Discord.');
+    console.error(e);
+  } finally {
+    discordKillBtn.disabled = false;
+  }
+});
+
+discordContinueBtn.addEventListener('click', async () => {
+  discordWarn.classList.add('hidden');
+  await doStartWatch(true);
+});
+
+async function doStartWatch(skipDiscordCheck = false) {
   watchBtn.disabled = true;
   try {
-    const result = await apiPost('/api/start_watch', collectFormData());
+    const data = { ...collectFormData(), skip_discord_check: skipDiscordCheck };
+    const result = await apiPost('/api/start_watch', data);
+    if (result.discord_running) {
+      discordWarn.classList.remove('hidden');
+      return;
+    }
     if (!result.ok) {
       showToast('error', result.error);
       return;
     }
+    discordWarn.classList.add('hidden');
     if (result.warning) {
       showToast('warning', result.warning, 7000);
     }
