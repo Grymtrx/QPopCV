@@ -76,7 +76,8 @@ class TestAfkTimer:
     @patch("qpopcv.api._validate_ref_images", return_value=None)
     @patch("qpopcv.api.QPopWatcher")
     @patch("qpopcv.api.threading.Timer")
-    def test_timer_created_when_afk_notify_true(self, MockTimer, MockWatcher, _mock_val):
+    @patch("qpopcv.api._is_discord_running", return_value=False)
+    def test_timer_created_when_afk_notify_true(self, _mock_dc, MockTimer, MockWatcher, _mock_val):
         api = make_api()
         mock_instance = MagicMock()
         MockTimer.return_value = mock_instance
@@ -96,7 +97,8 @@ class TestAfkTimer:
     @patch("qpopcv.api._validate_ref_images", return_value=None)
     @patch("qpopcv.api.QPopWatcher")
     @patch("qpopcv.api.threading.Timer")
-    def test_stop_watch_cancels_timer(self, MockTimer, MockWatcher, _mock_val):
+    @patch("qpopcv.api._is_discord_running", return_value=False)
+    def test_stop_watch_cancels_timer(self, _mock_dc, MockTimer, MockWatcher, _mock_val):
         api = make_api()
         mock_instance = MagicMock()
         MockTimer.return_value = mock_instance

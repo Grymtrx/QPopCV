@@ -10,6 +10,7 @@ import logging
 import threading
 import time
 import webbrowser
+import psutil
 import requests
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
@@ -52,6 +53,17 @@ def _validate_ref_images(paths: List[str]) -> Optional[str]:
         if not p.exists() or p.is_dir():
             return f"Reference image not found:\n{path_str}"
     return None
+
+
+def _is_discord_running() -> bool:
+    """Return True if any Discord.exe process is currently running."""
+    for proc in psutil.process_iter(["name"]):
+        try:
+            if proc.name().lower() == "discord.exe":
+                return True
+        except psutil.NoSuchProcess:
+            pass
+    return False
 
 
 # ── API class ──────────────────────────────────────────────────────────────────
@@ -113,6 +125,7 @@ class Api:
         paths = [str(p) for p in data.get("reference_image_paths", [])]
         monitor_index = int(data.get("monitor_index", 0))
         afk_notify = bool(data.get("afk_notify", False))
+        skip_discord_check = bool(data.get("skip_discord_check", False))
 
         err = _validate_discord(webhook_url, user_id)
         if err:
@@ -120,6 +133,9 @@ class Api:
         err = _validate_ref_images(paths)
         if err:
             return {"ok": False, "error": err}
+
+        if not skip_discord_check and _is_discord_running():
+            return {"ok": False, "discord_running": True}
 
         self.config["webhook_url"] = webhook_url
         self.config["user_id"] = user_id
@@ -159,6 +175,20 @@ class Api:
         if self._afk_timer:
             self._afk_timer.cancel()
             self._afk_timer = None
+        return {"ok": True}
+
+    def kill_discord(self) -> dict:
+        """Terminate all running Discord.exe processes."""
+        try:
+            for proc in psutil.process_iter(["name"]):
+                try:
+                    if proc.name().lower() == "discord.exe":
+                        proc.terminate()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+        except Exception as exc:
+            logger.error("kill_discord failed: %s", exc)
+            return {"ok": False, "error": str(exc)}
         return {"ok": True}
 
     def save_config_data(self, data: dict) -> dict:
