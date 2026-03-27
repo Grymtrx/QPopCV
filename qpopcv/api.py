@@ -125,6 +125,7 @@ class Api:
         self.config["user_id"] = user_id
         self.config["reference_image_paths"] = [p for p in paths if p.strip()]
         self.config["monitor_index"] = monitor_index
+        self.config["afk_notify"] = afk_notify
         save_config(self.config)
 
         settings = WatcherSettings.from_config(self.config)
