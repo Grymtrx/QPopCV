@@ -1,59 +1,53 @@
-# ⚡ QPopCV
+# QPopCV
 
-A lightweight desktop app that **monitors your screen for WoW Solo Shuffle queue pops** and instantly sends a **Discord ping** to your phone so you can step away from your PC while waiting.
+A Windows desktop app that detects WoW Solo Shuffle & Blitz queue pops via screen capture and sends a Discord notification to your phone.
 
-![Solo Shuffle Q Pop](https://i.imgur.com/KRNfpee.png)
+![QPopCV UI](qpopcv/media/qpop_ss_blizzardUI_reference.png)
 
-![Mobile Noti](https://i.imgur.com/FAwYL5B.png)
+![Mobile Notification](qpopcv/media/MobileNoti.png)
 
+## Features
 
+- **Queue pop detection** — using your reference image, computer image detects Queue pop.
+- **Discord Mobile notifications** — instant ping with ~1s end-to-end latency
+- **AFK notification** — Discord ping reminders that youre nearing blizzards auto-logout time.
+- **Discord process detection** — warns if Discord desktop is running (Mobile Notification result from PC discord.exe not running)
+- **Auto-update** — checks for new releases on launch with SHA-256 zip verification
 
 ## Requirements
-- **Windows**
-- A **Discord Webhook URL**
-- Your **Discord User ID**
-- WoW open with the **Queue pop visible on screen**
+
+- Windows 10+
+- Python 3.11+ (tested on 3.14)
+- A Discord webhook URL and your Discord user ID
+- WoW open with the queue pop visible on screen
 
 ## Setup
-Join the community here for setup instructions:  
-👉 **[QPopCV Discord](https://discord.gg/KpupS6N3Zj)**
 
-## Speed (End-to-End Latency)
-Measured from queue pop appearing → notification on phone:
+Download the latest release or clone the repo and install dependencies:
 
-- **App detection:** 0.005s – 0.1s  
-- **HTTP request to Discord:** ~ 0.7s  
-- **Discord → phone push:** ~ 0.2s  
-- **Total:** ~ 1 seconds
+```
+pip install -r requirements.txt
+python main.py
+```
 
+For setup help and community support:
+**[QPopCV Discord](https://discord.gg/KpupS6N3Zj)**
 
+## How It Works
 
-## Legality / Blizzard TOS Compliance
+QPopCV captures a region of your screen and runs OpenCV template matching against known queue pop images. When a match exceeds the confidence threshold, it fires a Discord webhook mentioning your user ID. The entire pipeline — capture, match, notify — completes in under a second.
 
-QPopCV is designed to operate **within the boundaries of Blizzard’s Terms of Service**.  
-It does **not** automate gameplay, modify the client, or provide any in-game advantage.
+## TOS Compliance
 
-**Why QPopCV is TOS/EULA Safe:**
+QPopCV operates within Blizzard's Terms of Service:
 
-- **No memory reading or writing**  
-  QPopCV never interacts with WoW’s process, RAM, or network packets.
+- **No memory reading/writing** — never touches WoW's process, RAM, or network
+- **No automation** — observes the screen only; does not click, accept queues, or act in-game
+- **No injected code** — standalone desktop app, no DLLs or addons
+- **Standard screen capture** — same APIs used by OBS, Discord screen-share, and Windows Magnifier
 
-- **No automation**  
-  The app only *observes* your screen for a visual queue pop.  
-  It does **not click**, **accept queues**, or perform any action in-game.
+> **Disclaimer:** While QPopCV is designed to comply with Blizzard's policies, use is at your own discretion.
 
-- **Uses standard screen capture APIs**  
-  Screen reading is explicitly allowed as long as it does not manipulate or alter the game.
+## License
 
-- **No injected code, no DLLs, no addons**  
-  QPopCV is an external desktop tool that does not integrate with the game client.
-
-- **No unfair competitive advantage**  
-  It only mirrors the same information already visible to the player.
-
-- **Similar to accessibility tools**  
-  It functions like Windows Magnifier, OBS, or Discord screen-share — all common, allowed tools.
-
-> **Disclaimer:**  
-> While QPopCV is designed to comply with Blizzard's policies, I am **not responsible** for any actions taken against your WoW account. Use at your own discretion.
-
+See [LICENSE](LICENSE) for details.
