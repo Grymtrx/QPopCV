@@ -89,7 +89,8 @@ class TestAfkTimer:
     @patch("qpopcv.api._validate_ref_images", return_value=None)
     @patch("qpopcv.api.QPopWatcher")
     @patch("qpopcv.api.threading.Timer")
-    def test_timer_not_created_when_afk_notify_false(self, MockTimer, MockWatcher, _mock_val):
+    @patch("qpopcv.api._is_discord_running", return_value=False)
+    def test_timer_not_created_when_afk_notify_false(self, _mock_dc, MockTimer, MockWatcher, _mock_val):
         api = make_api()
         self._start(api, False, MockWatcher)
         MockTimer.assert_not_called()
