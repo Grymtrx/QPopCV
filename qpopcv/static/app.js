@@ -156,18 +156,21 @@ function applyInitialState(data) {
   refreshAddBtn();
 
   // Fit window to content after everything is laid out
-  requestAnimationFrame(() => measureAndResize());
+  measureAndResize();
 }
 
 // ── Height adaptation ──────────────────────────────────────────────────────────
 
 function measureAndResize() {
-  const h = document.documentElement.scrollHeight;
-  fetch('/api/resize', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ height: h }),
-  }).catch(() => {});
+  requestAnimationFrame(() => {
+    const card = document.querySelector('.app-card');
+    const h = card ? card.offsetHeight : document.documentElement.scrollHeight;
+    fetch('/api/resize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ height: h }),
+    }).catch(() => {});
+  });
 }
 
 // ── Tab switching ──────────────────────────────────────────────────────────────
