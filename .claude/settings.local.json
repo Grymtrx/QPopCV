@@ -16,7 +16,10 @@
       "Bash(where python:*)",
       "Bash(python -c \"import sys; print\\(sys.executable\\)\")",
       "Bash(C:/Python314/python.exe -m pytest --version)",
-      "Bash(C:/Python314/python.exe -m pip install pytest -q)"
+      "Bash(C:/Python314/python.exe -m pip install pytest -q)",
+      "Bash(python:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
