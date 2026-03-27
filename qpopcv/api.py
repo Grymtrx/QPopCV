@@ -131,6 +131,10 @@ class Api:
         self._watcher = QPopWatcher(settings, on_detect=self._on_detection)
         self._watcher.start()
 
+        if self._afk_timer:
+            self._afk_timer.cancel()
+            self._afk_timer = None
+
         if afk_notify:
             self._afk_timer = threading.Timer(28 * 60, self._send_afk_notification)
             self._afk_timer.daemon = True
@@ -247,9 +251,12 @@ class Api:
             requests.post(webhook_url, json={"content": content}, timeout=5)
         except Exception as exc:
             logger.error("AFK notification failed: %s", exc)
-        self._afk_timer = None
+        self._afk_timer = None  # CPython GIL makes this write atomic; double-None with stop_watch is benign.
 
     def _cleanup(self) -> None:
         if self._watcher:
             self._watcher.stop()
             self._watcher = None
+        if self._afk_timer:
+            self._afk_timer.cancel()
+            self._afk_timer = None
