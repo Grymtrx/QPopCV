@@ -138,6 +138,8 @@ class _Handler(BaseHTTPRequestHandler):
                 result = {"ok": True}
             elif path == "/api/save_config":
                 result = api.save_config_data(body)
+            elif path == "/api/kill_discord":
+                result = api.kill_discord()
             elif path == "/api/window_control":
                 action = body.get("action", "")
                 if action == "minimize":
