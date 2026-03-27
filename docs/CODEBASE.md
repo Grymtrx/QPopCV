@@ -8,49 +8,52 @@
 
 ```
 QPopCV/
-├── main.py                          Entry point
-├── requirements.txt                 Python dependencies
-├── pyproject.toml                   Build config (PyInstaller packaging)
+├── main.py                              Entry point
+├── pyproject.toml                       Build config + pytest settings
 ├── docs/
-│   ├── ARCHITECTURE.md              System overview + diagrams
-│   ├── CODEBASE.md                  (this file)
-│   └── KNOWN_ISSUES.md              Bugs, security issues, tech debt
-├── qpopcv/                          Main package
-│   ├── __init__.py                  Re-exports QPopApp
-│   ├── app_ui.py                    GUI (~700 lines)
-│   ├── config.py                    Config management (~65 lines)
-│   ├── config.json                  Shared/repo config (webhook default)
-│   ├── config.local.json            User's personal config (gitignored, auto-created)
-│   ├── discord_client.py            Discord HTTP wrapper (23 lines)
-│   ├── watcher.py                   Detection engine (~275 lines)
-│   ├── validators.py                Input validation (~72 lines)
-│   ├── theme.py                     Color constants (~26 lines)
-│   ├── updater.py                   Auto-updater (309 lines)
-│   └── media/
-│       ├── qpop_ss_blizzardUI_reference.png   Built-in reference (Blizzard UI)
-│       ├── qpop_ss_bbq_reference.png          Built-in reference (BBQ UI)
-│       ├── qpop_ss_bbq_dark_reference.png     Built-in reference (BBQ UI dark)
-│       ├── Dialog Placement.png               Documentation screenshot
-│       ├── MobileNoti.png                     Documentation screenshot
-│       └── icon/                              App icons
+│   ├── ARCHITECTURE.md                  System overview + diagrams
+│   ├── CODEBASE.md                      (this file)
+│   ├── KNOWN_ISSUES.md                  Bugs, security issues, tech debt
+│   └── superpowers/
+│       ├── specs/                       Feature design specs
+│       └── plans/                       Implementation plans
+├── qpopcv/                              Main package
+│   ├── __init__.py                      Re-exports QPopApp
+│   ├── app_ui.py                        Qt shell + HTTP server + SSE bridge
+│   ├── api.py                           All business logic (framework-agnostic)
+│   ├── config.py                        Config management
+│   ├── config.json                      Shared/repo config (webhook default)
+│   ├── config.local.json                User's personal config (gitignored, auto-created)
+│   ├── discord_client.py                Discord HTTP wrapper
+│   ├── watcher.py                       Detection engine
+│   ├── validators.py                    Input validation
+│   ├── updater.py                       Auto-updater
+│   ├── theme.py                         Deprecated — CustomTkinter era artifact
+│   ├── monitor_utils.py                 Multi-monitor enumeration + region math
+│   ├── font_loader.py                   Font loading utility
+│   └── static/
+│       ├── index.html                   Single-page UI (4 tabs)
+│       ├── style.css                    Pearl White glassmorphic theme
+│       └── app.js                       Frontend logic
 ├── tests/
-│   ├── QpopCV_prototype.py          Original single-file prototype (not automated tests)
-│   ├── test_capture_region.py       Manual region capture utility
-│   ├── test_config.py               Config load/save tests
-│   ├── test_updater.py              Updater logic tests
-│   ├── test_validators.py           Input validation tests
-│   ├── test_watcher.py              Watcher engine tests
-│   └── conftest.py                  Pytest fixtures
+│   ├── conftest.py                      Pytest fixtures (Python 3.14 compat patches)
+│   ├── test_api_afk.py                  AFK timer + notification tests
+│   ├── test_config.py                   Config load/save tests
+│   ├── test_updater.py                  Updater logic tests
+│   ├── test_validators.py               Input validation tests
+│   ├── test_watcher.py                  Watcher engine tests
+│   ├── test_capture_region.py           Manual region capture utility
+│   └── QpopCV_prototype.py              Original single-file prototype (not automated)
 └── tools/
-    ├── show_watch_region.py         Visualizes the watch region on screen
-    └── privacy_mask.py              Transparent overlay for safe screenshotting
+    ├── show_watch_region.py             Visualises the watch region on screen
+    └── privacy_mask.py                  Transparent overlay for safe screenshotting
 ```
 
 ---
 
 ## `main.py`
 
-**Lines:** 28
+**Lines:** ~28
 
 Entry point. Configures logging and starts the app.
 
@@ -58,53 +61,86 @@ Entry point. Configures logging and starts the app.
 def main() -> None
 ```
 
-Sets up two handlers on the root logger (both using format `%(asctime)s [%(levelname)s] %(name)s: %(message)s`):
-- `StreamHandler` (console) via `logging.basicConfig` at INFO level
+Sets up two handlers on the root logger:
+- `StreamHandler` (console) at INFO level
 - `RotatingFileHandler` → `APP_DIR / "qpopcv.log"` (1 MB max, 3 backups, UTF-8)
+
+Format: `%(asctime)s [%(levelname)s] %(name)s: %(message)s`
 
 ---
 
 ## `qpopcv/config.py`
 
-**Lines:** 44
+**Lines:** ~65
 
-Central config constants and JSON load/save. Single source of truth for path resolution (frozen vs source).
+Central config constants and JSON load/save.
 
 ### Constants
 
 | Name | Value | Description |
 |------|-------|-------------|
 | `APP_DIR` | `Path(sys.executable).parent` or `Path(__file__).parent` | Root dir (frozen vs source) |
-| `_MEDIA_ROOT` | `sys._MEIPASS` (frozen) or `APP_DIR` (source) | Base for media assets; uses PyInstaller's temp dir when frozen onefile |
-| `MEDIA_DIR` | `_MEDIA_ROOT / "media"` | Built-in reference image directory |
+| `MEDIA_DIR` | `_MEDIA_ROOT / "media"` | Built-in reference images |
 | `FONTS_DIR` | `_MEDIA_ROOT / "fonts"` | Bundled font directory |
-| `APP_VERSION` | `"1.0.22"` | Bumped on every code change |
-| `BASE_CONFIG_PATH` | `APP_DIR / "config.json"` | Shared/repo config (webhook default); never written by app |
-| `USER_CONFIG_PATH` | `APP_DIR / "config.local.json"` | User's personal settings; written by `save_config`; gitignored |
+| `APP_VERSION` | `"1.0.38"` | Bumped on every code change |
+| `BASE_CONFIG_PATH` | `APP_DIR / "config.json"` | Shared/repo config; never written by app |
+| `USER_CONFIG_PATH` | `APP_DIR / "config.local.json"` | User settings; written by `save_config`; gitignored |
 | `DISCORD_SERVER_URL` | `"https://discord.gg/KpupS6N3Zj"` | Community invite (permanent link) |
-| `DEFAULT_CONFIG` | dict | Fallback values used as base layer before config files are merged |
+| `DEFAULT_CONFIG` | dict | Fallback values merged under both config files |
+
+### `DEFAULT_CONFIG` keys
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `webhook_url` | (hardcoded — see SEC-01) | Discord webhook endpoint |
+| `user_id` | `""` | 17–19-digit Discord snowflake |
+| `check_interval` | `0.15` | Seconds between screen captures |
+| `confidence` | `0.6` | Template match threshold (0–1) |
+| `reference_image_paths` | `[]` | User's custom popup screenshots |
+| `monitor_index` | `0` | Selected monitor (0 = primary) |
+| `afk_notify` | `False` | Send AFK ping after 28 min |
 
 ### Functions
 
 ```python
 def load_config() -> Dict[str, object]
 ```
-Reads `config.json`, merges over `DEFAULT_CONFIG`. Migrates the old `reference_image_path` (str) key into `reference_image_paths` (list) if present. On any read/parse error logs `logger.warning("Failed to load config, using defaults: %s", exc)` and returns `DEFAULT_CONFIG.copy()`.
+Merges `DEFAULT_CONFIG` → `config.json` → `config.local.json`. Migrates legacy `reference_image_path` (str) to `reference_image_paths` (list).
 
 ```python
 def save_config(config: Dict[str, object]) -> None
 ```
-Serialises the dict as indented JSON and writes to `USER_CONFIG_PATH` (`config.local.json`). Never touches `config.json`. No error handling.
+Writes to `config.local.json` only. Never touches `config.json`.
 
 ---
 
 ## `qpopcv/app_ui.py`
 
-**Lines:** ~700
+**Lines:** ~300
 
-All GUI code. Built with `customtkinter` (CTk). Uses a single `card` frame inside a `CTk` root window (480px wide min).
+Qt shell and HTTP server. Contains no business logic — all logic is in `api.py`.
 
-### Class `QPopApp`
+### `_Handler(BaseHTTPRequestHandler)`
+
+Handles all HTTP requests from the JS frontend.
+
+- `do_GET` — serves static files from `qpopcv/static/`; handles `/events` SSE stream
+- `do_POST` — routes `/api/*` paths to `Api` methods; returns JSON
+- `_handle_sse` — long-lived SSE connection; blocks on `event_queue.get(timeout=25)`; sends heartbeat on timeout
+
+### `_Bridge(QObject)`
+
+Qt signal bus allowing HTTP server threads to safely call Qt main-thread operations.
+
+| Signal | Purpose |
+|--------|---------|
+| `request_browse` | Opens `QFileDialog` on main thread |
+| `request_quit` | Closes the application |
+| `request_resize(int)` | Resizes window to content height |
+| `request_minimize` | Minimizes window |
+| `request_drag` | Starts native window drag |
+
+### `QPopApp`
 
 ```python
 class QPopApp:
@@ -112,120 +148,137 @@ class QPopApp:
     def run(self) -> None
 ```
 
-#### Attributes
+#### Key Attributes
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
-| `config` | `Dict[str, object]` | Loaded config dict |
-| `_watcher` | `Optional[QPopWatcher]` | Active watcher instance (or None) |
-| `_update_info` | `Optional[UpdateInfo]` | Latest update check result |
-| `_update_clickable` | `bool` | Whether version label is clickable |
-| `_last_test_time` | `float` | Unix timestamp of last test message (throttle) |
-| `update_manager` | `UpdateManager` | Update check/install coordinator |
-| `webhook_var` | `ctk.StringVar` | Bound to webhook URL entry |
-| `user_var` | `ctk.StringVar` | Bound to user ID entry |
-| `_ref_rows` | `List[Tuple]` | `(row_frame, StringVar, browse_btn, remove_btn)` per reference image row |
-| `_ref_section` | `ctk.CTkFrame` | Container for the reference image rows |
-| `_add_ref_btn` | `ctk.CTkButton` | "Add additional ref image" button; hidden at 5-image limit |
-| `status_label` | `ctk.CTkLabel` | Shows ● Stopped / ● Watching / ● Detected! |
-| `version_and_update` | `ctk.CTkLabel` | Shows version + update status (clickable) |
-
-#### UI Layout (grid rows inside `card` frame)
-
-| Row | Content |
-|-----|---------|
-| 0 | "Discord" section header (left) + "Test" button (right) |
-| 1 | Webhook label + entry |
-| 2 | User ID label + entry |
-| 3 | Separator line |
-| 4 | "Detection" section header |
-| 5 | Game Monitor label + dropdown |
-| 6 | Ref Images label + dynamic section (1–5 entry/browse/remove rows + "+ Add Image") |
-| 7 | Action row: Save Config (left) │ ● Status pill (center) │ Watch (right) |
-| 8 | Footer: Join Discord │ mobile hint │ version/update label |
+| `_api` | `Api` | Business logic instance |
+| `_event_queue` | `queue.Queue` | Thread-safe SSE event buffer |
+| `_bridge` | `_Bridge` | Qt signal bus |
+| `_port` | `int` | Random free port for HTTP server |
+| `_window` | `QMainWindow` | Frameless Qt window |
+| `_view` | `QWebEngineView` | Renders the HTML/CSS/JS UI |
 
 #### Key Methods
 
 ```python
-def _build_ui(self) -> None
+def _start_http_server(self) -> ThreadingHTTPServer
 ```
-Constructs all widgets. Called once from `__init__`.
+Binds to `127.0.0.1:<random port>`, serves forever in a daemon thread.
 
 ```python
-def _set_status(self, text: str, color: str) -> None
-def _flash_detected_status(self) -> None
+def _push_event(self, event_type: str, data: dict | None = None) -> None
 ```
-Status label helpers. `_flash_detected_status` shows "● Detected!" for 1.6s then restores previous state.
+Thread-safe SSE push. Puts `{"type": event_type, ...data}` on `_event_queue`.
 
 ```python
-def _add_ref_row(self, path: str = "") -> None
-def _remove_ref_row(self, idx: int) -> None
-def _refresh_remove_btns(self) -> None
-def _refresh_add_btn_position(self) -> None
+def browse_image_sync(self) -> dict
 ```
-Dynamic reference image row management. `_add_ref_row` creates an entry + browse + remove row (max 5). `_remove_ref_row` destroys the row and re-indexes remaining buttons (min 1). Remove button is disabled when only 1 row remains; Add button is hidden when 5 rows exist.
+Called from HTTP server thread. Emits `request_browse` signal → blocks on `threading.Event` until Qt main thread completes the file dialog (or 60s timeout).
 
 ```python
-def _get_ref_paths(self) -> List[str]
+def resize_window(self, height: int) -> None
 ```
-Returns list of stripped path strings from all current `_ref_rows`.
+Emits `request_resize(height)` signal; Qt main thread adjusts window height.
+
+---
+
+## `qpopcv/api.py`
+
+**Lines:** ~230
+
+All application logic. Framework-agnostic — no Qt or HTTP imports. Receives a `push_event` callback for SSE and a `quit_fn` for shutdown.
+
+### `Api`
 
 ```python
-def _update_config_from_ui(self) -> None
+class Api:
+    def __init__(self, config: Dict, push_event: Callable, quit_fn: Optional[Callable] = None)
 ```
-Pulls current StringVar values into `self.config`. Called before save and before starting watcher.
+
+#### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `config` | `dict` | Live config dict (mutated on save/start) |
+| `_push` | `Callable` | SSE push callback |
+| `_watcher` | `Optional[QPopWatcher]` | Active watcher, or None |
+| `_afk_timer` | `Optional[threading.Timer]` | AFK notification timer, or None |
+| `_update_info` | `Optional[UpdateInfo]` | Latest update check result |
+| `_last_test_time` | `float` | Unix timestamp of last test ping |
+| `update_manager` | `UpdateManager` | Update check/install coordinator |
+
+#### Public Methods
 
 ```python
-def on_save(self) -> None
+def get_initial_state(self) -> dict
 ```
-Validates via `validate_discord_core` + `validate_reference_images`, then calls `save_config`.
+Returns `{version, config, monitors}`. Config includes all keys from `DEFAULT_CONFIG` plus monitor labels list.
 
 ```python
-def on_test_discord(self) -> None
+def start_watch(self, data: dict) -> dict
 ```
-Checks 1s throttle (`TEST_THROTTLE_SECONDS`), validates inputs, calls `send_test_message`. Shows result dialog.
+1. Validates webhook URL + user ID + reference image paths
+2. Writes all fields (including `afk_notify`) to `self.config` and saves
+3. Creates and starts `QPopWatcher`
+4. Cancels any existing AFK timer, then arms a new one if `afk_notify=True`
+5. Returns `{"ok": True, "warning": ...}` (warning if images are oversized)
 
 ```python
-def on_toggle_watch(self) -> None
-def _start_watch(self) -> None
-def _stop_watch(self) -> None
+def stop_watch(self) -> dict
 ```
-Start/stop toggle. `_start_watch` validates, saves config, shows mobile-Discord info dialog, creates `QPopWatcher`, calls `watcher.start()`.
+Stops watcher. Cancels and clears `_afk_timer`.
 
 ```python
-def _start_update_check(self) -> None
+def save_config_data(self, data: dict) -> dict
 ```
-Spawns daemon thread → `check_for_update()` → posts result back via `root.after`.
+Saves all config fields without starting the watcher.
 
 ```python
-def on_update_click(self, _event=None) -> None
-def _perform_update_install(self) -> None
-def _restart_after_update(self) -> None
+def test_discord(self, data: dict) -> dict
 ```
-Update installation flow. `_perform_update_install` runs in daemon thread, posts status back to main thread on completion or failure.
+Throttled (1s). Validates, calls `send_test_message`.
 
 ```python
-def on_close(self) -> None
+def check_for_updates(self) -> None
+def install_update(self) -> dict
 ```
-Stops watcher, destroys root window.
+Background threads. Push SSE events with progress.
+
+#### Internal Methods
+
+```python
+def _on_detection(self) -> None
+```
+Called by `QPopWatcher` on detect. Pushes `"detected"` SSE event.
+
+```python
+def _send_afk_notification(self) -> None
+```
+Called by `threading.Timer` after 28 minutes. POSTs directly via `requests.post`:
+```
+<@user_id> Watch time nearing 30 minutes. Return to PC & move character to prevent blizzard auto-logout.
+```
+Returns early silently if `webhook_url` or `user_id` is empty. Catches all network exceptions and logs them. Sets `_afk_timer = None` on completion.
+
+```python
+def _cleanup(self) -> None
+```
+Safety-net shutdown. Stops watcher and cancels AFK timer.
 
 ---
 
 ## `qpopcv/watcher.py`
 
-**Lines:** 249
+**Lines:** ~275
 
 The screen detection engine. Runs entirely in a background daemon thread.
 
 ### `THROTTLE_SECONDS = 15`
 
-Minimum seconds between successive Discord pings for the same user.
+Minimum seconds between successive Discord pings.
 
-### `MEDIA_DIR`
-
-Imported from `config.py`. Points to `qpopcv/media/` (frozen `.exe` and source contexts handled there).
-
-### Dataclass `WatcherSettings`
+### `WatcherSettings`
 
 ```python
 @dataclass
@@ -234,20 +287,18 @@ class WatcherSettings:
     user_id: str
     check_interval: float = 0.5
     confidence: float = 0.6
-    reference_image_paths: List[Path] = None  # normalised to [] in __post_init__
+    reference_image_paths: List[Path] = None
     monitor_index: int = 0
 
     @classmethod
-    def from_config(cls, config: Dict[str, object]) -> "WatcherSettings"
+    def from_config(cls, config: Dict) -> "WatcherSettings"
 ```
 
-`from_config` converts the loose `dict` from `load_config()` into a typed dataclass. Reads `reference_image_paths` as a list of strings, converts each to `Path`, filters blank entries.
-
-### Class `QPopWatcher`
+### `QPopWatcher`
 
 ```python
 class QPopWatcher:
-    def __init__(self, settings: WatcherSettings, on_detect: Optional[Callable[[], None]] = None)
+    def __init__(self, settings: WatcherSettings, on_detect: Optional[Callable] = None)
     def start(self) -> None
     def stop(self) -> None
     def is_running(self) -> bool
@@ -258,23 +309,18 @@ class QPopWatcher:
 | Attribute | Description |
 |-----------|-------------|
 | `_stop_event` | `threading.Event` — set by `stop()`, checked in `_loop()` |
-| `_seen_once` | `bool` — tracks popup visible/not-visible state transitions |
+| `_seen_once` | `bool` — tracks popup visible/not-visible transitions |
 | `_last_qpop_time` | `float` — unix timestamp of last sent notification |
-| `_region` | `(x, y, w, h)` — computed once at init |
-| `_reference_images` | `List[Tuple[str, Image.Image]]` — loaded once at init |
+| `_region` | `(x, y, w, h)` — computed once at init from monitor selection |
+| `_reference_images` | `List[Tuple[str, Image.Image]]` — 0.9×/1.0×/1.1× variants |
+| `oversized_refs` | `List[Path]` — refs that exceed the capture region (reported to UI) |
 
 #### Key Methods
 
 ```python
-@staticmethod
-def _compute_top_center_region() -> Tuple[int, int, int, int]
-```
-Returns `(screen_w//3, 0, screen_w//3, screen_h//2)` — middle third of screen, top half.
-
-```python
 def _prepare_reference_images(self) -> List[Tuple[str, Image.Image]]
 ```
-Loads each path in `reference_image_paths` at 0.9×, 1.0×, 1.1× scales (up to 15 variants total). Skips missing paths with a warning. Returns empty list if none are valid (disables detection).
+Loads each path at 0.9×, 1.0×, 1.1× scales. Skips missing or oversized variants with warnings.
 
 ```python
 def _find_queue_popup(self, screenshot) -> Optional[str]
@@ -284,74 +330,76 @@ Iterates `_reference_images`, calls `pyautogui.locate(ref, screenshot, confidenc
 ```python
 def _loop(self) -> None
 ```
-Main loop: screenshot → find popup → state machine → sleep via `_stop_event.wait(interval)`.
+Main loop: screenshot → find popup → state machine → `_stop_event.wait(interval)`.
 
 ```python
 def _handle_detected_popup(self, match_name: str) -> None
 ```
-Checks throttle. If not throttled: calls `_send_discord_message`, updates `_last_qpop_time`. Always calls `on_detect` callback.
+Checks throttle. If not throttled: POSTs Discord webhook, updates `_last_qpop_time`. Always calls `on_detect` callback.
 
 ```python
 def _send_discord_message(self, content: str) -> None
 ```
-Direct `requests.post` to `_webhook_url` with `timeout=5`. No error handling beyond outer `except Exception`.
+Direct `requests.post` with `timeout=5`.
 
 ---
 
 ## `qpopcv/discord_client.py`
 
-**Lines:** 23
+**Lines:** ~23
 
-Thin HTTP wrapper. Used only by the GUI's "Test Connection" button.
-(The watcher calls `requests.post` directly in `_send_discord_message`.)
-
-```python
-def send_discord_mention(webhook_url: str, user_id: str, message: str, timeout: float = 5.0) -> None
-```
-POSTs `{"content": "<@user_id> message"}` to the webhook URL.
+Thin HTTP wrapper. Used only by the "Test Connection" button. The watcher and AFK timer call `requests.post` directly.
 
 ```python
-def send_test_message(webhook_url: str, user_id: str, timeout: float = 5.0) -> None
+def send_discord_mention(webhook_url, user_id, message, timeout=5.0) -> None
+def send_test_message(webhook_url, user_id, timeout=5.0) -> None
 ```
-Calls `send_discord_mention` with the message `"connected ✅"`.
 
 ---
 
 ## `qpopcv/validators.py`
 
-**Lines:** 72
+**Lines:** ~72
 
-Input validation functions. Each shows a `messagebox` on failure and returns `bool`.
+Input validation. Used by `api.py`'s `_validate_discord()` and `_validate_ref_images()` (internal functions, same logic reused from here in tests).
 
 ```python
 def validate_discord_core(webhook_url: str, user_id: str) -> bool
 ```
-- Rejects empty webhook URL
-- Rejects URL that does not start with `https://discord.com/api/webhooks/`
-- Rejects empty user ID
-- Rejects user ID that is not 17–19 digits (covers old accounts and 19-digit snowflakes)
+- Rejects empty or non-`https://discord.com/api/webhooks/` URLs
+- Rejects empty or non-17–19-digit user IDs
 
 ```python
 def validate_reference_image(path_str: str) -> bool
-```
-- Rejects empty path, non-existent path, or directories (single-path legacy helper)
-
-```python
 def validate_reference_images(paths: List[str]) -> bool
 ```
-- Requires at least one non-empty path
-- Each non-empty path must exist and not be a directory; shows the specific bad path on failure
+- Requires at least one non-empty, existing, non-directory path
 
+---
+
+## `qpopcv/monitor_utils.py`
+
+Multi-monitor enumeration via `ctypes` (no extra dependencies).
+
+```python
+def get_monitors() -> List[Dict]
+```
+Returns list of `{x, y, w, h, is_primary}` dicts. Primary monitor first.
+
+```python
+def compute_top_center_region(monitor: Dict) -> Tuple[int, int, int, int]
+```
+Returns `(x + w//3, y, w//3, h//2)` — middle third, top half of the given monitor.
 
 ---
 
 ## `qpopcv/updater.py`
 
-**Lines:** 309
+**Lines:** ~309
 
 GitHub release checker and installer.
 
-### Dataclass `UpdateInfo`
+### `UpdateInfo` (dataclass)
 
 ```python
 @dataclass
@@ -364,7 +412,7 @@ class UpdateInfo:
     release_name: str = ""
 ```
 
-### Class `UpdateManager`
+### `UpdateManager`
 
 ```python
 class UpdateManager:
@@ -372,46 +420,46 @@ class UpdateManager:
                  current_version="0.0.0", app_dir=None)
 ```
 
-#### Public API
+```python
+def check_for_update(self, timeout=5.0) -> UpdateInfo
+```
+GETs GitHub releases API. Returns `UpdateInfo(available=False)` on any exception.
 
 ```python
-def check_for_update(self, timeout: float = 5.0) -> UpdateInfo
+def install_update(self, info: UpdateInfo, timeout=30.0) -> None
 ```
-GET `https://api.github.com/repos/Grymtrx/QPopCV/releases/latest`. Compares `tag_name` to `current_version`. Returns `UpdateInfo(available=False)` on any exception (silent).
+Downloads ZIP → extracts → frozen: write+launch `update.bat`; source: `_copy_tree()`.
 
-```python
-def install_update(self, info: UpdateInfo, timeout: float = 30.0) -> None
-```
-1. `tempfile.mkdtemp()` → download ZIP → extract
-2. Frozen: write + launch `update.bat` (waits for exe exit → xcopy → restart)
-3. Source: `_copy_tree()` directly
-
-#### Internal Helpers
-
-```python
-@staticmethod def _normalize_tag(tag: str) -> str
-@staticmethod def _normalize_version(version: str) -> Sequence
-def _is_newer_version(self, latest: str, current: str) -> bool
-@staticmethod def _select_download_url(data: dict) -> Optional[str]
-@staticmethod def _download_file(url: str, dest: Path, timeout: float) -> None
-@staticmethod def _find_source_root(extract_dir: Path) -> Path
-def _copy_tree(self, src: Path, dest: Path) -> None
-def _run_external_updater(self, source_root: Path, tmp_dir: Path) -> None
-```
-
-`_copy_tree` explicitly skips `config.json` and `.`-prefixed files to preserve user config during source updates.
-
-`_run_external_updater` writes a batch script to `tmp_dir/qpopcv_update.bat` and launches it with `os.startfile()`. The script: waits for exe to exit via `tasklist`, `xcopy`s files, restarts exe, cleans temp dir.
+`_copy_tree` skips `config.json` and hidden files to preserve user config.
 
 ---
 
-## `qpopcv/theme.py`
+## `qpopcv/static/index.html`
 
-> **Deprecated** — no longer imported. Left as a file artifact from the CustomTkinter era. All theming is now handled via CSS variables in `qpopcv/static/style.css`.
+Single-page UI. Four tabs, one footer.
 
-## `qpopcv/static/style.css` — Theme
+### Tab structure
 
-**Current theme:** Pearl White (light glassmorphic, v1.0.36)
+| Tab | ID | Contents |
+|-----|----|----------|
+| Discord | `tab-discord` | Webhook URL, User ID, Test + Join Discord buttons |
+| Capture | `tab-capture` | Monitor dropdown |
+| Images | `tab-images` | Reference image rows (1–5) with browse/remove |
+| AFK | `tab-afk` | `#afk-notify` checkbox + hint text |
+
+### Footer
+
+| Element | Description |
+|---------|-------------|
+| `.save-btn` | "Save Configuration" — triggers `/api/save_config` |
+| `.watch-btn` | "Watch" / "Stop" toggle — triggers `/api/start_watch` or `/api/stop_watch` |
+| `.version-row` | Version label + update status (clickable when update available) |
+
+---
+
+## `qpopcv/static/style.css`
+
+**Theme:** Pearl White (light glassmorphic, introduced v1.0.36)
 
 All colors are CSS custom properties on `:root`. To retheme, only the `:root` block and a handful of component-specific `rgba()` values need changing.
 
@@ -424,41 +472,93 @@ All colors are CSS custom properties on `:root`. To retheme, only the `:root` bl
 | `--text` | `#111827` | Primary text |
 | `--text-secondary` | `#374151` | Secondary text |
 | `--text-muted` | `#6b7280` | Labels, hints |
-| `--text-dim` | `#9ca3af` | Placeholders |
+| `--text-dim` | `#9ca3af` | Placeholders, dim icons |
 | `--green` | `#16a34a` | Watch active / success |
 | `--orange` | `#d97706` | Detected state |
-| `--red` | `#dc2626` | Errors |
-| `--discord` | `#5865f2` | Blurple accent (watch btn, tab underline, logo dot) |
+| `--red` | `#dc2626` | Errors, close hover |
+| `--discord` | `#5865f2` | Blurple accent (watch btn, tab underline, checkbox, logo dot) |
+
+---
+
+## `qpopcv/static/app.js`
+
+**Lines:** ~470
+
+Vanilla JS. Communicates with Python via `fetch('/api/...')` POSTs and `EventSource('/events')` SSE.
+
+### State
+
+```js
+const state = {
+  watching: false,     // is watcher running
+  monitors: [],        // monitor label strings
+  updateClickable: false,
+  MAX_REFS: 5,
+};
+```
+
+### Key Functions
+
+```js
+function applyInitialState(data)
+```
+Populates all form controls from `data.config` on page load. Sets monitor dropdown, inputs, checkbox states, ref image rows.
+
+```js
+function collectFormData() -> object
+```
+Gathers all form values into `{webhook_url, user_id, reference_image_paths, monitor_index, afk_notify}`. Used by both Save and Watch Start.
+
+```js
+async function doStartWatch()
+async function doStopWatch()
+```
+POST to `/api/start_watch` / `/api/stop_watch`. Update watch button state.
+
+```js
+function handlePushEvent(event)
+```
+SSE event router. Dispatches to `onDetected()`, `onUpdateStatus()`, `onUpdateProgress()`.
+
+```js
+function onDetected()
+```
+Flashes status pill to "Detected!", adds `.detected-overlay` flash animation.
+
+```js
+function showToast(type, message, duration)
+```
+Creates animated toast notification (success / error / warning / info).
+
+```js
+function measureAndResize()
+```
+POSTs `document.documentElement.scrollHeight` to `/api/resize` so the Qt window fits content exactly. Called after tab switches and after init.
 
 ---
 
 ## Data Flow Summary
 
 ```
-User input (GUI StringVars)
+User clicks Watch
     │
-    ▼ on_save() / _start_watch()
-validate_discord_core() + validate_reference_images()
+    ▼ collectFormData() → POST /api/start_watch
+    │   {webhook_url, user_id, reference_image_paths, monitor_index, afk_notify}
     │
-    ▼
-_update_config_from_ui() → self.config dict
+    ▼ Api.start_watch(data)
+    │   validate → save to config.local.json → start QPopWatcher → arm AFK timer
     │
-    ├──► save_config() → config.json
+    ▼ QPopWatcher._loop() (daemon thread)
+    │   pyautogui.screenshot(region)
+    │   pyautogui.locate(reference, screenshot, confidence)
+    │   → match found → requests.post(webhook, "<@user_id> Your Queue has popped!")
+    │   → Api._on_detection() → push_event("detected")
     │
-    └──► WatcherSettings.from_config(self.config)
-              │
-              ▼
-         QPopWatcher(settings, on_detect=_flash_detected_status)
-              │
-              ▼ (daemon thread: _loop)
-         pyautogui.screenshot(region)
-              │
-              ▼
-         pyautogui.locate(reference, screenshot, confidence)
-              │  match found
-              ▼
-         requests.post(webhook_url, {"content": "<@user_id> Your Queue has popped!"})
-              │
-              ▼
-         on_detect() → root.after → status_label flash
+    ▼ SSE → EventSource → handlePushEvent({type:"detected"})
+    │
+    ▼ onDetected() → status pill flash + overlay animation
+
+28 minutes later (if afk_notify=True):
+    ▼ threading.Timer fires _send_afk_notification()
+        requests.post(webhook, "<@user_id> Watch time nearing 30 minutes...")
 ```

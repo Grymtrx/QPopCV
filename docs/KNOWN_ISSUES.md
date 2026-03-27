@@ -109,6 +109,11 @@
 #### ~~GAP-04 — No Rate Limiting on Test Discord Button~~ ✅ Fixed in 1.0.10
 - `TEST_THROTTLE_SECONDS = 1` introduced in `app_ui.py`; `_check_test_throttle` now uses it instead of the watcher's 15s `THROTTLE_SECONDS`.
 
+#### GAP-08 — AFK Timer `_afk_timer` Assignment Has CPython-Only Thread Safety
+- **File:** `qpopcv/api.py` — `_send_afk_notification` and `stop_watch`
+- **Detail:** `self._afk_timer = None` is written from both the timer thread (`_send_afk_notification`) and the HTTP server thread (`stop_watch`). Under CPython, the GIL makes single reference assignments atomic, making the double-`None` race benign. Under a free-threaded Python build (3.13+ `--disable-gil`) this would need an explicit lock.
+- **Fix (if ever needed):** Wrap `_afk_timer` access in a `threading.Lock`.
+
 #### GAP-05 — `confidence` Not Exposed in UI
 - **Detail:** The `confidence` config key (default `0.6`) controls template match sensitivity but has no UI control. Users with unusual screen scaling or DPI may need to adjust it.
 - **Fix:** Add a slider or numeric entry for confidence in the settings area.
@@ -141,4 +146,5 @@ Priority order for a future Claude session:
 14. ~~**GAP-04** — Test button reused watcher throttle~~ ✅ Fixed in 1.0.10
 13. ~~**GAP-03** — Multi-monitor region support~~ ✅ Fixed in 1.0.12
 14. ~~**UI/UX Redesign**~~ ✅ Done in 1.0.22
-15. **GAP-05/06** — Expose confidence + interval in UI
+15. ~~**AFK Tab**~~ ✅ Done in 1.0.38 — 28-min Discord ping with @mention; `threading.Timer` armed on Watch start, cancelled on Stop
+16. **GAP-05/06** — Expose confidence + interval in UI
