@@ -19,7 +19,9 @@
       "Bash(C:/Python314/python.exe -m pip install pytest -q)",
       "Bash(python:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(grep -i \"\\\\.wav$\")",
+      "Skill(update-config)"
     ]
   }
 }
