@@ -272,7 +272,6 @@ discordKillBtn.addEventListener('click', async () => {
       return;
     }
     discordWarn.classList.add('hidden');
-    await doStartWatch(true);
   } catch (e) {
     showToast('error', 'Failed to kill Discord.');
     console.error(e);
