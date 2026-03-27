@@ -189,7 +189,7 @@ QPopCV-vX.Y.Z.zip
     ├── config.json         ← shared defaults (from qpopcv/config.json)
     ├── media\
     │   └── icon\
-    │       ├── icon.ico
+    │       ├── icon_v2.ico
     │       └── QPopCV v2 logo.png
     ├── fonts\
     └── static\

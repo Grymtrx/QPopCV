@@ -21,7 +21,11 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(grep -i \"\\\\.wav$\")",
-      "Skill(update-config)"
+      "Skill(update-config)",
+      "Bash(git checkout:*)",
+      "Bash(pytest:*)",
+      "Bash(jq:*)",
+      "Bash(bash ~/.claude/statusline-command.sh)"
     ]
   }
 }
