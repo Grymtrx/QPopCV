@@ -29,6 +29,11 @@ const state = {
   monitors: [],
   updateClickable: false,
   MAX_REFS: 5,
+  metricsData: { all_time: null, today: null },
+  metricsPeriod: 'all',
+  watchTimerInterval: null,
+  watchTimerSeconds: 0,
+  watchTimerPaused: false,
 };
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
@@ -51,6 +56,11 @@ const afkNotifyCheckbox = $('afk-notify');
 const discordWarn        = $('discord-warn');
 const discordKillBtn     = $('discord-kill-btn');
 const discordContinueBtn = $('discord-continue-btn');
+const watchTimer        = $('watch-timer');
+const watchTimerValue   = $('watch-timer-value');
+const watchTimerPaused  = $('watch-timer-paused');
+const afkBanner         = $('afk-banner');
+const afkResetBtn       = $('afk-reset-btn');
 
 // ── Window controls ───────────────────────────────────────────────────────────
 
@@ -108,6 +118,18 @@ function handlePushEvent(event) {
     case 'update_progress':
       onUpdateProgress(event.state, event.error);
       break;
+    case 'afk_warning':
+      onAfkWarning();
+      break;
+    case 'afk_logout':
+      onAfkLogout();
+      break;
+    case 'afk_reset':
+      onAfkReset();
+      break;
+    case 'metrics_update':
+      onMetricsUpdate(event);
+      break;
     case 'heartbeat':
       break;
   }
@@ -157,6 +179,11 @@ function applyInitialState(data) {
 
   // Fit window to content after everything is laid out
   measureAndResize();
+
+  if (data.metrics) {
+    state.metricsData = data.metrics;
+    renderMetrics();
+  }
 }
 
 // ── Height adaptation ──────────────────────────────────────────────────────────
@@ -190,12 +217,18 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 function setStatus(stateVal) {
   statusPill.dataset.state = stateVal;
-  statusText.textContent = { idle: 'Stopped', watching: 'Watching', detected: 'Detected!' }[stateVal] || stateVal;
+  statusText.textContent = { idle: 'Stopped', watching: 'Watching', detected: 'Detected!', afk: 'AFK Warning' }[stateVal] || stateVal;
 }
 
 // ── Detection callback ─────────────────────────────────────────────────────────
 
 function onDetected() {
+  state.watching = false;
+  stopWatchTimer();
+  afkBanner.classList.add('hidden');
+  watchBtn.classList.remove('is-watching');
+  watchBtnIcon.textContent = '▶';
+  watchBtnText.textContent = 'Watch';
   const prev = statusPill.dataset.state;
   setStatus('detected');
 
@@ -208,6 +241,135 @@ function onDetected() {
     if (statusPill.dataset.state === 'detected') setStatus(prev || 'watching');
   }, 1600);
 }
+
+// ── Watch timer ────────────────────────────────────────────────────────────────
+
+function formatHMS(totalSeconds) {
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  return String(h).padStart(2, '0') + ':' +
+         String(m).padStart(2, '0') + ':' +
+         String(s).padStart(2, '0');
+}
+
+function startWatchTimer() {
+  state.watchTimerSeconds = 0;
+  state.watchTimerPaused = false;
+  watchTimerValue.textContent = '00:00:00';
+  watchTimer.classList.remove('hidden', 'is-paused');
+  watchTimerPaused.classList.add('hidden');
+
+  state.watchTimerInterval = setInterval(() => {
+    if (!state.watchTimerPaused) {
+      state.watchTimerSeconds++;
+      watchTimerValue.textContent = formatHMS(state.watchTimerSeconds);
+    }
+  }, 1000);
+  measureAndResize();
+}
+
+function stopWatchTimer() {
+  if (state.watchTimerInterval) {
+    clearInterval(state.watchTimerInterval);
+    state.watchTimerInterval = null;
+  }
+  watchTimer.classList.add('hidden');
+  watchTimer.classList.remove('is-paused');
+  watchTimerPaused.classList.add('hidden');
+  state.watchTimerPaused = false;
+  measureAndResize();
+}
+
+function pauseWatchTimer() {
+  state.watchTimerPaused = true;
+  watchTimer.classList.add('is-paused');
+  watchTimerPaused.classList.remove('hidden');
+}
+
+function resumeWatchTimer() {
+  state.watchTimerPaused = false;
+  watchTimer.classList.remove('is-paused');
+  watchTimerPaused.classList.add('hidden');
+}
+
+// ── AFK banner ─────────────────────────────────────────────────────────────────
+
+function onAfkWarning() {
+  afkBanner.classList.remove('hidden');
+  pauseWatchTimer();
+  statusPill.dataset.state = 'afk';
+  statusText.textContent = 'AFK Warning';
+  measureAndResize();
+}
+
+function onAfkLogout() {
+  // Banner stays visible, flashing continues
+  showToast('warning', 'Your character has most likely auto-logged out.', 8000);
+}
+
+function onAfkReset() {
+  afkBanner.classList.add('hidden');
+  resumeWatchTimer();
+  setStatus('watching');
+  measureAndResize();
+}
+
+afkResetBtn.addEventListener('click', async () => {
+  afkResetBtn.disabled = true;
+  try {
+    const result = await apiPost('/api/reset_afk');
+    if (!result.ok) {
+      showToast('error', result.error || 'Reset failed.');
+    }
+  } catch (e) {
+    showToast('error', 'Reset request failed.');
+  } finally {
+    afkResetBtn.disabled = false;
+  }
+});
+
+// ── Metrics tab ────────────────────────────────────────────────────────────────
+
+function formatDuration(totalSeconds) {
+  if (totalSeconds <= 0) return '0m';
+  const d = Math.floor(totalSeconds / 86400);
+  const h = Math.floor((totalSeconds % 86400) / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+function renderMetrics() {
+  const data = state.metricsPeriod === 'all'
+    ? state.metricsData.all_time
+    : state.metricsData.today;
+  if (!data) return;
+
+  $('metric-total-time-val').textContent = formatDuration(data.total_time_saved);
+  $('metric-effective-time-val').textContent = formatDuration(data.effective_time_saved);
+  $('metric-pops-val').textContent = String(data.pops_detected);
+  $('metric-avg-wait-val').textContent = formatDuration(data.avg_queue_wait);
+  $('metric-longest-val').textContent = formatDuration(data.longest_session);
+}
+
+function onMetricsUpdate(event) {
+  state.metricsData.all_time = event.all_time || state.metricsData.all_time;
+  state.metricsData.today = event.today || state.metricsData.today;
+  renderMetrics();
+}
+
+document.querySelectorAll('.metrics-toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.metrics-toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.metricsPeriod = btn.dataset.period;
+    renderMetrics();
+  });
+});
 
 // ── Update callbacks ───────────────────────────────────────────────────────────
 
@@ -310,6 +472,7 @@ async function doStartWatch(skipDiscordCheck = false) {
       showToast('warning', result.warning, 7000);
     }
     state.watching = true;
+    startWatchTimer();
     setStatus('watching');
     watchBtn.classList.add('is-watching');
     watchBtnIcon.textContent = '■';
@@ -327,6 +490,8 @@ async function doStopWatch() {
   try {
     await apiPost('/api/stop_watch');
     state.watching = false;
+    stopWatchTimer();
+    afkBanner.classList.add('hidden');
     setStatus('idle');
     watchBtn.classList.remove('is-watching');
     watchBtnIcon.textContent = '▶';
