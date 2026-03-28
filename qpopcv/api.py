@@ -15,6 +15,7 @@ import requests
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 from datetime import datetime, date
+from .messages import AFK_WARNING, AFK_LOGOUT
 from .metrics import MetricsStore
 
 from .config import APP_DIR, APP_VERSION, DISCORD_SERVER_URL, save_config
@@ -308,10 +309,7 @@ class Api:
         webhook_url = str(self.config.get("webhook_url", "")).strip()
         user_id = str(self.config.get("user_id", "")).strip()
         if webhook_url and user_id:
-            content = (
-                f"<@{user_id}> :afkzzz: Move character to prevent AFK logout. "
-                "Watch time nearing 30 minutes."
-            )
+            content = f"<@{user_id}> {AFK_WARNING}"
             try:
                 requests.post(webhook_url, json={"content": content}, timeout=5)
             except Exception as exc:
@@ -328,10 +326,7 @@ class Api:
         webhook_url = str(self.config.get("webhook_url", "")).strip()
         user_id = str(self.config.get("user_id", "")).strip()
         if webhook_url and user_id:
-            content = (
-                f"<@{user_id}> :logoutalert: Your character has most likely auto-logged out. "
-                "Return to PC."
-            )
+            content = f"<@{user_id}> {AFK_LOGOUT}"
             try:
                 requests.post(webhook_url, json={"content": content}, timeout=5)
             except Exception as exc:

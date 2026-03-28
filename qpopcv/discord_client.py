@@ -1,6 +1,7 @@
 # Discord webhook wrapper.
 # Sends Discord webhook messages with user mentions.
 import requests
+from .messages import CONNECTED
 
 
 def send_discord_mention(
@@ -9,7 +10,7 @@ def send_discord_mention(
     message: str,
     timeout: float = 5.0,
 ) -> None:
-    
+
     webhook_url = webhook_url.strip()
     user_id = user_id.strip()
 
@@ -20,4 +21,4 @@ def send_discord_mention(
 
 
 def send_test_message(webhook_url: str, user_id: str, timeout: float = 5.0) -> None:
-    send_discord_mention(webhook_url, user_id, "is connected :verify:", timeout=timeout)
+    send_discord_mention(webhook_url, user_id, CONNECTED, timeout=timeout)

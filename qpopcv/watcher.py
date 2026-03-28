@@ -11,6 +11,7 @@ import requests
 from PIL import Image
 
 from qpopcv.config import MEDIA_DIR
+from qpopcv.messages import QUEUE_POP
 from qpopcv.monitor_utils import get_monitors, compute_top_center_region
 
 THROTTLE_SECONDS = 15
@@ -179,7 +180,7 @@ class QPopWatcher:
         else:
             try:
                 send_start = time.time()
-                self._send_discord_message(f"{self._mention} :queuepopblink: Your Queue has popped!")
+                self._send_discord_message(f"{self._mention} {QUEUE_POP}")
                 send_end = time.time()
 
                 self._last_qpop_time = now
