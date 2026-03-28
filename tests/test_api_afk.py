@@ -3,6 +3,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 
 from qpopcv.api import Api
+from qpopcv.messages import AFK_WARN_DELAY, AFK_WARNING
 
 VALID_WEBHOOK = "https://discord.com/api/webhooks/123456789012345678/token"
 VALID_USER_ID = "123456789012345678"
@@ -39,7 +40,7 @@ class TestSendAfkWarning:
         _, kwargs = mock_post.call_args
         content = kwargs["json"]["content"]
         assert f"<@{VALID_USER_ID}>" in content
-        assert "Move now" in content
+        assert AFK_WARNING in content
 
     @patch("qpopcv.api.requests.post")
     def test_no_post_when_webhook_missing(self, mock_post):
@@ -82,7 +83,7 @@ class TestAfkTimer:
         mock_instance = MagicMock()
         MockTimer.return_value = mock_instance
         self._start(api, True, MockWatcher)
-        MockTimer.assert_called_once_with(28 * 60, api._send_afk_warning)
+        MockTimer.assert_called_once_with(AFK_WARN_DELAY, api._send_afk_warning)
         mock_instance.start.assert_called_once()
         assert mock_instance.daemon is True
 

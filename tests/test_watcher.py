@@ -12,6 +12,7 @@ from PIL import Image
 
 from qpopcv.watcher import WatcherSettings, QPopWatcher, THROTTLE_SECONDS
 from qpopcv.monitor_utils import compute_top_center_region
+from qpopcv.messages import QUEUE_POP
 
 
 # ===========================================================================
@@ -277,7 +278,7 @@ class TestHandleDetectedPopup:
         mock_send.assert_called_once()
         content = mock_send.call_args[0][0]
         assert VALID_USER_ID in content
-        assert "pop" in content.lower()
+        assert QUEUE_POP in content
 
     def test_does_not_send_when_throttled(self):
         w = self._make_watcher()

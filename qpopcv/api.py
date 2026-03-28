@@ -15,7 +15,7 @@ import requests
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 from datetime import datetime, date
-from .messages import AFK_WARNING, AFK_LOGOUT
+from .messages import AFK_WARN_DELAY, AFK_LOGOUT_DELAY, AFK_WARNING, AFK_LOGOUT
 from .metrics import MetricsStore
 
 from .config import APP_DIR, APP_VERSION, DISCORD_SERVER_URL, save_config
@@ -178,7 +178,7 @@ class Api:
             self._afk_escalation_timer = None
 
         if afk_notify:
-            self._afk_timer = threading.Timer(28 * 60, self._send_afk_warning)
+            self._afk_timer = threading.Timer(AFK_WARN_DELAY, self._send_afk_warning)
             self._afk_timer.daemon = True
             self._afk_timer.start()
 
@@ -317,7 +317,7 @@ class Api:
 
         self._push("afk_warning", None)
 
-        self._afk_escalation_timer = threading.Timer(2 * 60, self._send_afk_logout)
+        self._afk_escalation_timer = threading.Timer(AFK_LOGOUT_DELAY, self._send_afk_logout)
         self._afk_escalation_timer.daemon = True
         self._afk_escalation_timer.start()
 
@@ -355,7 +355,7 @@ class Api:
         # Restart 28-min AFK timer
         if self._afk_timer:
             self._afk_timer.cancel()
-        self._afk_timer = threading.Timer(28 * 60, self._send_afk_warning)
+        self._afk_timer = threading.Timer(AFK_WARN_DELAY, self._send_afk_warning)
         self._afk_timer.daemon = True
         self._afk_timer.start()
 

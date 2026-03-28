@@ -4,6 +4,7 @@ from unittest.mock import patch, MagicMock, call
 from datetime import datetime
 
 from qpopcv.api import Api
+from qpopcv.messages import AFK_WARNING, AFK_LOGOUT, QUEUE_POP
 
 VALID_WEBHOOK = "https://discord.com/api/webhooks/123456789012345678/token"
 VALID_USER_ID = "123456789012345678"
@@ -44,7 +45,7 @@ class TestAfkEscalation:
         api._send_afk_warning()
         mock_post.assert_called_once()
         content = mock_post.call_args[1]["json"]["content"]
-        assert "Move now" in content
+        assert AFK_WARNING in content
         assert f"<@{VALID_USER_ID}>" in content
 
     @patch("qpopcv.api.requests.post")
@@ -59,7 +60,7 @@ class TestAfkEscalation:
         api._send_afk_logout()
         mock_post.assert_called_once()
         content = mock_post.call_args[1]["json"]["content"]
-        assert "AFK'd out" in content
+        assert AFK_LOGOUT in content
 
     @patch("qpopcv.api.requests.post")
     def test_send_afk_logout_pushes_sse_event(self, mock_post):
