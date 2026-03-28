@@ -24,7 +24,7 @@ USER_CONFIG_PATH = APP_DIR / "config.local.json"
 DISCORD_SERVER_URL = "https://discord.gg/KpupS6N3Zj"  # QPopCV Discord Server (PermaLink)
 
 DEFAULT_CONFIG: Dict[str, object] = {
-    "webhook_url": "https://discord.com/api/webhooks/1435435868767912096/Ken8UDwQGDKEZ-MJAo6FNQR9wNxOahRgg5Pci_Y2X-smeSKUeE4dfhYuwfkCKu1hmzVA",
+    "webhook_url": "",
     "user_id": "",
     "check_interval": 0.15,
     "confidence": 0.6,
