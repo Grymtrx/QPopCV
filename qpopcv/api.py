@@ -93,7 +93,9 @@ class Api:
         self._afk_timer: Optional[threading.Timer] = None
         self._afk_escalation_timer: Optional[threading.Timer] = None
         self._afk_warned: bool = False
+        self._session_lock = threading.Lock()
         self._session_start_time: Optional[datetime] = None
+        self._session_start_mono: Optional[float] = None
         self._session_paused_at: Optional[float] = None
         self._session_paused_total: float = 0.0
         self._metrics = MetricsStore(APP_DIR / "metrics.json")
@@ -160,9 +162,11 @@ class Api:
         self._watcher = QPopWatcher(settings, on_detect=self._on_detection)
         self._watcher.start()
 
-        self._session_start_time = datetime.now()
-        self._session_paused_at = None
-        self._session_paused_total = 0.0
+        with self._session_lock:
+            self._session_start_time = datetime.now()
+            self._session_start_mono = time.monotonic()
+            self._session_paused_at = None
+            self._session_paused_total = 0.0
         self._afk_warned = False
 
         if self._afk_timer:
@@ -298,7 +302,8 @@ class Api:
     def _send_afk_warning(self) -> None:
         """Called by threading.Timer after 28 minutes of watching."""
         self._afk_warned = True
-        self._session_paused_at = time.monotonic()
+        with self._session_lock:
+            self._session_paused_at = time.monotonic()
 
         webhook_url = str(self.config.get("webhook_url", "")).strip()
         user_id = str(self.config.get("user_id", "")).strip()
@@ -345,9 +350,10 @@ class Api:
             self._afk_escalation_timer = None
 
         # Resume session timer
-        if self._session_paused_at is not None:
-            self._session_paused_total += time.monotonic() - self._session_paused_at
-            self._session_paused_at = None
+        with self._session_lock:
+            if self._session_paused_at is not None:
+                self._session_paused_total += time.monotonic() - self._session_paused_at
+                self._session_paused_at = None
 
         self._afk_warned = False
 
@@ -363,28 +369,31 @@ class Api:
 
     def _end_session(self, detected: bool) -> Optional[dict]:
         """Record session to metrics store. Returns session dict or None."""
-        if self._session_start_time is None:
-            return None
+        with self._session_lock:
+            if self._session_start_time is None:
+                return None
 
-        now = datetime.now()
-        elapsed_wall = (now - self._session_start_time).total_seconds()
+            now = datetime.now()
+            elapsed_mono = time.monotonic() - self._session_start_mono
 
-        # If currently paused, add the current pause duration
-        if self._session_paused_at is not None:
-            self._session_paused_total += time.monotonic() - self._session_paused_at
-            self._session_paused_at = None
+            # If currently paused, add the current pause duration
+            if self._session_paused_at is not None:
+                self._session_paused_total += time.monotonic() - self._session_paused_at
+                self._session_paused_at = None
 
-        duration = max(0, int(elapsed_wall - self._session_paused_total))
+            duration = max(0, int(elapsed_mono - self._session_paused_total))
+
+            start_time = self._session_start_time
+            self._session_start_time = None
+            self._session_start_mono = None
+            self._session_paused_total = 0.0
 
         session = self._metrics.record_session(
-            start=self._session_start_time,
+            start=start_time,
             end=now,
             duration_seconds=duration,
             detected=detected,
         )
-
-        self._session_start_time = None
-        self._session_paused_total = 0.0
 
         # Push updated metrics to JS
         self._push("metrics_update", {

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from datetime import date, datetime
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -30,10 +31,12 @@ class MetricsStore:
             self.sessions = []
 
     def _save(self) -> None:
-        self._path.write_text(
+        tmp = self._path.with_suffix(".tmp")
+        tmp.write_text(
             json.dumps({"sessions": self.sessions}, indent=2),
             encoding="utf-8",
         )
+        os.replace(str(tmp), str(self._path))
 
     def record_session(
         self,

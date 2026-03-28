@@ -238,7 +238,7 @@ function onDetected() {
   overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
 
   setTimeout(() => {
-    if (statusPill.dataset.state === 'detected') setStatus(prev || 'watching');
+    if (statusPill.dataset.state === 'detected') setStatus('idle');
   }, 1600);
 }
 
