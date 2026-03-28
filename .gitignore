@@ -37,6 +37,7 @@ dist/
 
 # User-specific config (personal webhook, user ID, ref images — never committed)
 config.local.json
+metrics.json
 
 # ------------------------------
 # OS / editor cruft
