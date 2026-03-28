@@ -14,6 +14,8 @@ import psutil
 import requests
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
+from datetime import datetime, date
+from .metrics import MetricsStore
 
 from .config import APP_DIR, APP_VERSION, DISCORD_SERVER_URL, save_config
 from .discord_client import send_test_message
@@ -89,6 +91,12 @@ class Api:
         self._update_info: Optional[UpdateInfo] = None
         self._last_test_time: float = 0.0
         self._afk_timer: Optional[threading.Timer] = None
+        self._afk_escalation_timer: Optional[threading.Timer] = None
+        self._afk_warned: bool = False
+        self._session_start_time: Optional[datetime] = None
+        self._session_paused_at: Optional[float] = None
+        self._session_paused_total: float = 0.0
+        self._metrics = MetricsStore(APP_DIR / "metrics.json")
         self.update_manager = UpdateManager(current_version=APP_VERSION, app_dir=APP_DIR)
 
     # ── Initial state ──────────────────────────────────────────────────────────
@@ -115,6 +123,10 @@ class Api:
                 "afk_notify": bool(self.config.get("afk_notify", False)),
             },
             "monitors": labels,
+            "metrics": {
+                "all_time": self._metrics.compute(),
+                "today": self._metrics.compute(day=date.today()),
+            },
         }
 
     # ── Watch control ──────────────────────────────────────────────────────────
@@ -148,12 +160,20 @@ class Api:
         self._watcher = QPopWatcher(settings, on_detect=self._on_detection)
         self._watcher.start()
 
+        self._session_start_time = datetime.now()
+        self._session_paused_at = None
+        self._session_paused_total = 0.0
+        self._afk_warned = False
+
         if self._afk_timer:
             self._afk_timer.cancel()
             self._afk_timer = None
+        if self._afk_escalation_timer:
+            self._afk_escalation_timer.cancel()
+            self._afk_escalation_timer = None
 
         if afk_notify:
-            self._afk_timer = threading.Timer(28 * 60, self._send_afk_notification)
+            self._afk_timer = threading.Timer(28 * 60, self._send_afk_warning)
             self._afk_timer.daemon = True
             self._afk_timer.start()
 
@@ -168,14 +188,20 @@ class Api:
 
         return {"ok": True, "warning": warning}
 
-    def stop_watch(self) -> dict:
+    def stop_watch(self, detected: bool = False) -> dict:
         if self._watcher:
             self._watcher.stop()
             self._watcher = None
         if self._afk_timer:
             self._afk_timer.cancel()
             self._afk_timer = None
-        return {"ok": True}
+        if self._afk_escalation_timer:
+            self._afk_escalation_timer.cancel()
+            self._afk_escalation_timer = None
+        self._afk_warned = False
+
+        session = self._end_session(detected)
+        return {"ok": True, "session": session}
 
     def kill_discord(self) -> dict:
         """Terminate all running Discord.exe processes."""
@@ -266,23 +292,107 @@ class Api:
 
     def _on_detection(self) -> None:
         """Called from QPopWatcher daemon thread on queue-pop detection."""
+        self.stop_watch(detected=True)
         self._push("detected", None)
 
-    def _send_afk_notification(self) -> None:
+    def _send_afk_warning(self) -> None:
         """Called by threading.Timer after 28 minutes of watching."""
+        self._afk_warned = True
+        self._session_paused_at = time.monotonic()
+
         webhook_url = str(self.config.get("webhook_url", "")).strip()
         user_id = str(self.config.get("user_id", "")).strip()
-        if not webhook_url or not user_id:
-            return
-        content = (
-            f"<@{user_id}> Watch time nearing 30 minutes. "
-            "Return to PC & move character to prevent blizzard auto-logout."
+        if webhook_url and user_id:
+            content = (
+                f"<@{user_id}> Move character to prevent AFK logout. "
+                "Watch time nearing 30 minutes."
+            )
+            try:
+                requests.post(webhook_url, json={"content": content}, timeout=5)
+            except Exception as exc:
+                logger.error("AFK warning notification failed: %s", exc)
+
+        self._push("afk_warning", None)
+
+        self._afk_escalation_timer = threading.Timer(2 * 60, self._send_afk_logout)
+        self._afk_escalation_timer.daemon = True
+        self._afk_escalation_timer.start()
+
+    def _send_afk_logout(self) -> None:
+        """Called 2 minutes after AFK warning if user hasn't reset."""
+        webhook_url = str(self.config.get("webhook_url", "")).strip()
+        user_id = str(self.config.get("user_id", "")).strip()
+        if webhook_url and user_id:
+            content = (
+                f"<@{user_id}> Your character has most likely auto-logged out. "
+                "Return to PC."
+            )
+            try:
+                requests.post(webhook_url, json={"content": content}, timeout=5)
+            except Exception as exc:
+                logger.error("AFK logout notification failed: %s", exc)
+
+        self._afk_escalation_timer = None
+        self._push("afk_logout", None)
+
+    def reset_afk(self) -> dict:
+        """Reset the AFK timer — called when user clicks Reset AFK Timer button."""
+        if not self._afk_warned:
+            return {"ok": False, "error": "No AFK warning active."}
+
+        if self._afk_escalation_timer:
+            self._afk_escalation_timer.cancel()
+            self._afk_escalation_timer = None
+
+        # Resume session timer
+        if self._session_paused_at is not None:
+            self._session_paused_total += time.monotonic() - self._session_paused_at
+            self._session_paused_at = None
+
+        self._afk_warned = False
+
+        # Restart 28-min AFK timer
+        if self._afk_timer:
+            self._afk_timer.cancel()
+        self._afk_timer = threading.Timer(28 * 60, self._send_afk_warning)
+        self._afk_timer.daemon = True
+        self._afk_timer.start()
+
+        self._push("afk_reset", None)
+        return {"ok": True}
+
+    def _end_session(self, detected: bool) -> Optional[dict]:
+        """Record session to metrics store. Returns session dict or None."""
+        if self._session_start_time is None:
+            return None
+
+        now = datetime.now()
+        elapsed_wall = (now - self._session_start_time).total_seconds()
+
+        # If currently paused, add the current pause duration
+        if self._session_paused_at is not None:
+            self._session_paused_total += time.monotonic() - self._session_paused_at
+            self._session_paused_at = None
+
+        duration = max(0, int(elapsed_wall - self._session_paused_total))
+
+        session = self._metrics.record_session(
+            start=self._session_start_time,
+            end=now,
+            duration_seconds=duration,
+            detected=detected,
         )
-        try:
-            requests.post(webhook_url, json={"content": content}, timeout=5)
-        except Exception as exc:
-            logger.error("AFK notification failed: %s", exc)
-        self._afk_timer = None  # CPython GIL makes this write atomic; double-None with stop_watch is benign.
+
+        self._session_start_time = None
+        self._session_paused_total = 0.0
+
+        # Push updated metrics to JS
+        self._push("metrics_update", {
+            "all_time": self._metrics.compute(),
+            "today": self._metrics.compute(day=date.today()),
+        })
+
+        return session
 
     def _cleanup(self) -> None:
         if self._watcher:
@@ -291,3 +401,6 @@ class Api:
         if self._afk_timer:
             self._afk_timer.cancel()
             self._afk_timer = None
+        if self._afk_escalation_timer:
+            self._afk_escalation_timer.cancel()
+            self._afk_escalation_timer = None

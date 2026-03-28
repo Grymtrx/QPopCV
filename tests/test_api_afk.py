@@ -26,37 +26,37 @@ def make_api(config=None):
     return Api(config, push_event=lambda t, d: None)
 
 
-# ── _send_afk_notification ─────────────────────────────────────────────────
+# ── _send_afk_warning ─────────────────────────────────────────────────────
 
-class TestSendAfkNotification:
+class TestSendAfkWarning:
 
     @patch("qpopcv.api.requests.post")
     def test_sends_discord_post_with_mention(self, mock_post):
         api = make_api(make_config())
-        api._send_afk_notification()
+        api._send_afk_warning()
 
         mock_post.assert_called_once()
         _, kwargs = mock_post.call_args
         content = kwargs["json"]["content"]
         assert f"<@{VALID_USER_ID}>" in content
-        assert "30 minutes" in content
+        assert "Move character to prevent AFK logout" in content
 
     @patch("qpopcv.api.requests.post")
     def test_no_post_when_webhook_missing(self, mock_post):
         api = make_api(make_config(webhook_url=""))
-        api._send_afk_notification()
+        api._send_afk_warning()
         mock_post.assert_not_called()
 
     @patch("qpopcv.api.requests.post")
     def test_no_post_when_user_id_missing(self, mock_post):
         api = make_api(make_config(user_id=""))
-        api._send_afk_notification()
+        api._send_afk_warning()
         mock_post.assert_not_called()
 
     @patch("qpopcv.api.requests.post", side_effect=Exception("network error"))
     def test_network_error_does_not_raise(self, mock_post):
         api = make_api()
-        api._send_afk_notification()  # must not raise
+        api._send_afk_warning()  # must not raise
 
 
 # ── start_watch / stop_watch timer ────────────────────────────────────────
@@ -82,7 +82,7 @@ class TestAfkTimer:
         mock_instance = MagicMock()
         MockTimer.return_value = mock_instance
         self._start(api, True, MockWatcher)
-        MockTimer.assert_called_once_with(28 * 60, api._send_afk_notification)
+        MockTimer.assert_called_once_with(28 * 60, api._send_afk_warning)
         mock_instance.start.assert_called_once()
         assert mock_instance.daemon is True
 
