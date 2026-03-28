@@ -140,6 +140,8 @@ class _Handler(BaseHTTPRequestHandler):
                 result = api.save_config_data(body)
             elif path == "/api/kill_discord":
                 result = api.kill_discord()
+            elif path == "/api/reset_afk":
+                result = api.reset_afk()
             elif path == "/api/window_control":
                 action = body.get("action", "")
                 if action == "minimize":
@@ -201,6 +203,7 @@ class _Bridge(QObject):
     request_resize   = pyqtSignal(int)   # content height in px
     request_minimize = pyqtSignal()
     request_drag     = pyqtSignal()
+    request_flash    = pyqtSignal()
 
 
 # ── Main application class ─────────────────────────────────────────────────────
@@ -248,6 +251,8 @@ class QPopApp:
         if data:
             payload.update(data)
         self._event_queue.put(payload)
+        if event_type == "afk_warning":
+            self._bridge.request_flash.emit()
 
     # ── File dialog (main-thread bridge) ───────────────────────────────────────
 
@@ -302,6 +307,13 @@ class QPopApp:
             if handle:
                 handle.startSystemMove()
 
+    def _on_flash_requested(self) -> None:
+        """Runs on Qt main thread. Flashes the taskbar icon."""
+        if self._window:
+            app = QApplication.instance()
+            if app:
+                app.alert(self._window, 0)  # 0 = flash until focused
+
     # ── Run ────────────────────────────────────────────────────────────────────
 
     def run(self) -> None:
@@ -330,6 +342,9 @@ class QPopApp:
         )
         self._bridge.request_drag.connect(
             self._on_drag_requested, Qt.ConnectionType.QueuedConnection
+        )
+        self._bridge.request_flash.connect(
+            self._on_flash_requested, Qt.ConnectionType.QueuedConnection
         )
 
         # Web view
