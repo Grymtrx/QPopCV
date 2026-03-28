@@ -179,7 +179,7 @@ class QPopWatcher:
         else:
             try:
                 send_start = time.time()
-                self._send_discord_message(f"{self._mention} Your Queue has popped!")
+                self._send_discord_message(f":queuepopblink: {self._mention} Your Queue has popped!")
                 send_end = time.time()
 
                 self._last_qpop_time = now

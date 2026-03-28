@@ -304,8 +304,14 @@ function onAfkWarning() {
 }
 
 function onAfkLogout() {
-  // Banner stays visible, flashing continues
-  showToast('warning', 'Your character has most likely auto-logged out.', 8000);
+  state.watching = false;
+  stopWatchTimer();
+  afkBanner.classList.add('hidden');
+  watchBtn.classList.remove('is-watching');
+  watchBtnIcon.textContent = '▶';
+  watchBtnText.textContent = 'Watch';
+  setStatus('idle');
+  measureAndResize();
 }
 
 function onAfkReset() {

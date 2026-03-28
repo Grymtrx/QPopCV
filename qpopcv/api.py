@@ -309,7 +309,7 @@ class Api:
         user_id = str(self.config.get("user_id", "")).strip()
         if webhook_url and user_id:
             content = (
-                f"<@{user_id}> Move character to prevent AFK logout. "
+                f":afkzzz: <@{user_id}> Move character to prevent AFK logout. "
                 "Watch time nearing 30 minutes."
             )
             try:
@@ -329,7 +329,7 @@ class Api:
         user_id = str(self.config.get("user_id", "")).strip()
         if webhook_url and user_id:
             content = (
-                f"<@{user_id}> Your character has most likely auto-logged out. "
+                f":logoutalert: <@{user_id}> Your character has most likely auto-logged out. "
                 "Return to PC."
             )
             try:

@@ -125,6 +125,10 @@
 
     <!-- ── Footer ─────────────────────────────────────────────────── -->
     <footer class="footer">
+      <div class="watch-timer hidden" id="watch-timer">
+        <span class="watch-timer-value" id="watch-timer-value">00:00:00</span>
+        <span class="watch-timer-paused hidden" id="watch-timer-paused">PAUSED</span>
+      </div>
       <div class="save-row">
         <button class="save-btn" id="btn-save">Save Configuration</button>
       </div>
@@ -134,10 +138,6 @@
           <button class="discord-warn-kill" id="discord-kill-btn">Kill Discord</button>
           <button class="discord-warn-continue" id="discord-continue-btn">Continue Anyway</button>
         </div>
-      </div>
-      <div class="watch-timer hidden" id="watch-timer">
-        <span class="watch-timer-value" id="watch-timer-value">00:00:00</span>
-        <span class="watch-timer-paused hidden" id="watch-timer-paused">PAUSED</span>
       </div>
       <button class="watch-btn" id="watch-btn">
         <span class="watch-btn-icon">▶</span>
