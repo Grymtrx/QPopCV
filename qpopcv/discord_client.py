@@ -20,4 +20,4 @@ def send_discord_mention(
 
 
 def send_test_message(webhook_url: str, user_id: str, timeout: float = 5.0) -> None:
-    send_discord_mention(webhook_url, user_id, "connected ✅", timeout=timeout)
+    send_discord_mention(webhook_url, user_id, "is connected :verify:", timeout=timeout)
