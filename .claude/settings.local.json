@@ -26,7 +26,16 @@
       "Bash(pytest:*)",
       "Bash(jq:*)",
       "Bash(bash ~/.claude/statusline-command.sh)",
-      "Bash(where pyinstaller:*)"
+      "Bash(where pyinstaller:*)",
+      "Bash(xargs grep:*)",
+      "Bash(bash \"C:\\\\Users\\\\Jesse\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\superpowers\\\\5.0.6\\\\scripts\\\\start-server.sh\" --project-dir \"D:\\\\Git\\\\QPopCV\")",
+      "Bash(for dir:*)",
+      "Bash(do echo:*)",
+      "Read(//d/Git/QPopCV/$dir/**)",
+      "Bash(done)",
+      "Bash(bash \"C:/Users/Jesse/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.6/skills/brainstorming/scripts/start-server.sh\" --project-dir \"D:/Git/QPopCV\")",
+      "Bash(bash \"C:/Users/Jesse/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.6/skills/brainstorming/scripts/start-server.sh\" --project-dir \"D:/Git/QPopCV\" --foreground)",
+      "Bash(find D:/Git/QPopCV/tests -type f -name *.py)"
     ]
   }
 }
