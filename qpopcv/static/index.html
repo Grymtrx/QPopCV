@@ -37,6 +37,7 @@
       <button class="tab-btn" data-tab="capture">Capture</button>
       <button class="tab-btn" data-tab="images">Images</button>
       <button class="tab-btn" data-tab="afk">AFK</button>
+      <button class="tab-btn" data-tab="metrics">Metrics</button>
     </nav>
 
     <!-- ── Discord tab ────────────────────────────────────────────── -->
@@ -82,6 +83,46 @@
       </div>
     </div>
 
+    <!-- ── Metrics tab ────────────────────────────────────────────────────── -->
+    <div class="tab-panel" id="tab-metrics">
+      <div class="metrics-toggle" id="metrics-toggle">
+        <button class="metrics-toggle-btn active" data-period="all">All Time</button>
+        <button class="metrics-toggle-btn" data-period="today">Today</button>
+      </div>
+      <div class="metrics-hero" id="metric-total-time">
+        <div class="metrics-hero-label">Total Time Saved</div>
+        <div class="metrics-hero-value" id="metric-total-time-val">0m</div>
+      </div>
+      <div class="metrics-effective" id="metric-effective-time">
+        <div class="metrics-effective-label">Effective Time Saved <span class="metrics-effective-tag">(Queue Popped)</span></div>
+        <div class="metrics-effective-value" id="metric-effective-time-val">0m</div>
+      </div>
+      <div class="metrics-row">
+        <div class="metrics-stat">
+          <div class="metrics-stat-value" id="metric-pops-val">0</div>
+          <div class="metrics-stat-label">Pops<br>Detected</div>
+        </div>
+        <div class="metrics-stat">
+          <div class="metrics-stat-value" id="metric-avg-wait-val">0m</div>
+          <div class="metrics-stat-label">Avg Queue<br>Wait</div>
+        </div>
+        <div class="metrics-stat">
+          <div class="metrics-stat-value" id="metric-longest-val">0m</div>
+          <div class="metrics-stat-label">Longest<br>Session</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── AFK warning banner ─────────────────────────────────────── -->
+    <div class="afk-banner hidden" id="afk-banner">
+      <div class="afk-banner-icon">⚠</div>
+      <div class="afk-banner-body">
+        <div class="afk-banner-title">Move character to prevent AFK logout</div>
+        <div class="afk-banner-hint">Then click the button below to reset the 28-minute AFK timer and continue watching.</div>
+        <button class="afk-banner-btn" id="afk-reset-btn">Reset AFK Timer</button>
+      </div>
+    </div>
+
     <!-- ── Footer ─────────────────────────────────────────────────── -->
     <footer class="footer">
       <div class="save-row">
@@ -93,6 +134,10 @@
           <button class="discord-warn-kill" id="discord-kill-btn">Kill Discord</button>
           <button class="discord-warn-continue" id="discord-continue-btn">Continue Anyway</button>
         </div>
+      </div>
+      <div class="watch-timer hidden" id="watch-timer">
+        <span class="watch-timer-value" id="watch-timer-value">00:00:00</span>
+        <span class="watch-timer-paused hidden" id="watch-timer-paused">PAUSED</span>
       </div>
       <button class="watch-btn" id="watch-btn">
         <span class="watch-btn-icon">▶</span>
