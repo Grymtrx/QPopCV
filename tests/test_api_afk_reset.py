@@ -44,7 +44,7 @@ class TestAfkEscalation:
         api._send_afk_warning()
         mock_post.assert_called_once()
         content = mock_post.call_args[1]["json"]["content"]
-        assert "Move character to prevent AFK logout" in content
+        assert "Move now" in content
         assert f"<@{VALID_USER_ID}>" in content
 
     @patch("qpopcv.api.requests.post")
@@ -59,7 +59,7 @@ class TestAfkEscalation:
         api._send_afk_logout()
         mock_post.assert_called_once()
         content = mock_post.call_args[1]["json"]["content"]
-        assert "auto-logged out" in content
+        assert "AFK'd out" in content
 
     @patch("qpopcv.api.requests.post")
     def test_send_afk_logout_pushes_sse_event(self, mock_post):

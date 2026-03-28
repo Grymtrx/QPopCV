@@ -39,7 +39,7 @@ class TestSendAfkWarning:
         _, kwargs = mock_post.call_args
         content = kwargs["json"]["content"]
         assert f"<@{VALID_USER_ID}>" in content
-        assert "Move character to prevent AFK logout" in content
+        assert "Move now" in content
 
     @patch("qpopcv.api.requests.post")
     def test_no_post_when_webhook_missing(self, mock_post):

@@ -277,7 +277,7 @@ class TestHandleDetectedPopup:
         mock_send.assert_called_once()
         content = mock_send.call_args[0][0]
         assert VALID_USER_ID in content
-        assert "popped" in content.lower()
+        assert "pop" in content.lower()
 
     def test_does_not_send_when_throttled(self):
         w = self._make_watcher()
