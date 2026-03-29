@@ -16,7 +16,7 @@ FONTS_DIR = _MEDIA_ROOT / "fonts"
 
 logger = logging.getLogger(__name__)
 
-APP_VERSION = "1.2.4"
+APP_VERSION = "1.2.5"
 # config.json  — tracked in git; contains shared defaults (webhook URL only)
 # config.local.json — gitignored; contains the user's personal settings
 BASE_CONFIG_PATH = APP_DIR / "config.json"
@@ -30,7 +30,7 @@ DEFAULT_CONFIG: Dict[str, object] = {
     "confidence": 0.6,
     "reference_image_paths": [],
     "monitor_index": 0,
-    "afk_notify": False,
+    "afk_notify": True,
 }
 
 
