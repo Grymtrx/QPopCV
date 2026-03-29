@@ -159,6 +159,11 @@ class Api:
         self.config["afk_notify"] = afk_notify
         save_config(self.config)
 
+        # Stop any existing watcher before creating a new one
+        if self._watcher is not None:
+            self._watcher.stop()
+            self._watcher = None
+
         settings = WatcherSettings.from_config(self.config)
         self._watcher = QPopWatcher(settings, on_detect=self._on_detection)
         self._watcher.start()
