@@ -21,6 +21,9 @@ build/
 dist/
 *.spec
 
+# PyInstaller runtime (regenerated every build)
+qpopcv/_internal/
+
 # Installer / release archives
 *.zip
 *.tar
@@ -34,6 +37,7 @@ dist/
 # Logs & runtime data
 # ------------------------------
 *.log
+qpopcv/*.log
 
 # User-specific config (personal webhook, user ID, ref images — never committed)
 config.local.json
