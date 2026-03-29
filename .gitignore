@@ -19,7 +19,7 @@ env/
 # ------------------------------
 build/
 dist/
-*.spec
+# *.spec — NOT ignored; QPopCV.spec is needed for builds
 
 # PyInstaller runtime (regenerated every build)
 qpopcv/_internal/
