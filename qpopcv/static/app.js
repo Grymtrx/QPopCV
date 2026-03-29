@@ -229,17 +229,12 @@ function onDetected() {
   watchBtn.classList.remove('is-watching');
   watchBtnIcon.textContent = '▶';
   watchBtnText.textContent = 'Watch';
-  const prev = statusPill.dataset.state;
   setStatus('detected');
 
   const overlay = document.createElement('div');
   overlay.className = 'detected-overlay';
   document.body.appendChild(overlay);
   overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
-
-  setTimeout(() => {
-    if (statusPill.dataset.state === 'detected') setStatus('idle');
-  }, 1600);
 }
 
 // ── Watch timer ────────────────────────────────────────────────────────────────
