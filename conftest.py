@@ -50,17 +50,5 @@ def _stub_pyautogui():
     sys.modules.setdefault("pymsgbox", pymsgbox)
 
 
-def _stub_customtkinter():
-    ctk = MagicMock()
-    ctk.CTk = MagicMock
-    ctk.CTkFrame = MagicMock
-    ctk.CTkLabel = MagicMock
-    ctk.CTkEntry = MagicMock
-    ctk.CTkButton = MagicMock
-    ctk.StringVar = MagicMock
-    sys.modules.setdefault("customtkinter", ctk)
-
-
 _stub_tkinter()
 _stub_pyautogui()
-_stub_customtkinter()
