@@ -49,6 +49,15 @@ QPopCV-vX.Y.Z.zip
         └── app.js
 ```
 
+**Expected output sizes (v1.2.x):**
+
+| Artifact | Expected size |
+|----------|--------------|
+| `dist\QPopCV\` (uncompressed folder) | ~500-600 MB |
+| `dist\QPopCV-vX.Y.Z.zip` | ~250-270 MB |
+
+If sizes differ significantly from these ranges, investigate before publishing.
+
 **NOT in the ZIP:** `config.local.json` (gitignored) — this is the user's personal settings file and is intentionally excluded from every release ZIP.
 
 ---
