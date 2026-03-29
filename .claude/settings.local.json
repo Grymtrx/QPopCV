@@ -37,7 +37,20 @@
       "Bash(bash \"C:/Users/Jesse/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.6/skills/brainstorming/scripts/start-server.sh\" --project-dir \"D:/Git/QPopCV\" --foreground)",
       "Bash(find D:/Git/QPopCV/tests -type f -name *.py)",
       "Bash(git:*)",
-      "Bash(py -m pytest --tb=short -q)"
+      "Bash(py -m pytest --tb=short -q)",
+      "Bash(du -sh /d/Git/QPopCV/*)",
+      "Bash(find /d/Git/QPopCV/qpopcv/media -type f -exec ls -lh {})",
+      "Bash(2)",
+      "Bash(grep -h \"^import\\\\|^from\" /d/Git/QPopCV/qpopcv/*.py)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(find /d/Git/QPopCV -name *.pyc -o -name __pycache__)",
+      "Bash(find D:/Git/QPopCV/.claude -name *.md -o -name *.json)",
+      "Bash(rm -rf dist/)",
+      "Bash(rm -rf build/)",
+      "Bash(rm -rf qpopcv/_internal/)",
+      "Bash(rm -f qpopcv/QPopCV.exe)",
+      "Bash(rm -rf __pycache__/)"
     ]
   }
 }
