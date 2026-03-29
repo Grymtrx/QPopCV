@@ -19,7 +19,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from PyQt6.QtCore import QObject, QUrl, Qt, pyqtSignal
+from PyQt6.QtCore import QEvent, QObject, QUrl, Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QApplication, QFileDialog, QMainWindow
 from PyQt6.QtWebEngineWidgets import QWebEngineView
@@ -206,6 +206,17 @@ class _Bridge(QObject):
     request_flash    = pyqtSignal()
 
 
+# ── Always-on-top window subclass ─────────────────────────────────────────────
+
+class _MainWindow(QMainWindow):
+    """QMainWindow subclass that stays on top and dims when unfocused."""
+
+    def changeEvent(self, event):  # noqa: N802
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.ActivationChange:
+            self.setWindowOpacity(1.0 if self.isActiveWindow() else 0.5)
+
+
 # ── Main application class ─────────────────────────────────────────────────────
 
 class QPopApp:
@@ -319,10 +330,12 @@ class QPopApp:
     def run(self) -> None:
         app = QApplication.instance() or QApplication(sys.argv)
 
-        self._window = QMainWindow()
+        self._window = _MainWindow()
         self._window.setWindowTitle("QPopCV")
         self._window.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint | Qt.WindowType.Window
+            Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.Window
+            | Qt.WindowType.WindowStaysOnTopHint
         )
         self._window.resize(440, 320)
         self._window.setMinimumSize(400, 240)
