@@ -2,8 +2,8 @@
 # Timer settings (seconds)
 # ──────────────────────────────────────────────────────────────────────────────
 
-AFK_WARN_DELAY     =  10  # how long before the AFK warning fires 28 * 60
-AFK_LOGOUT_DELAY   =  10  # how long after the warning before logout message 2 * 60
+AFK_WARN_DELAY     =  28 * 60  # how long before the AFK warning fires
+AFK_LOGOUT_DELAY   =  2 * 60  # how long after the warning before logout message 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Discord message templates
@@ -23,3 +23,4 @@ AFK_WARNING = "<:afkzzz:1487591915120492634> AFK 28m. Move character (2m until l
 
 # Sent 2 minutes after the AFK warning if the timer was not reset.
 AFK_LOGOUT = "<:logoutalert:1487592229060083914> Logged out!"
+1

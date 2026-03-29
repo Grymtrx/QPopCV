@@ -8,7 +8,7 @@
 
 A lightweight Windows desktop app that watches the screen for a World of Warcraft Solo Shuffle queue popup and fires a Discord webhook notification (with a user mention) the moment it appears. Users can step away from their PC while queuing and be pinged on phone or desktop Discord — all while staying within Blizzard's TOS.
 
-**Current version:** `1.0.38`
+**Current version:** `1.2.3`
 **Target OS:** Windows (uses `pyautogui`, `os.startfile`, batch scripts)
 
 ---
@@ -20,14 +20,18 @@ A lightweight Windows desktop app that watches the screen for a World of Warcraf
 | `main.py`                     | Entry point — configures logging, creates `QPopApp`, starts Qt loop  |
 | `qpopcv/__init__.py`          | Re-exports `QPopApp`                                                 |
 | `qpopcv/app_ui.py`            | Qt shell + embedded HTTP server + SSE bridge (`QPopApp`)            |
-| `qpopcv/api.py`               | All business logic — watch control, AFK timer, Discord, updates      |
+| `qpopcv/api.py`               | All business logic — watch control, AFK timer, Discord, metrics, updates |
 | `qpopcv/watcher.py`           | Screen detection engine (`QPopWatcher`, `WatcherSettings`)           |
 | `qpopcv/config.py`            | Config constants, `load_config`, `save_config`                       |
+| `qpopcv/messages.py`          | Timer delay constants + Discord message templates                    |
+| `qpopcv/metrics.py`           | Persistent session metrics (`MetricsStore`)                          |
 | `qpopcv/discord_client.py`    | Thin wrapper around Discord webhook HTTP (used by Test button)       |
 | `qpopcv/validators.py`        | Input validation (webhook, user ID, reference image path)            |
 | `qpopcv/updater.py`           | GitHub release checker and installer (`UpdateManager`, `UpdateInfo`) |
+| `qpopcv/monitor_utils.py`     | Multi-monitor enumeration + region math                              |
+| `qpopcv/font_loader.py`       | Font loading utility                                                 |
 | `qpopcv/theme.py`             | **Deprecated** — artifact from CustomTkinter era, not imported       |
-| `qpopcv/static/index.html`    | Single-page UI — 4 tabs: Discord, Capture, Images, AFK              |
+| `qpopcv/static/index.html`    | Single-page UI — 5 tabs: Discord, Capture, Images, AFK, Metrics     |
 | `qpopcv/static/style.css`     | Pearl White glassmorphic theme; all colors via CSS custom properties |
 | `qpopcv/static/app.js`        | Frontend logic — fetch API calls, SSE handler, tab switching         |
 
@@ -46,8 +50,8 @@ A lightweight Windows desktop app that watches the screen for a World of Warcraf
 │                  QPopApp  (app_ui.py)                       │
 │                                                             │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │  QMainWindow (frameless) + QWebEngineView             │  │
-│  │  loads http://127.0.0.1:PORT/                         │  │
+│  │  _MainWindow (frameless, always-on-top, dims unfocused)│  │
+│  │  + QWebEngineView loads http://127.0.0.1:PORT/        │  │
 │  └───────────────────────────────────────────────────────┘  │
 │                                                             │
 │  ┌───────────────────────────────────────────────────────┐  │
@@ -64,6 +68,7 @@ A lightweight Windows desktop app that watches the screen for a World of Warcraf
 │  │  • request_browse → QFileDialog on main thread        │  │
 │  │  • request_resize → window resize on main thread      │  │
 │  │  • request_minimize / request_quit / request_drag     │  │
+│  │  • request_flash  → taskbar flash on AFK warning      │  │
 │  └───────────────────────────────────────────────────────┘  │
 └────────────────────────┬────────────────────────────────────┘
                          │
@@ -71,30 +76,43 @@ A lightweight Windows desktop app that watches the screen for a World of Warcraf
 ┌─────────────────────────────────────────────────────────────┐
 │                     Api  (api.py)                           │
 │                                                             │
-│  • get_initial_state()    — config + monitor list           │
+│  • get_initial_state()    — config + monitor list + metrics │
 │  • start_watch(data)      — validates, starts watcher +     │
-│                             arms AFK threading.Timer        │
-│  • stop_watch()           — stops watcher, cancels timer    │
+│                             arms AFK timer, records session │
+│  • stop_watch(detected)   — stops watcher, cancels timers,  │
+│                             records session to MetricsStore │
+│  • kill_discord()         — terminates Discord.exe processes│
 │  • save_config_data(data) — persists settings               │
 │  • test_discord(data)     — test webhook ping               │
+│  • reset_afk()            — cancels escalation, restarts    │
+│                             AFK timer, resumes session clock│
 │  • check_for_updates()    — background GitHub check         │
 │  • install_update()       — download + install              │
-│  • _send_afk_notification() — fires after 28 min            │
-└────────────┬────────────────────────┬───────────────────────┘
-             │                        │
-             ▼ (daemon thread)        ▼ (threading.Timer)
-┌────────────────────┐    ┌────────────────────────────────┐
-│   QPopWatcher      │    │   AFK Timer (28 min)           │
-│   (watcher.py)     │    │                                │
-│                    │    │  requests.post(webhook,        │
-│ pyautogui.         │    │    "<@user_id> Watch time      │
-│   screenshot()     │    │    nearing 30 minutes...")     │
-│ pyautogui.         │    └────────────────────────────────┘
+│  • _send_afk_warning()    — fires after 28 min              │
+│  • _send_afk_logout()     — fires 2 min after warning       │
+│  • _end_session(detected) — records to MetricsStore         │
+└────────────┬──────────────────────────┬─────────────────────┘
+             │                          │
+             ▼ (daemon thread)          ▼ (threading.Timer ×2)
+┌────────────────────┐    ┌────────────────────────────────────┐
+│   QPopWatcher      │    │   AFK Warning Timer (28 min)       │
+│   (watcher.py)     │    │                                    │
+│                    │    │  requests.post(webhook, AFK_WARNING)│
+│ pyautogui.         │    │  → push_event("afk_warning")       │
+│   screenshot()     │    │  → arms Escalation Timer (2 min)   │
+│ pyautogui.         │    └────────────────────────────────────┘
 │   locate()         │
-│ → Discord POST     │    ┌────────────────────────────────┐
-└────────────────────┘    │   UpdateManager (daemon)       │
-                          │   GitHub API → download + bat  │
-                          └────────────────────────────────┘
+│ → Discord POST     │    ┌────────────────────────────────────┐
+│ → on_detect()      │    │   AFK Escalation Timer (2 min)     │
+└────────────────────┘    │                                    │
+                          │  requests.post(webhook, AFK_LOGOUT)│
+                          │  → push_event("afk_logout")        │
+                          └────────────────────────────────────┘
+
+                          ┌────────────────────────────────────┐
+                          │   UpdateManager (daemon)           │
+                          │   GitHub API → download + bat      │
+                          └────────────────────────────────────┘
 ```
 
 ---
@@ -105,12 +123,36 @@ A lightweight Windows desktop app that watches the screen for a World of Warcraf
 
 **Python → JS:** Asynchronous events flow via Server-Sent Events. The JS opens `new EventSource('/events')` at startup. Python calls `push_event(type, data)` (thread-safe queue) which serialises to `data: {"type":"..."}` SSE frames.
 
-| SSE Event type     | Trigger                                  | JS handler          |
-|--------------------|------------------------------------------|---------------------|
-| `detected`         | Queue popup found by watcher             | `onDetected()`      |
-| `update_status`    | Update check completed                   | `onUpdateStatus()`  |
-| `update_progress`  | Update install progressed / completed    | `onUpdateProgress()`|
-| `heartbeat`        | SSE keepalive every 25s                  | (ignored)           |
+| SSE Event type     | Trigger                                        | JS handler             |
+|--------------------|------------------------------------------------|------------------------|
+| `detected`         | Queue popup found by watcher; watch auto-stops | `onDetected()`         |
+| `update_status`    | Update check completed                         | `onUpdateStatus()`     |
+| `update_progress`  | Update install progressed / completed          | `onUpdateProgress()`   |
+| `afk_warning`      | 28-min AFK warning fired                       | `onAfkWarning()`       |
+| `afk_logout`       | 2-min escalation logout message sent           | `onAfkLogout()`        |
+| `afk_reset`        | User clicked Reset AFK Timer                   | `onAfkReset()`         |
+| `metrics_update`   | Session ended; metrics recomputed              | `onMetricsUpdate()`    |
+| `heartbeat`        | SSE keepalive every 25s                        | (ignored)              |
+
+---
+
+## HTTP API Routes
+
+| Method | Path                   | Handler                        | Description                              |
+|--------|------------------------|--------------------------------|------------------------------------------|
+| POST   | `/api/initial_state`   | `api.get_initial_state()`      | Config + monitors + metrics on load      |
+| POST   | `/api/start_watch`     | `api.start_watch(body)`        | Validate, save, start watcher + AFK timer|
+| POST   | `/api/stop_watch`      | `api.stop_watch()`             | Stop watcher, cancel timers, end session |
+| POST   | `/api/test_discord`    | `api.test_discord(body)`       | Send test webhook ping (throttled 1s)    |
+| POST   | `/api/browse_image`    | `app.browse_image_sync()`      | Open native file dialog (main thread)    |
+| POST   | `/api/open_discord`    | `api.open_discord()`           | Open Discord server invite in browser    |
+| POST   | `/api/check_updates`   | `api.check_for_updates()`      | Kick off background GitHub check         |
+| POST   | `/api/install_update`  | `api.install_update()`         | Download + install update                |
+| POST   | `/api/resize`          | `app.resize_window(h)`         | Resize Qt window to content height       |
+| POST   | `/api/save_config`     | `api.save_config_data(body)`   | Persist settings without starting watcher|
+| POST   | `/api/kill_discord`    | `api.kill_discord()`           | Terminate Discord.exe processes          |
+| POST   | `/api/reset_afk`       | `api.reset_afk()`              | Cancel escalation, restart AFK timer     |
+| POST   | `/api/window_control`  | bridge signals                 | minimize / close / drag_start            |
 
 ---
 
@@ -127,12 +169,20 @@ Qt Main Thread (event loop)
 ├─► Watcher Thread (daemon)
 │     Spawned on start_watch()
 │     Runs QPopWatcher._loop() until _stop_event is set
-│     Calls push_event("detected") → SSE queue → JS
+│     Calls on_detect() → Api._on_detection() → stop_watch(detected=True)
+│     → push_event("detected") → SSE queue → JS
 │
-├─► AFK Timer Thread (daemon threading.Timer)
+├─► AFK Warning Timer Thread (daemon threading.Timer)
 │     Armed on start_watch() if afk_notify=True
-│     Fires _send_afk_notification() after 28 minutes
-│     Cancelled on stop_watch() or if a new watch session starts
+│     Fires _send_afk_warning() after 28 minutes (AFK_WARN_DELAY)
+│     Cancelled on stop_watch() or when a new watch session starts
+│     On fire: sends Discord ping, pushes "afk_warning" SSE,
+│              arms Escalation Timer
+│
+├─► AFK Escalation Timer Thread (daemon threading.Timer)
+│     Armed by _send_afk_warning()
+│     Fires _send_afk_logout() after 2 minutes (AFK_LOGOUT_DELAY)
+│     Cancelled by reset_afk() or stop_watch()
 │
 ├─► Update Check Thread (daemon)
 │     Spawned once after startup
@@ -148,7 +198,8 @@ Qt Main Thread (event loop)
 - `Api._push_event()` puts items on a `queue.Queue` — thread-safe by design.
 - `_Bridge` signals are Qt queued connections — cross-thread signal emissions are safe.
 - `QPopWatcher._seen_once` and `_last_qpop_time` are accessed only from the watcher thread — no lock needed.
-- `Api._afk_timer` is set/cleared from both the HTTP server thread and the timer thread. CPython GIL makes individual attribute writes atomic; the double-`None` race with `stop_watch` is benign.
+- `Api._session_lock` (threading.Lock) guards session start/pause/end fields accessed from both the HTTP server thread and AFK timer threads.
+- `Api._afk_timer` / `_afk_escalation_timer` single-attribute writes are atomic under CPython's GIL; see `GAP-08` in KNOWN_ISSUES.md.
 
 ---
 
@@ -167,8 +218,9 @@ Every check_interval seconds (default 0.15s):
 │         popup appeared (not seen → seen):
 │           → _handle_detected_popup()
 │               → check 15s throttle
-│               → POST Discord webhook "<@user_id> Your Queue has popped!"
-│               → call on_detect() → push_event("detected") → SSE → JS flash
+│               → POST Discord webhook QUEUE_POP message
+│               → call on_detect() → Api._on_detection()
+│                   → stop_watch(detected=True) + push_event("detected")
 │         popup gone (seen → not seen):
 │           → reset _seen_once = False
 │
@@ -195,7 +247,7 @@ Api.config dict  ←→  JS form fields (via /api/initial_state + collectFormDat
 
 | Key                      | Type   | Default   | Description                                          |
 | ------------------------ | ------ | --------- | ---------------------------------------------------- |
-| `webhook_url`            | str    | (see repo)| Discord webhook endpoint                             |
+| `webhook_url`            | str    | `""`      | Discord webhook endpoint                             |
 | `user_id`                | str    | `""`      | 17–19-digit Discord snowflake ID                     |
 | `check_interval`         | float  | `0.15`    | Seconds between screen captures (~6.7 FPS)           |
 | `confidence`             | float  | `0.6`     | Template match confidence threshold (0–1)            |
@@ -214,15 +266,61 @@ User enables AFK checkbox → clicks Watch
     │
     ▼ Api.start_watch()
     │   ├── validates discord + ref images
+    │   ├── checks for Discord.exe (warns if running)
     │   ├── starts QPopWatcher
-    │   └── arms threading.Timer(28*60, _send_afk_notification)
+    │   ├── records session start time
+    │   └── arms AFK Warning Timer (28 min)
     │
     ▼ 28 minutes later...
     │
-    ▼ Api._send_afk_notification()
-        └── requests.post(webhook, {"content": "<@user_id> Watch time nearing 30 minutes..."})
+    ▼ Api._send_afk_warning()
+    │   ├── requests.post(webhook, AFK_WARNING message)
+    │   ├── push_event("afk_warning") → JS shows AFK banner + pauses watch timer
+    │   │   → _Bridge.request_flash → taskbar icon flashes
+    │   └── arms AFK Escalation Timer (2 min)
+    │
+    ▼ User clicks "Reset AFK Timer" in banner:
+    │   Api.reset_afk()
+    │   ├── cancels escalation timer
+    │   ├── resumes session clock
+    │   ├── restarts 28-min AFK timer
+    │   └── push_event("afk_reset") → JS hides banner + resumes watch timer
+    │
+    OR...
+    │
+    ▼ 2 minutes later (no reset)...
+    │
+    ▼ Api._send_afk_logout()
+        ├── requests.post(webhook, AFK_LOGOUT message)
+        └── push_event("afk_logout") → JS stops watch, resets UI to idle
 
-User clicks Stop at any time → stop_watch() → timer.cancel()
+User clicks Stop at any time → stop_watch() → both timers cancelled
+```
+
+---
+
+## Metrics Flow
+
+```
+Session starts → Api.start_watch() records _session_start_time, _session_start_mono
+    │
+    ▼ While watching:
+    │   AFK warning pauses effective time (_session_paused_at set)
+    │   AFK reset resumes effective time (_session_paused_total accumulates)
+    │
+    ▼ Session ends (stop_watch() or detection):
+    │
+    ▼ Api._end_session(detected)
+    │   ├── computes duration = elapsed_mono - _session_paused_total
+    │   ├── MetricsStore.record_session(start, end, duration, detected)
+    │   │     → appends to sessions list → atomic write to metrics.json
+    │   └── push_event("metrics_update", {all_time: ..., today: ...})
+    │         → JS updates Metrics tab display
+    │
+    ▼ MetricsStore.compute(day=None)
+        Returns: total_time_saved, effective_time_saved, pops_detected,
+                 avg_queue_wait, longest_session
+        (filtered by day if provided)
 ```
 
 ---
@@ -239,6 +337,7 @@ Startup
 User clicks "Update available: x.x.x"
     └─► /api/install_update → install_update() (background thread)
             Download .zip from GitHub release assets → temp dir
+            Verify SHA-256 checksum (if digest present in release metadata)
             Extract zip
 
             If frozen (.exe):
@@ -261,3 +360,4 @@ User clicks "Update available: x.x.x"
 | `pyautogui`           | Screenshot + template matching                   |
 | `Pillow`              | Image loading and scaling                        |
 | `requests`            | Discord webhooks, GitHub API, update download    |
+| `psutil`              | Discord process detection (`kill_discord`)       |

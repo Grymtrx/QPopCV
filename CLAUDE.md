@@ -18,6 +18,9 @@ WoW Solo Shuffle queue-pop detector. Windows-only Python app — pywebview GUI (
 - Config: `qpopcv/config.json` (shared defaults) + `qpopcv/config.local.json` (user settings, gitignored), both loaded via `qpopcv/config.py`
 - Python 3.11+, Windows only (tested on 3.14)
 
+## Rules
+- Never write to `qpopcv/config.local.json` directly. It contains the user's personal credentials and must only be written by the app's own save flow.
+
 ## Versioning
 Increment the patch version (`APP_VERSION` in `qpopcv/config.py`) on every code change. Current version: `1.2.0`.
 

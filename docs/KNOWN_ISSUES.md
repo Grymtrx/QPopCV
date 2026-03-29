@@ -126,9 +126,14 @@ Priority order for a future Claude session:
 12. ~~**AP-02** — Consolidate `MEDIA_DIR` into `config.py`~~ ✅ Fixed in 1.0.9
 13. ~~**GAP-02** — Add rotating file log handler~~ ✅ Fixed in 1.0.10
 14. ~~**GAP-04** — Test button reused watcher throttle~~ ✅ Fixed in 1.0.10
-13. ~~**GAP-03** — Multi-monitor region support~~ ✅ Fixed in 1.0.12
-14. ~~**UI/UX Redesign**~~ ✅ Done in 1.0.22
-15. ~~**AFK Tab**~~ ✅ Done in 1.0.38 — 28-min Discord ping with @mention; `threading.Timer` armed on Watch start, cancelled on Stop
-16. ~~**AP-05**~~ ✅ Fixed in 1.0.39 — Log update check failures
-17. ~~**SEC-04**~~ ✅ Fixed in 1.0.39 — SHA-256 checksum verification on downloaded ZIPs
-18. ~~**Discord process detection**~~ ✅ Done in 1.0.40 — Detects Discord.exe on Watch click; shows inline warning with Kill Discord / Continue Anyway options so notifications route to phone
+15. ~~**GAP-03** — Multi-monitor region support~~ ✅ Fixed in 1.0.12
+16. ~~**UI/UX Redesign**~~ ✅ Done in 1.0.22
+17. ~~**AFK Tab**~~ ✅ Done in 1.0.38 — 28-min Discord ping with @mention; `threading.Timer` armed on Watch start, cancelled on Stop
+18. ~~**AP-05**~~ ✅ Fixed in 1.0.39 — Log update check failures
+19. ~~**SEC-04**~~ ✅ Fixed in 1.0.39 — SHA-256 checksum verification on downloaded ZIPs
+20. ~~**Discord process detection**~~ ✅ Done in 1.0.40 — Detects Discord.exe on Watch click; shows inline warning with Continue Anyway option so notifications route to phone
+21. ~~**AFK escalation timer**~~ ✅ Done in 1.2.0 — 2-min countdown after AFK warning; auto-sends logout Discord message if user doesn't reset; `_afk_escalation_timer` armed by `_send_afk_warning`
+22. ~~**AFK in-app banner**~~ ✅ Done in 1.2.0 — Inline warning banner with "Reset AFK Timer" button; hides after reset or stop
+23. ~~**Watch timer (HH:MM:SS)**~~ ✅ Done in 1.2.0 — Elapsed timer in footer; pauses during AFK warning; resumes on reset
+24. ~~**Metrics tab**~~ ✅ Done in 1.2.0 — Persistent session tracking via `MetricsStore` (`metrics.json`); All Time / Today toggle; Total Time Saved, Effective Time Saved, Pops Detected, Avg Queue Wait, Longest Session stats; updated via `metrics_update` SSE event after each session
+25. ~~**Discord message templates**~~ ✅ Done in 1.2.0 — Centralised in `messages.py` (`QUEUE_POP`, `AFK_WARNING`, `AFK_LOGOUT`, `CONNECTED`, timer delay constants)
