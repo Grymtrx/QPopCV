@@ -55,7 +55,6 @@ const updateText    = $('update-text');
 const toastContainer = $('toasts');
 const afkNotifyCheckbox = $('afk-notify');
 const discordWarn        = $('discord-warn');
-const discordKillBtn     = $('discord-kill-btn');
 const discordContinueBtn = $('discord-continue-btn');
 const watchTimer        = $('watch-timer');
 const watchTimerValue   = $('watch-timer-value');
@@ -449,23 +448,6 @@ watchBtn.addEventListener('click', async () => {
   }
 });
 
-discordKillBtn.addEventListener('click', async () => {
-  discordKillBtn.disabled = true;
-  try {
-    const result = await apiPost('/api/kill_discord');
-    if (!result.ok) {
-      showToast('error', result.error || 'Failed to kill Discord.');
-      return;
-    }
-    discordWarn.classList.add('hidden');
-    measureAndResize();
-  } catch (e) {
-    showToast('error', 'Failed to kill Discord.');
-    console.error(e);
-  } finally {
-    discordKillBtn.disabled = false;
-  }
-});
 
 discordContinueBtn.addEventListener('click', async () => {
   discordWarn.classList.add('hidden');

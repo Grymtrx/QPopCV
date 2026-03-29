@@ -870,21 +870,6 @@ html, body {
   gap: 6px;
 }
 
-.discord-warn-kill {
-  flex: 1;
-  padding: 5px 8px;
-  font-size: 11px;
-  border-radius: calc(var(--radius) - 2px);
-  border: 1px solid rgba(220, 38, 38, 0.4);
-  background: rgba(254, 226, 226, 0.9);
-  color: #dc2626;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.discord-warn-kill:hover {
-  background: rgba(254, 202, 202, 0.95);
-}
 
 .discord-warn-continue {
   flex: 1;
