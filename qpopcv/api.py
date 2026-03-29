@@ -214,17 +214,30 @@ class Api:
         return {"ok": True, "session": session}
 
     def kill_discord(self) -> dict:
-        """Terminate all running Discord.exe processes."""
+        """Terminate all running Discord.exe processes and wait for them to exit."""
+        procs = []
         try:
             for proc in psutil.process_iter(["name"]):
                 try:
                     if proc.name().lower() == "discord.exe":
                         proc.terminate()
+                        procs.append(proc)
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
         except Exception as exc:
             logger.error("kill_discord failed: %s", exc)
             return {"ok": False, "error": str(exc)}
+
+        # Wait for processes to actually exit
+        for proc in procs:
+            try:
+                proc.wait(timeout=5)
+            except (psutil.NoSuchProcess, psutil.TimeoutExpired):
+                pass
+
+        # Give Discord's Gateway time to detect the dropped connection
+        # and reroute subsequent notifications to mobile
+        time.sleep(3)
         return {"ok": True}
 
     def save_config_data(self, data: dict) -> dict:
