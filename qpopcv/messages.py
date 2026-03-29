@@ -2,8 +2,8 @@
 # Timer settings (seconds)
 # ──────────────────────────────────────────────────────────────────────────────
 
-AFK_WARN_DELAY     =  30  # how long before the AFK warning fires 28 * 60
-AFK_LOGOUT_DELAY   =  10000  # how long after the warning before logout message 2 * 60
+AFK_WARN_DELAY     =  10  # how long before the AFK warning fires 28 * 60
+AFK_LOGOUT_DELAY   =  10  # how long after the warning before logout message 2 * 60
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Discord message templates

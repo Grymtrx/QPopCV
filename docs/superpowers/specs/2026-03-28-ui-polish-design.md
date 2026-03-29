@@ -16,7 +16,7 @@
 
 ### 2. Eye Icon on User ID Field
 
-**What:** The User ID input (`type="password"`) gets a small eye button on its right edge. Clicking it reveals the value as plain text for 5 seconds, then auto-hides. Clicking again while visible resets the 5s timer.
+**What:** The User ID input (`type="password"`yes) gets a small eye button on its right edge. Clicking it reveals the value as plain text for 5 seconds, then auto-hides. Clicking again while visible resets the 5s timer.
 
 **Implementation (index.html + style.css + app.js):**
 - Wrap the `#user-id` input in a `<div class="field-input-wrap">` with `position: relative`
