@@ -1181,3 +1181,46 @@ html, body {
   margin-top: 4px;
   line-height: 1.3;
 }
+
+/* ── Eye-toggle wrapper ───────────────────────────────────────── */
+
+.field-input-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  min-width: 0;
+}
+
+.field-input-wrap .field-input {
+  flex: 1;
+  padding-right: 30px;
+  min-width: 0;
+}
+
+.eye-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition);
+  outline: none;
+}
+
+.eye-btn:hover {
+  color: var(--text-muted);
+}
+
+.eye-btn.is-visible {
+  color: var(--blue);
+}

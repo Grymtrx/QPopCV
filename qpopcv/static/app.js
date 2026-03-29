@@ -43,6 +43,7 @@ const statusPill    = $('status-pill');
 const statusText    = $('status-text');
 const webhookInput  = $('webhook-url');
 const userIdInput   = $('user-id');
+const eyeBtn        = $('eye-btn');
 const monitorSelect = $('monitor-select');
 const refList       = $('ref-list');
 const addImageBtn   = $('btn-add-image');
@@ -89,6 +90,25 @@ document.getElementById('win-btn-close').addEventListener('click', () => {
     body: JSON.stringify({ action: 'close' }),
   }).catch(() => {});
 });
+
+// ── Eye-toggle (User ID) ──────────────────────────────────────────────────────
+
+(function () {
+  let eyeTimer = null;
+
+  function hideUserId() {
+    userIdInput.type = 'password';
+    eyeBtn.classList.remove('is-visible');
+    eyeTimer = null;
+  }
+
+  eyeBtn.addEventListener('click', () => {
+    clearTimeout(eyeTimer);
+    userIdInput.type = 'text';
+    eyeBtn.classList.add('is-visible');
+    eyeTimer = setTimeout(hideUserId, 5000);
+  });
+})();
 
 // ── Server-Sent Events ────────────────────────────────────────────────────────
 
