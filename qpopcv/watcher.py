@@ -7,11 +7,9 @@ import logging
 
 import pyautogui
 from pyautogui import ImageNotFoundException
-import requests
 from PIL import Image
 
 from qpopcv.config import MEDIA_DIR
-from qpopcv.messages import QUEUE_POP
 from qpopcv.monitor_utils import get_monitors, compute_top_center_region
 
 THROTTLE_SECONDS = 15
@@ -27,7 +25,6 @@ REFERENCE_IMG = [
 
 @dataclass
 class WatcherSettings:
-    webhook_url: str
     user_id: str
     check_interval: float = 0.5
     confidence: float = 0.6
@@ -50,7 +47,6 @@ class WatcherSettings:
         ]
 
         return cls(
-            webhook_url=str(config.get("webhook_url", "")).strip(),
             user_id=str(config.get("user_id", "")).strip(),
             check_interval=float(config.get("check_interval", 0.5)),
             confidence=float(config.get("confidence", 0.6)),
@@ -78,13 +74,11 @@ class QPopWatcher:
         settings: WatcherSettings,
         on_detect: Optional[Callable[[], None]] = None,
     ) -> None:
-        self._webhook_url = settings.webhook_url.strip()
         self._user_id = settings.user_id.strip()
         self._check_interval = float(settings.check_interval)
         self._confidence = float(settings.confidence)
         self._reference_paths = settings.reference_image_paths
 
-        self._mention = f"<@{self._user_id}>"
         self._on_detect = on_detect
 
         self._thread: Optional[threading.Thread] = None
@@ -153,12 +147,9 @@ class QPopWatcher:
 
         return None
 
-    def _send_discord_message(self, content: str) -> None:
-        requests.post(
-            self._webhook_url,
-            json={"content": content},
-            timeout=5,
-        )
+    def _send_discord_message(self) -> None:
+        from .discord_client import notify
+        notify(self._user_id, "qpop")
 
     def _check_throttle(self) -> Tuple[bool, int, float]:
         now = time.time()
@@ -180,7 +171,7 @@ class QPopWatcher:
         else:
             try:
                 send_start = time.time()
-                self._send_discord_message(f"{self._mention} {QUEUE_POP}")
+                self._send_discord_message()
                 send_end = time.time()
 
                 self._last_qpop_time = now

@@ -3,15 +3,13 @@ import pytest
 from unittest.mock import patch, MagicMock
 
 from qpopcv.api import Api
-from qpopcv.messages import AFK_WARN_DELAY, AFK_WARNING
+from qpopcv.messages import AFK_WARN_DELAY
 
-VALID_WEBHOOK = "https://discord.com/api/webhooks/123456789012345678/token"
 VALID_USER_ID = "123456789012345678"
 
 
 def make_config(**overrides):
     base = {
-        "webhook_url": VALID_WEBHOOK,
         "user_id": VALID_USER_ID,
         "reference_image_paths": [],
         "monitor_index": 0,
@@ -31,33 +29,18 @@ def make_api(config=None):
 
 class TestSendAfkWarning:
 
-    @patch("qpopcv.api.requests.post")
-    def test_sends_discord_post_with_mention(self, mock_post):
+    @patch("qpopcv.api.notify")
+    def test_sends_proxy_notification(self, mock_notify):
         api = make_api(make_config())
         api._send_afk_warning()
 
-        mock_post.assert_called_once()
-        _, kwargs = mock_post.call_args
-        content = kwargs["json"]["content"]
-        assert f"<@{VALID_USER_ID}>" in content
-        assert AFK_WARNING in content
+        mock_notify.assert_called_once_with(VALID_USER_ID, "afk_warn")
 
-    @patch("qpopcv.api.requests.post")
-    def test_no_post_when_webhook_missing(self, mock_post):
-        api = make_api(make_config(webhook_url=""))
-        api._send_afk_warning()
-        mock_post.assert_not_called()
-
-    @patch("qpopcv.api.requests.post")
-    def test_no_post_when_user_id_missing(self, mock_post):
+    @patch("qpopcv.api.notify")
+    def test_no_post_when_user_id_missing(self, mock_notify):
         api = make_api(make_config(user_id=""))
         api._send_afk_warning()
-        mock_post.assert_not_called()
-
-    @patch("qpopcv.api.requests.post", side_effect=Exception("network error"))
-    def test_network_error_does_not_raise(self, mock_post):
-        api = make_api()
-        api._send_afk_warning()  # must not raise
+        mock_notify.assert_not_called()
 
 
 # ── start_watch / stop_watch timer ────────────────────────────────────────
@@ -67,7 +50,6 @@ class TestAfkTimer:
     def _start(self, api, afk_notify, MockWatcher):
         MockWatcher.return_value.oversized_refs = []
         return api.start_watch({
-            "webhook_url": VALID_WEBHOOK,
             "user_id": VALID_USER_ID,
             "reference_image_paths": [],
             "monitor_index": 0,
@@ -135,7 +117,6 @@ class TestSaveConfigDataAfkNotify:
     def test_afk_notify_persisted(self, mock_save):
         api = make_api()
         api.save_config_data({
-            "webhook_url": VALID_WEBHOOK,
             "user_id": VALID_USER_ID,
             "reference_image_paths": [],
             "monitor_index": 0,
@@ -149,7 +130,6 @@ class TestSaveConfigDataAfkNotify:
     def test_afk_notify_defaults_false(self, mock_save):
         api = make_api()
         api.save_config_data({
-            "webhook_url": VALID_WEBHOOK,
             "user_id": VALID_USER_ID,
             "reference_image_paths": [],
             "monitor_index": 0,

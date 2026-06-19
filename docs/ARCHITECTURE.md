@@ -6,7 +6,7 @@
 
 ## What is QPopCV?
 
-A lightweight Windows desktop app that watches the screen for a World of Warcraft Solo Shuffle queue popup and fires a Discord webhook notification (with a user mention) the moment it appears. Users can step away from their PC while queuing and be pinged on phone or desktop Discord — all while staying within Blizzard's TOS.
+A lightweight Windows desktop app that watches the screen for a World of Warcraft Solo Shuffle queue popup and fires a Discord notification (with a user mention) the moment it appears. The app POSTs to a Cloudflare Worker proxy that holds the real Discord webhook secret and forwards the message — keeping the webhook URL out of the distributed client. Users can step away from their PC while queuing and be pinged on phone or desktop Discord — all while staying within Blizzard's TOS.
 
 **Current version:** `1.2.3`
 **Target OS:** Windows (uses `pyautogui`, `os.startfile`, batch scripts)
@@ -25,8 +25,8 @@ A lightweight Windows desktop app that watches the screen for a World of Warcraf
 | `qpopcv/config.py`            | Config constants, `load_config`, `save_config`                       |
 | `qpopcv/messages.py`          | Timer delay constants + Discord message templates                    |
 | `qpopcv/metrics.py`           | Persistent session metrics (`MetricsStore`)                          |
-| `qpopcv/discord_client.py`    | Thin wrapper around Discord webhook HTTP (used by Test button)       |
-| `qpopcv/validators.py`        | Input validation (webhook, user ID, reference image path)            |
+| `qpopcv/discord_client.py`    | Thin wrapper that POSTs `{user_id, type}` to the Cloudflare Worker proxy |
+| `qpopcv/validators.py`        | Input validation (user ID, reference image path)                     |
 | `qpopcv/updater.py`           | GitHub release checker and installer (`UpdateManager`, `UpdateInfo`) |
 | `qpopcv/monitor_utils.py`     | Multi-monitor enumeration + region math                              |
 | `qpopcv/font_loader.py`       | Font loading utility                                                 |
@@ -97,15 +97,15 @@ A lightweight Windows desktop app that watches the screen for a World of Warcraf
 ┌────────────────────┐    ┌────────────────────────────────────┐
 │   QPopWatcher      │    │   AFK Warning Timer (28 min)       │
 │   (watcher.py)     │    │                                    │
-│                    │    │  requests.post(webhook, AFK_WARNING)│
+│                    │    │  POST PROXY_URL {user_id, "afk_warn"}│
 │ pyautogui.         │    │  → push_event("afk_warning")       │
 │   screenshot()     │    │  → arms Escalation Timer (2 min)   │
 │ pyautogui.         │    └────────────────────────────────────┘
 │   locate()         │
-│ → Discord POST     │    ┌────────────────────────────────────┐
+│ → POST PROXY_URL   │    ┌────────────────────────────────────┐
 │ → on_detect()      │    │   AFK Escalation Timer (2 min)     │
 └────────────────────┘    │                                    │
-                          │  requests.post(webhook, AFK_LOGOUT)│
+                          │  POST PROXY_URL {user_id, "afk_logout"}│
                           │  → push_event("afk_logout")        │
                           └────────────────────────────────────┘
 
@@ -218,7 +218,7 @@ Every check_interval seconds (default 0.15s):
 │         popup appeared (not seen → seen):
 │           → _handle_detected_popup()
 │               → check 15s throttle
-│               → POST Discord webhook QUEUE_POP message
+│               → POST PROXY_URL {user_id, "qpop"}
 │               → call on_detect() → Api._on_detection()
 │                   → stop_watch(detected=True) + push_event("detected")
 │         popup gone (seen → not seen):
@@ -247,7 +247,6 @@ Api.config dict  ←→  JS form fields (via /api/initial_state + collectFormDat
 
 | Key                      | Type   | Default   | Description                                          |
 | ------------------------ | ------ | --------- | ---------------------------------------------------- |
-| `webhook_url`            | str    | `""`      | Discord webhook endpoint                             |
 | `user_id`                | str    | `""`      | 17–19-digit Discord snowflake ID                     |
 | `check_interval`         | float  | `0.15`    | Seconds between screen captures (~6.7 FPS)           |
 | `confidence`             | float  | `0.6`     | Template match confidence threshold (0–1)            |
@@ -274,7 +273,7 @@ User enables AFK checkbox → clicks Watch
     ▼ 28 minutes later...
     │
     ▼ Api._send_afk_warning()
-    │   ├── requests.post(webhook, AFK_WARNING message)
+    │   ├── POST PROXY_URL {user_id, "afk_warn"}
     │   ├── push_event("afk_warning") → JS shows AFK banner + pauses watch timer
     │   │   → _Bridge.request_flash → taskbar icon flashes
     │   └── arms AFK Escalation Timer (2 min)
@@ -291,7 +290,7 @@ User enables AFK checkbox → clicks Watch
     ▼ 2 minutes later (no reset)...
     │
     ▼ Api._send_afk_logout()
-        ├── requests.post(webhook, AFK_LOGOUT message)
+        ├── POST PROXY_URL {user_id, "afk_logout"}
         └── push_event("afk_logout") → JS stops watch, resets UI to idle
 
 User clicks Stop at any time → stop_watch() → both timers cancelled
@@ -351,6 +350,12 @@ User clicks "Update available: x.x.x"
 
 ---
 
+## Discord Notification Proxy
+
+All Discord pings (queue pop, AFK warning, AFK logout, test) flow through a Cloudflare Worker rather than going directly from the desktop client to Discord. The app POSTs `{user_id, type}` to the `PROXY_URL` constant in `qpopcv/config.py`; the worker looks up `type` (`qpop` / `afk_warn` / `afk_logout` / `test`), formats the message with the user's mention, and forwards to the real Discord webhook. The actual webhook URL is stored as a `wrangler secret` and never ships with the client binary — this prevents the kind of webhook abuse that occurred when the URL leaked via git history. The worker source lives in `worker/` (Wrangler config, `src/index.ts`, README) and is deployed independently of the desktop app.
+
+---
+
 ## External Dependencies
 
 | Package               | Used For                                         |
@@ -359,5 +364,5 @@ User clicks "Update available: x.x.x"
 | `PyQt6-WebEngine`     | QWebEngineView for rendering the HTML/CSS/JS UI  |
 | `pyautogui`           | Screenshot + template matching                   |
 | `Pillow`              | Image loading and scaling                        |
-| `requests`            | Discord webhooks, GitHub API, update download    |
+| `requests`            | Cloudflare Worker proxy, GitHub API, update download |
 | `psutil`              | Discord process detection (`kill_discord`)       |

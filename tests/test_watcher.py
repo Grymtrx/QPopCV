@@ -12,20 +12,18 @@ from PIL import Image
 
 from qpopcv.watcher import WatcherSettings, QPopWatcher, THROTTLE_SECONDS
 from qpopcv.monitor_utils import compute_top_center_region
-from qpopcv.messages import QUEUE_POP
+from qpopcv.config import PROXY_URL
 
 
 # ===========================================================================
 # Helpers
 # ===========================================================================
 
-VALID_WEBHOOK = "https://discord.com/api/webhooks/123456789012345678/token"
 VALID_USER_ID = "123456789012345678"
 
 
 def make_settings(**overrides) -> WatcherSettings:
     base = dict(
-        webhook_url=VALID_WEBHOOK,
         user_id=VALID_USER_ID,
         check_interval=0.05,
         confidence=0.6,
@@ -54,47 +52,41 @@ class TestWatcherSettingsFromConfig:
 
     def test_basic_values_parsed(self):
         config = {
-            "webhook_url": VALID_WEBHOOK,
             "user_id": VALID_USER_ID,
             "check_interval": 0.25,
             "confidence": 0.75,
             "reference_image_paths": [],
         }
         s = WatcherSettings.from_config(config)
-        assert s.webhook_url == VALID_WEBHOOK
         assert s.user_id == VALID_USER_ID
         assert s.check_interval == 0.25
         assert s.confidence == 0.75
         assert s.reference_image_paths == []
 
     def test_empty_reference_image_paths_becomes_empty_list(self):
-        config = {"webhook_url": VALID_WEBHOOK, "user_id": VALID_USER_ID,
-                  "reference_image_paths": []}
+        config = {"user_id": VALID_USER_ID, "reference_image_paths": []}
         s = WatcherSettings.from_config(config)
         assert s.reference_image_paths == []
 
     def test_blank_string_entries_are_filtered_out(self):
-        config = {"webhook_url": VALID_WEBHOOK, "user_id": VALID_USER_ID,
-                  "reference_image_paths": ["", "   "]}
+        config = {"user_id": VALID_USER_ID, "reference_image_paths": ["", "   "]}
         s = WatcherSettings.from_config(config)
         assert s.reference_image_paths == []
 
     def test_valid_reference_image_paths_are_set(self, tmp_path):
         img = tmp_path / "ref.png"
         img.write_bytes(b"fake")
-        config = {"webhook_url": VALID_WEBHOOK, "user_id": VALID_USER_ID,
-                  "reference_image_paths": [str(img)]}
+        config = {"user_id": VALID_USER_ID, "reference_image_paths": [str(img)]}
         s = WatcherSettings.from_config(config)
         assert s.reference_image_paths == [Path(str(img)).expanduser()]
 
-    def test_webhook_url_is_stripped(self):
-        config = {"webhook_url": f"  {VALID_WEBHOOK}  ", "user_id": VALID_USER_ID,
-                  "reference_image_paths": []}
+    def test_user_id_is_stripped(self):
+        config = {"user_id": f"  {VALID_USER_ID}  ", "reference_image_paths": []}
         s = WatcherSettings.from_config(config)
-        assert s.webhook_url == VALID_WEBHOOK
+        assert s.user_id == VALID_USER_ID
 
     def test_missing_keys_use_defaults(self):
-        config = {"webhook_url": VALID_WEBHOOK, "user_id": VALID_USER_ID}
+        config = {"user_id": VALID_USER_ID}
         s = WatcherSettings.from_config(config)
         assert s.check_interval == 0.5
         assert s.confidence == 0.6
@@ -273,24 +265,24 @@ class TestHandleDetectedPopup:
 
     def test_sends_discord_on_first_detection(self):
         w = self._make_watcher()
-        with patch.object(w, "_send_discord_message") as mock_send:
+        with patch("qpopcv.discord_client.requests.post") as mock_post:
             w._handle_detected_popup("test_ref")
-        mock_send.assert_called_once()
-        content = mock_send.call_args[0][0]
-        assert VALID_USER_ID in content
-        assert QUEUE_POP in content
+        mock_post.assert_called_once()
+        args, kwargs = mock_post.call_args
+        assert args[0] == PROXY_URL
+        assert kwargs["json"] == {"user_id": VALID_USER_ID, "type": "qpop"}
 
     def test_does_not_send_when_throttled(self):
         w = self._make_watcher()
         w._last_qpop_time = time.time()  # just detected
-        with patch.object(w, "_send_discord_message") as mock_send:
+        with patch("qpopcv.discord_client.requests.post") as mock_post:
             w._handle_detected_popup("test_ref")
-        mock_send.assert_not_called()
+        mock_post.assert_not_called()
 
     def test_calls_on_detect_callback_always(self):
         callback = MagicMock()
         w = self._make_watcher(on_detect=callback)
-        with patch.object(w, "_send_discord_message"):
+        with patch("qpopcv.discord_client.requests.post"):
             w._handle_detected_popup("test_ref")
         callback.assert_called_once()
 
@@ -298,14 +290,14 @@ class TestHandleDetectedPopup:
         callback = MagicMock()
         w = self._make_watcher(on_detect=callback)
         w._last_qpop_time = time.time()
-        with patch.object(w, "_send_discord_message"):
+        with patch("qpopcv.discord_client.requests.post"):
             w._handle_detected_popup("test_ref")
         callback.assert_called_once()
 
     def test_updates_last_qpop_time_on_send(self):
         w = self._make_watcher()
         before = time.time()
-        with patch.object(w, "_send_discord_message"):
+        with patch("qpopcv.discord_client.requests.post"):
             w._handle_detected_popup("test_ref")
         assert w._last_qpop_time >= before
 
@@ -313,14 +305,15 @@ class TestHandleDetectedPopup:
         w = self._make_watcher()
         original_time = time.time() - 5  # 5 seconds ago, within throttle window
         w._last_qpop_time = original_time
-        with patch.object(w, "_send_discord_message"):
+        with patch("qpopcv.discord_client.requests.post"):
             w._handle_detected_popup("test_ref")
         # Time should NOT have been updated since it was throttled
         assert w._last_qpop_time == original_time
 
-    def test_mention_format(self):
+    def test_proxy_payload_contains_user_id(self):
         w = self._make_watcher()
-        with patch.object(w, "_send_discord_message") as mock_send:
+        with patch("qpopcv.discord_client.requests.post") as mock_post:
             w._handle_detected_popup("test_ref")
-        content = mock_send.call_args[0][0]
-        assert f"<@{VALID_USER_ID}>" in content
+        payload = mock_post.call_args.kwargs["json"]
+        assert payload["user_id"] == VALID_USER_ID
+        assert payload["type"] == "qpop"

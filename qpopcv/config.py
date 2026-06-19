@@ -16,15 +16,17 @@ FONTS_DIR = _MEDIA_ROOT / "fonts"
 
 logger = logging.getLogger(__name__)
 
-APP_VERSION = "1.2.5"
-# config.json  — tracked in git; contains shared defaults (webhook URL only)
+APP_VERSION = "1.3.0"
+PROXY_URL = "https://qpopcv-proxy.grymtrx.workers.dev/notify"
+# config.json  — tracked in git; placeholder for future shared defaults (currently empty {}).
+#                The Discord webhook URL is no longer stored here — it lives as a secret in the
+#                Cloudflare Worker proxy (see PROXY_URL above and the worker/ directory).
 # config.local.json — gitignored; contains the user's personal settings
 BASE_CONFIG_PATH = APP_DIR / "config.json"
 USER_CONFIG_PATH = APP_DIR / "config.local.json"
 DISCORD_SERVER_URL = "https://discord.gg/KpupS6N3Zj"  # QPopCV Discord Server (PermaLink)
 
 DEFAULT_CONFIG: Dict[str, object] = {
-    "webhook_url": "",
     "user_id": "",
     "check_interval": 0.15,
     "confidence": 0.6,
@@ -45,7 +47,7 @@ def _load_json(path: Path) -> Dict[str, object]:
 def load_config() -> Dict[str, object]:
     merged = DEFAULT_CONFIG.copy()
 
-    # Layer 1: shared base config from repo (webhook URL etc.)
+    # Layer 1: shared base config from repo (placeholder for future shared defaults)
     if BASE_CONFIG_PATH.exists():
         merged.update(_load_json(BASE_CONFIG_PATH))
 

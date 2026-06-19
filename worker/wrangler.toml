@@ -1,0 +1,10 @@
+name = "qpopcv-proxy"
+main = "src/index.ts"
+compatibility_date = "2026-01-15"
+
+# DISCORD_WEBHOOK_URL is set via:
+#   wrangler secret put DISCORD_WEBHOOK_URL
+# Do NOT put the real webhook URL in this file or in source control.
+
+[observability]
+enabled = true

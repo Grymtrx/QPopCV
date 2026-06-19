@@ -89,7 +89,7 @@ class TestSaveConfig:
 
     def test_writes_valid_json(self, tmp_path):
         config_file = make_config_path(tmp_path)
-        data = {"webhook_url": "https://example.com", "user_id": "123456789012345678"}
+        data = {"user_id": "123456789012345678", "monitor_index": 1}
         with isolated_config(user_path=config_file):
             save_config(data)
         raw = config_file.read_text(encoding="utf-8")

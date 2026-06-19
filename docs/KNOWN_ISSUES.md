@@ -6,16 +6,10 @@
 
 ## Security Issues
 
-### CRITICAL 
+### CRITICAL
 
-#### SEC-01 — Hardcoded Discord Webhook URL in Source Control    (DO NOT FIX THIS ISSUE WITHOUT EXPLICIT APPROVAL FROM DEVELOPER)
-- **Files:** `qpopcv/config.py:16`, `qpopcv/config.json:2`
-- **Detail:** A real, live Discord webhook URL is committed to the repository as the `DEFAULT_CONFIG` value. Anyone with repo access (or who clones the repo) can POST messages to this webhook indefinitely.
-- **Impact:** Unwanted messages in your Discord channel; webhook spamming; social engineering via your channel.
-- **Fix:**
-  1. Regenerate the webhook in Discord immediately (the exposed one should be considered compromised).
-  2. Set `DEFAULT_CONFIG["webhook_url"]` to `""`.
-  3. Clear `config.json`'s `webhook_url` to `""` and add `config.json` to `.gitignore` or exclude it from commits.
+#### ~~SEC-01 — Hardcoded Discord Webhook URL in Source Control~~ ✅ Fixed in 1.3.0
+- **Resolution:** App no longer holds a Discord webhook URL at all. Notifications now route through a Cloudflare Worker proxy (`worker/`) that holds the real webhook URL as a `wrangler secret`. The app POSTs `{user_id, type}` to `PROXY_URL` (in `qpopcv/config.py`); the worker validates, rate-limits (per-IP + per-user_id), formats the message, and forwards to Discord. The original leaked webhook was deleted in Discord, killing in-flight abuse instantly. Webhook rotation no longer requires an app rebuild — `wrangler secret put DISCORD_WEBHOOK_URL` is enough.
 
 ---
 
@@ -112,7 +106,7 @@
 
 Priority order for a future Claude session:
 
-1. **SEC-01** — Remove hardcoded webhook (security critical, 5 min fix)
+1. ~~**SEC-01** — Remove hardcoded webhook~~ ✅ Fixed in 1.3.0 — Migrated to Cloudflare Worker proxy holding the webhook as a server-side secret
 2. ~~**BUG-02** — Surface detection disabled state to user (UX critical)~~ ✅ Fixed in 1.0.5
 3. ~~**AP-01** — Replace all `print()` in watcher with `logger` calls (code quality)~~ ✅ Fixed in 1.0.6
 4. ~~**GAP-07** — Remove unused `opencv-python` from requirements~~ ✅ Fixed in 1.0.7

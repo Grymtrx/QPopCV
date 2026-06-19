@@ -6,24 +6,9 @@ from typing import List
 import tkinter.messagebox as messagebox
 
 
-def validate_discord_core(webhook_url: str, user_id: str) -> bool:
-    # Validate webhook URL + Discord user ID, showing message boxes on error.
-    webhook_url = webhook_url.strip()
+def validate_discord_core(user_id: str) -> bool:
+    # Validate Discord user ID, showing message boxes on error.
     user_id = user_id.strip()
-
-    if not webhook_url:
-        messagebox.showwarning(
-            "Missing Discord Webhook URL",
-            "Please set the Discord Webhook URL.",
-        )
-        return False
-
-    if not webhook_url.startswith("https://discord.com/api/webhooks/"):
-        messagebox.showwarning(
-            "Invalid Discord Webhook URL",
-            "Webhook URL must start with https://discord.com/api/webhooks/",
-        )
-        return False
 
     if not user_id:
         messagebox.showwarning(

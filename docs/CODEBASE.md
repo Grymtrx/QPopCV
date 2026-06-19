@@ -22,11 +22,11 @@ QPopCV/
 │   ├── app_ui.py                        Qt shell + HTTP server + SSE bridge
 │   ├── api.py                           All business logic (framework-agnostic)
 │   ├── config.py                        Config management
-│   ├── config.json                      Shared/repo config (webhook default)
+│   ├── config.json                      Shared/repo config (non-secret defaults)
 │   ├── config.local.json                User's personal config (gitignored, auto-created)
 │   ├── messages.py                      Timer delay constants + Discord message templates
 │   ├── metrics.py                       Persistent session metrics (MetricsStore)
-│   ├── discord_client.py                Discord HTTP wrapper
+│   ├── discord_client.py                Cloudflare Worker proxy HTTP wrapper
 │   ├── watcher.py                       Detection engine
 │   ├── validators.py                    Input validation
 │   ├── updater.py                       Auto-updater
@@ -91,13 +91,13 @@ Central config constants and JSON load/save.
 | `BASE_CONFIG_PATH` | `APP_DIR / "config.json"` | Shared/repo config; never written by app |
 | `USER_CONFIG_PATH` | `APP_DIR / "config.local.json"` | User settings; written by `save_config`; gitignored |
 | `DISCORD_SERVER_URL` | `"https://discord.gg/KpupS6N3Zj"` | Community invite (permanent link) |
+| `PROXY_URL` | `"https://<PLACEHOLDER>.workers.dev"` | Cloudflare Worker endpoint that forwards `{user_id, type}` to the real Discord webhook (held as a worker secret) |
 | `DEFAULT_CONFIG` | dict | Fallback values merged under both config files |
 
 ### `DEFAULT_CONFIG` keys
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `webhook_url` | `""` | Discord webhook endpoint |
 | `user_id` | `""` | 17–19-digit Discord snowflake |
 | `check_interval` | `0.15` | Seconds between screen captures |
 | `confidence` | `0.6` | Template match threshold (0–1) |
@@ -308,7 +308,7 @@ Returns `{version, config, monitors, metrics}`. Metrics contains `all_time` and 
 ```python
 def start_watch(self, data: dict) -> dict
 ```
-1. Validates webhook URL + user ID + reference image paths
+1. Validates user ID + reference image paths
 2. If Discord.exe is running and `skip_discord_check` is False, returns `{"ok": False, "discord_running": True}`
 3. Writes all fields to `self.config` and saves
 4. Stops any existing watcher, creates and starts new `QPopWatcher`
@@ -334,7 +334,7 @@ Saves all config fields without starting the watcher.
 ```python
 def test_discord(self, data: dict) -> dict
 ```
-Throttled (1s). Validates, calls `send_test_message`.
+Throttled (1s). Validates user ID, calls `discord_client.send_test_message(user_id)` (POSTs `{user_id, "test"}` to the worker proxy).
 
 ```python
 def reset_afk(self) -> dict
@@ -357,12 +357,12 @@ Called by `QPopWatcher` on detect. Calls `stop_watch(detected=True)` then pushes
 ```python
 def _send_afk_warning(self) -> None
 ```
-Called by `_afk_timer` after 28 minutes. Sets `_afk_warned = True`. Pauses session clock. POSTs `AFK_WARNING` to Discord webhook. Pushes `"afk_warning"` SSE event. Arms `_afk_escalation_timer` (2 min).
+Called by `_afk_timer` after 28 minutes. Sets `_afk_warned = True`. Pauses session clock. Calls `discord_client.notify(user_id, "afk_warn")` (POSTs to the Cloudflare Worker proxy). Pushes `"afk_warning"` SSE event. Arms `_afk_escalation_timer` (2 min).
 
 ```python
 def _send_afk_logout(self) -> None
 ```
-Called by `_afk_escalation_timer` 2 minutes after AFK warning (if not reset). POSTs `AFK_LOGOUT` to Discord webhook. Pushes `"afk_logout"` SSE event.
+Called by `_afk_escalation_timer` 2 minutes after AFK warning (if not reset). Calls `discord_client.notify(user_id, "afk_logout")` (POSTs to the Cloudflare Worker proxy). Pushes `"afk_logout"` SSE event.
 
 ```python
 def _end_session(self, detected: bool) -> Optional[dict]
@@ -391,7 +391,6 @@ Minimum seconds between successive Discord pings.
 ```python
 @dataclass
 class WatcherSettings:
-    webhook_url: str
     user_id: str
     check_interval: float = 0.5
     confidence: float = 0.6
@@ -444,12 +443,12 @@ Main loop: screenshot → find popup → state machine → `_stop_event.wait(int
 ```python
 def _handle_detected_popup(self, match_name: str) -> None
 ```
-Checks throttle. If not throttled: POSTs Discord webhook using `QUEUE_POP` message from `messages.py`, updates `_last_qpop_time`. Always calls `on_detect` callback regardless of throttle.
+Checks throttle. If not throttled: calls `discord_client.notify(user_id, "qpop")` (POSTs to the Cloudflare Worker proxy), updates `_last_qpop_time`. Always calls `on_detect` callback regardless of throttle.
 
 ```python
-def _send_discord_message(self, content: str) -> None
+def _send_discord_message(self, type_: str) -> None
 ```
-Direct `requests.post` with `timeout=5`.
+Delegates to `discord_client.notify(user_id, type_)`. The worker resolves `type_` (`qpop` / `afk_warn` / `afk_logout`) to the correct message template and forwards to the real Discord webhook.
 
 ---
 
@@ -457,12 +456,18 @@ Direct `requests.post` with `timeout=5`.
 
 **Lines:** ~23
 
-Thin HTTP wrapper. Used only by the "Test Connection" button. The watcher and AFK timer call `requests.post` directly.
+Thin HTTP wrapper around the Cloudflare Worker proxy. All Discord pings (queue pop, AFK warning, AFK logout, test) POST `{user_id, type}` JSON to `PROXY_URL` and let the worker forward to the real Discord webhook.
 
 ```python
-def send_discord_mention(webhook_url, user_id, message, timeout=5.0) -> None
-def send_test_message(webhook_url, user_id, timeout=5.0) -> None
+def notify(user_id: str, type_: str, timeout: float = 5.0) -> None
+def send_test_message(user_id: str, timeout: float = 5.0) -> None
 ```
+
+Valid `type_` values: `"qpop"`, `"afk_warn"`, `"afk_logout"`, `"test"`. The worker holds the Discord webhook URL as a `wrangler secret` so the desktop binary never ships the real URL.
+
+### Discord notification proxy
+
+The app calls a Cloudflare Worker rather than Discord directly. The worker holds the real webhook URL as a `wrangler secret`, so the desktop client only ever sees the proxy URL. The proxy endpoint is the `PROXY_URL` constant in `qpopcv/config.py`. The worker code (Wrangler config, `src/index.ts`, README) lives in the top-level `worker/` directory and is deployed independently of the desktop app. Every call uses the same request shape: `POST PROXY_URL  {"user_id": "<snowflake>", "type": "<qpop|afk_warn|afk_logout|test>"}`.
 
 ---
 
@@ -473,10 +478,9 @@ def send_test_message(webhook_url, user_id, timeout=5.0) -> None
 Input validation. Used by `api.py`'s `_validate_discord()` and `_validate_ref_images()`.
 
 ```python
-def validate_discord_core(webhook_url: str, user_id: str) -> bool
+def validate_discord_core(user_id: str) -> bool
 ```
-- Rejects empty or non-`https://discord.com/api/webhooks/` URLs
-- Rejects empty or non-17–19-digit user IDs
+- Rejects empty or non-17–19-digit user IDs (Discord snowflake format). Webhook URL validation no longer exists — the real webhook URL is held by the Cloudflare Worker proxy, not the client.
 
 ```python
 def validate_reference_image(path_str: str) -> bool
@@ -552,7 +556,7 @@ Single-page UI. Five tabs, one footer, one AFK banner.
 
 | Tab | ID | Contents |
 |-----|----|----------|
-| Discord | `tab-discord` | Webhook URL, User ID (password input + eye toggle), Test + Join Discord buttons |
+| Discord | `tab-discord` | User ID (password input + eye toggle), Test + Join Discord buttons |
 | Capture | `tab-capture` | Monitor dropdown |
 | Images | `tab-images` | Reference image rows (1–5) with browse/remove |
 | AFK | `tab-afk` | `#afk-notify` checkbox + hint text |
@@ -629,7 +633,7 @@ Populates all form controls from `data.config` on page load. Sets monitor dropdo
 ```js
 function collectFormData() -> object
 ```
-Gathers all form values into `{webhook_url, user_id, reference_image_paths, monitor_index, afk_notify}`. Used by both Save and Watch Start.
+Gathers all form values into `{user_id, reference_image_paths, monitor_index, afk_notify}`. Used by both Save and Watch Start.
 
 ```js
 async function doStartWatch(skipDiscordCheck = false)
@@ -695,7 +699,7 @@ POSTs `app-card.offsetHeight` to `/api/resize` so the Qt window fits content exa
 User clicks Watch
     │
     ▼ collectFormData() → POST /api/start_watch
-    │   {webhook_url, user_id, reference_image_paths, monitor_index, afk_notify}
+    │   {user_id, reference_image_paths, monitor_index, afk_notify}
     │
     ▼ Api.start_watch(data)
     │   validate → check Discord running → save to config.local.json
@@ -704,7 +708,8 @@ User clicks Watch
     ▼ QPopWatcher._loop() (daemon thread)
     │   pyautogui.screenshot(region)
     │   pyautogui.locate(reference, screenshot, confidence)
-    │   → match found → requests.post(webhook, QUEUE_POP)
+    │   → match found → discord_client.notify(user_id, "qpop")
+    │                   (POST PROXY_URL → worker → Discord webhook)
     │   → on_detect() → Api._on_detection()
     │       → stop_watch(detected=True) → _end_session()
     │       → push_event("detected")
@@ -715,7 +720,7 @@ User clicks Watch
 
 28 minutes later (if afk_notify=True):
     ▼ threading.Timer fires _send_afk_warning()
-    │   requests.post(webhook, AFK_WARNING)
+    │   discord_client.notify(user_id, "afk_warn")
     │   push_event("afk_warning") → JS shows AFK banner, pauses timer
     │   arms escalation timer (2 min)
     │
@@ -723,7 +728,7 @@ User clicks Watch
     ▼ /api/reset_afk → resume timer, restart 28-min AFK timer
     │
     OR 2 minutes later:
-    ▼ _send_afk_logout() → requests.post(webhook, AFK_LOGOUT)
+    ▼ _send_afk_logout() → discord_client.notify(user_id, "afk_logout")
         push_event("afk_logout") → JS stops watch, resets to idle
 
 Session ends:

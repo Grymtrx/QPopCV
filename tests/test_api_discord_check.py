@@ -4,13 +4,11 @@ from unittest.mock import patch, MagicMock
 
 from qpopcv.api import Api, _is_discord_running
 
-VALID_WEBHOOK = "https://discord.com/api/webhooks/123456789012345678/token"
 VALID_USER_ID = "123456789012345678"
 
 
 def make_config(**overrides):
     base = {
-        "webhook_url": VALID_WEBHOOK,
         "user_id": VALID_USER_ID,
         "reference_image_paths": [],
         "monitor_index": 0,
@@ -96,7 +94,6 @@ class TestStartWatchDiscordCheck:
     def _start(self, api, MockWatcher, skip=False):
         MockWatcher.return_value.oversized_refs = []
         return api.start_watch({
-            "webhook_url": VALID_WEBHOOK,
             "user_id": VALID_USER_ID,
             "reference_image_paths": [],
             "monitor_index": 0,

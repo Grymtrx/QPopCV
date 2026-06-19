@@ -11,15 +11,14 @@ import threading
 import time
 import webbrowser
 import psutil
-import requests
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 from datetime import datetime, date
-from .messages import AFK_WARN_DELAY, AFK_LOGOUT_DELAY, AFK_WARNING, AFK_LOGOUT
+from .messages import AFK_WARN_DELAY, AFK_LOGOUT_DELAY
 from .metrics import MetricsStore
 
 from .config import APP_DIR, APP_VERSION, DISCORD_SERVER_URL, save_config
-from .discord_client import send_test_message
+from .discord_client import notify, send_test_message
 from .monitor_utils import get_monitors
 from .updater import UpdateInfo, UpdateManager
 from .watcher import QPopWatcher, WatcherSettings
@@ -31,14 +30,9 @@ TEST_THROTTLE_SECONDS = 1
 
 # ── Pure validation ────────────────────────────────────────────────────────────
 
-def _validate_discord(webhook_url: str, user_id: str) -> Optional[str]:
+def _validate_discord(user_id: str) -> Optional[str]:
     """Return an error string, or None if valid."""
-    webhook_url = webhook_url.strip()
     user_id = user_id.strip()
-    if not webhook_url:
-        return "Please set the Discord Webhook URL."
-    if not webhook_url.startswith("https://discord.com/api/webhooks/"):
-        return "Webhook URL must start with https://discord.com/api/webhooks/"
     if not user_id:
         return "Please set your Discord User ID."
     if not (user_id.isdigit() and 17 <= len(user_id) <= 19):
@@ -119,7 +113,6 @@ class Api:
         return {
             "version": APP_VERSION,
             "config": {
-                "webhook_url": str(self.config.get("webhook_url", "")),
                 "user_id": str(self.config.get("user_id", "")),
                 "reference_image_paths": [str(p) for p in self.config.get("reference_image_paths", [])],
                 "monitor_index": saved_idx,
@@ -135,14 +128,13 @@ class Api:
     # ── Watch control ──────────────────────────────────────────────────────────
 
     def start_watch(self, data: dict) -> dict:
-        webhook_url = str(data.get("webhook_url", "")).strip()
         user_id = str(data.get("user_id", "")).strip()
         paths = [str(p) for p in data.get("reference_image_paths", [])]
         monitor_index = int(data.get("monitor_index", 0))
         afk_notify = bool(data.get("afk_notify", False))
         skip_discord_check = bool(data.get("skip_discord_check", False))
 
-        err = _validate_discord(webhook_url, user_id)
+        err = _validate_discord(user_id)
         if err:
             return {"ok": False, "error": err}
         err = _validate_ref_images(paths)
@@ -152,7 +144,6 @@ class Api:
         if not skip_discord_check and _is_discord_running():
             return {"ok": False, "discord_running": True}
 
-        self.config["webhook_url"] = webhook_url
         self.config["user_id"] = user_id
         self.config["reference_image_paths"] = [p for p in paths if p.strip()]
         self.config["monitor_index"] = monitor_index
@@ -242,7 +233,6 @@ class Api:
 
     def save_config_data(self, data: dict) -> dict:
         """Save settings without starting the watcher."""
-        self.config["webhook_url"] = str(data.get("webhook_url", "")).strip()
         self.config["user_id"] = str(data.get("user_id", "")).strip()
         paths = [str(p) for p in data.get("reference_image_paths", [])]
         self.config["reference_image_paths"] = [p for p in paths if p.strip()]
@@ -259,15 +249,14 @@ class Api:
             remaining = int(TEST_THROTTLE_SECONDS - (now - self._last_test_time))
             return {"ok": False, "error": f"Wait {remaining}s before testing again."}
 
-        webhook_url = str(data.get("webhook_url", "")).strip()
         user_id = str(data.get("user_id", "")).strip()
 
-        err = _validate_discord(webhook_url, user_id)
+        err = _validate_discord(user_id)
         if err:
             return {"ok": False, "error": err}
 
         try:
-            send_test_message(webhook_url, user_id, timeout=5.0)
+            send_test_message(user_id, timeout=5.0)
             self._last_test_time = now
             return {"ok": True}
         except Exception as exc:
@@ -324,14 +313,9 @@ class Api:
         with self._session_lock:
             self._session_paused_at = time.monotonic()
 
-        webhook_url = str(self.config.get("webhook_url", "")).strip()
         user_id = str(self.config.get("user_id", "")).strip()
-        if webhook_url and user_id:
-            content = f"<@{user_id}> {AFK_WARNING}"
-            try:
-                requests.post(webhook_url, json={"content": content}, timeout=5)
-            except Exception as exc:
-                logger.error("AFK warning notification failed: %s", exc)
+        if user_id:
+            notify(user_id, "afk_warn")
 
         self._push("afk_warning", None)
 
@@ -341,14 +325,9 @@ class Api:
 
     def _send_afk_logout(self) -> None:
         """Called 2 minutes after AFK warning if user hasn't reset."""
-        webhook_url = str(self.config.get("webhook_url", "")).strip()
         user_id = str(self.config.get("user_id", "")).strip()
-        if webhook_url and user_id:
-            content = f"<@{user_id}> {AFK_LOGOUT}"
-            try:
-                requests.post(webhook_url, json={"content": content}, timeout=5)
-            except Exception as exc:
-                logger.error("AFK logout notification failed: %s", exc)
+        if user_id:
+            notify(user_id, "afk_logout")
 
         self._afk_escalation_timer = None
         self._push("afk_logout", None)

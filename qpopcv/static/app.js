@@ -41,7 +41,6 @@ const state = {
 const $ = id => document.getElementById(id);
 const statusPill    = $('status-pill');
 const statusText    = $('status-text');
-const webhookInput  = $('webhook-url');
 const userIdInput   = $('user-id');
 const eyeBtn        = $('eye-btn');
 const monitorSelect = $('monitor-select');
@@ -188,7 +187,6 @@ function applyInitialState(data) {
   monitorSelect.value = config.monitor_index;
   afkNotifyCheckbox.checked = !!config.afk_notify;
 
-  webhookInput.value = config.webhook_url || '';
   userIdInput.value  = config.user_id || '';
 
   refList.innerHTML = '';
@@ -535,7 +533,6 @@ $('btn-test').addEventListener('click', async () => {
   btn.textContent = 'Testing…';
   try {
     const result = await apiPost('/api/test_discord', {
-      webhook_url: webhookInput.value,
       user_id: userIdInput.value,
     });
     if (result.ok) {
@@ -639,7 +636,6 @@ function collectFormData() {
     if (v) paths.push(v);
   });
   return {
-    webhook_url: webhookInput.value.trim(),
     user_id: userIdInput.value.trim(),
     reference_image_paths: paths,
     monitor_index: parseInt(monitorSelect.value, 10) || 0,

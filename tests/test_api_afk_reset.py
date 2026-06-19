@@ -4,15 +4,12 @@ from unittest.mock import patch, MagicMock, call
 from datetime import datetime
 
 from qpopcv.api import Api
-from qpopcv.messages import AFK_WARNING, AFK_LOGOUT, QUEUE_POP
 
-VALID_WEBHOOK = "https://discord.com/api/webhooks/123456789012345678/token"
 VALID_USER_ID = "123456789012345678"
 
 
 def make_config(**overrides):
     base = {
-        "webhook_url": VALID_WEBHOOK,
         "user_id": VALID_USER_ID,
         "reference_image_paths": [],
         "monitor_index": 0,
@@ -32,38 +29,33 @@ def make_api(config=None, push_event=None):
 
 class TestAfkEscalation:
 
-    @patch("qpopcv.api.requests.post")
-    def test_send_afk_warning_pushes_sse_event(self, mock_post):
+    @patch("qpopcv.api.notify")
+    def test_send_afk_warning_pushes_sse_event(self, mock_notify):
         push = MagicMock()
         api = make_api(push_event=push)
         api._send_afk_warning()
         push.assert_any_call("afk_warning", None)
 
-    @patch("qpopcv.api.requests.post")
-    def test_send_afk_warning_sends_discord_message(self, mock_post):
+    @patch("qpopcv.api.notify")
+    def test_send_afk_warning_sends_proxy_notification(self, mock_notify):
         api = make_api()
         api._send_afk_warning()
-        mock_post.assert_called_once()
-        content = mock_post.call_args[1]["json"]["content"]
-        assert AFK_WARNING in content
-        assert f"<@{VALID_USER_ID}>" in content
+        mock_notify.assert_called_once_with(VALID_USER_ID, "afk_warn")
 
-    @patch("qpopcv.api.requests.post")
-    def test_send_afk_warning_creates_escalation_timer(self, mock_post):
+    @patch("qpopcv.api.notify")
+    def test_send_afk_warning_creates_escalation_timer(self, mock_notify):
         api = make_api()
         api._send_afk_warning()
         assert api._afk_escalation_timer is not None
 
-    @patch("qpopcv.api.requests.post")
-    def test_send_afk_logout_sends_second_discord(self, mock_post):
+    @patch("qpopcv.api.notify")
+    def test_send_afk_logout_sends_proxy_notification(self, mock_notify):
         api = make_api()
         api._send_afk_logout()
-        mock_post.assert_called_once()
-        content = mock_post.call_args[1]["json"]["content"]
-        assert AFK_LOGOUT in content
+        mock_notify.assert_called_once_with(VALID_USER_ID, "afk_logout")
 
-    @patch("qpopcv.api.requests.post")
-    def test_send_afk_logout_pushes_sse_event(self, mock_post):
+    @patch("qpopcv.api.notify")
+    def test_send_afk_logout_pushes_sse_event(self, mock_notify):
         push = MagicMock()
         api = make_api(push_event=push)
         api._send_afk_logout()
@@ -101,7 +93,6 @@ class TestSessionTracking:
         api = make_api()
         MockWatcher.return_value.oversized_refs = []
         api.start_watch({
-            "webhook_url": VALID_WEBHOOK,
             "user_id": VALID_USER_ID,
             "reference_image_paths": [],
             "monitor_index": 0,
@@ -117,7 +108,6 @@ class TestSessionTracking:
         api = make_api()
         MockWatcher.return_value.oversized_refs = []
         api.start_watch({
-            "webhook_url": VALID_WEBHOOK,
             "user_id": VALID_USER_ID,
             "reference_image_paths": [],
             "monitor_index": 0,

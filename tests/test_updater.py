@@ -252,12 +252,12 @@ class TestCopyTree:
         src = tmp_path / "src"
         dest = tmp_path / "dest"
         src.mkdir(); dest.mkdir()
-        (src / "config.json").write_text('{"webhook_url": "new"}')
-        (dest / "config.json").write_text('{"webhook_url": "old"}')
+        (src / "config.json").write_text('{"user_id": "new"}')
+        (dest / "config.json").write_text('{"user_id": "old"}')
         mgr = make_manager(app_dir=dest)
         mgr._copy_tree(src, dest)
         # config.json must NOT be overwritten
-        assert json.loads((dest / "config.json").read_text())["webhook_url"] == "old"
+        assert json.loads((dest / "config.json").read_text())["user_id"] == "old"
 
     def test_skips_hidden_files(self, tmp_path):
         src = tmp_path / "src"
